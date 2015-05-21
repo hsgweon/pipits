@@ -1,0 +1,6 @@
+include pipits_config
+include MANIFEST.in
+include MANUAL.txt
+include LICENSE
+recursive-include pipits *
+recursive-include test_data *

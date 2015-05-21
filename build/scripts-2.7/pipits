@@ -1,0 +1,347 @@
+#!/usr/bin/python
+
+__author__ = "Hyun Soon Gweon"
+__copyright__ = "Copyright 2015, The PIPITS Project"
+__credits__ = ["Hyun Soon Gweon", "Anna Oliver", "Joanne Taylor", "Tim Booth", "Melanie Gibbs", "Daniel S. Read", "Robert I. Griffiths", "Karsten Schonrogge"]
+__license__ = "GPL"
+__version__ = "unknown"
+__maintainer__ = "Hyun Soon Gweon"
+__email__ = "hyugwe@ceh.ac.uk"
+
+import sys, os, argparse, subprocess, ConfigParser, shutil, textwrap, time, warnings
+
+# Discover real version from setup.py
+try:
+    import pkg_resources
+    __version__ = pkg_resources.require("pipits")[0].version
+except:
+    warnings.warn("Cannot determine pipits library version")
+
+
+from pipits import tcolours as tc
+from pipits import dependencies as pd
+
+if __name__ == '__main__':
+
+    # Initialise dependencies.
+    # Environment variable PIPITSCONFIG to point to the config file needs to be set
+    pd.init(os.getenv("PIPITSCONFIG", None) or
+            os.getenv("HOME") + "/.pipits_config")
+
+    logo = tc.OKBLUE + textwrap.dedent(r'''
+     ____ ___ ____ ___ _____ ____
+    |  _ \_ _|  _ \_ _|_   _/ ___|
+    | |_) | || |_) | |  | | \___ \
+    |  __/| ||  __/| |  | |  ___) |
+    |_|  |___|_|  |___| |_| |____/
+
+    ''') + "[Version " + __version__ + "]\n" + tc.ENDC
+
+    print(logo)
+
+    parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter,
+                                     description = '''\
+[] indicates optional input (order unimportant)
+Runs PIPITS - Pipeline for Illumina Fungal ITS sequences
+
+Example:
+pipits getreadpairslist
+pipits prep
+pipits funits
+pipits process
+pipits all
+'''
+                                     )
+
+    subparsers = parser.add_subparsers(
+        title="commands"
+)
+
+    # Shared
+    def add_arguments_r(parser):
+        parser.add_argument(
+            "-r",
+            action = "store_true",
+            dest = "remove",
+            help = "Remove intermediate files (Intermediate files use excessive disk space)",
+            required = False)
+    def add_arguments_v(parser):
+        parser.add_argument(
+            "-v",
+            action = "store_true",
+            dest = "verbose",
+            help = "Verbose mode",
+            required = False)
+    def add_arguments_t(parser):
+        parser.add_argument(
+            "-t",
+            action = "store",
+            dest = "threads",
+            metavar = "<INT>",
+            help = "Number of Threads [default: 1]",
+            default = "1",
+            required = False)
+
+    # GETREADPAIRSLIST
+    parser_getreadpairslist = subparsers.add_parser('getreadpairslist')
+    parser_getreadpairslist.set_defaults(which='getreadpairslist')
+    parser_getreadpairslist.add_argument(
+        "-i",
+        action = "store",
+        dest = "dataDir",
+        metavar = "<DIR>",
+        help = "[REQUIRED] Directory with your raw sequences in gzipped FASTQ",
+        required = True)
+    parser_getreadpairslist.add_argument(
+        "-o",
+        action = "store",
+        dest = "output",
+        metavar = "<FILE>",
+        help = "Name of output file.",
+        required = False)
+    parser_getreadpairslist.add_argument(
+        "--label-add-c",
+        action = "store",
+        dest = "label_add_c",
+        metavar = "<TXT>",
+        help = "Add a label to each sample ids in the output file",
+        required = False)
+    parser_getreadpairslist.add_argument(
+        "--label-reindex-c",
+        action = "store",
+        dest = "label_add_reindex_c",
+        metavar = "<TXT>",
+        help = "Add a label to each sample ids in the output file",
+        required = False)
+
+    # PREP
+    parser_prep = subparsers.add_parser('prep')
+    parser_prep.set_defaults(which='prep')
+    def add_arguments_prep_i(parser):
+        parser.add_argument(
+            "-i",
+            action = "store",
+            dest = "dataDir",
+            metavar = "<DIR>",
+            help = "[REQUIRED] Directory with raw sequences in gzipped FASTQ",
+            required = True)
+    def add_arguments_prep_o(parser):
+        parser.add_argument(
+            "-o",
+            action = "store",
+            dest = "outDir",
+            metavar = "<DIR>",
+            help = "[REQUIRED] Directory to output results",
+            required = True)
+    def add_arguments_prep_l(parser):
+        parser.add_argument(
+            "-l",
+            action = "store",
+            dest = "listfile",
+            metavar = "<FILE>",
+            help = "Tap separated file with three columns for sample ids, forward-read filename and reverse-read filename. PIPITS_PREP will process only the files listed in this \
+file.",
+            required = False)
+    def add_arguments_prep_FASTX_q(parser):
+        parser.add_argument(
+            "--FASTX-q",
+            action = "store",
+            dest = "FASTX_fastq_quality_filter_q",
+            metavar = "<INT>",
+            help = "FASTX FASTQ_QUALITY_FILTER - Minimum quality score to keep [default: 30]",
+            default = "30",
+            required = False)
+    def add_arguments_prep_FASTX_p(parser):
+        parser.add_argument(
+            "--FASTX-p",
+            action = "store",
+            dest = "FASTX_fastq_quality_filter_p",
+            metavar = "<INT>",
+            help = "FASTX FASTQ_QUALITY_FILTER - Minimum percent of bases that must have q quality [default: 80]",
+            default = "80",
+            required = False)
+    def add_arguments_prep_FASTX_n(parser):
+       parser.add_argument(
+            "--FASTX-n",
+            action = "store_true",
+            dest = "FASTX_fastq_to_fasta_n",
+            help = "FASTX FASTQ_TO_FASTA - keep sequences with unknown (N) nucleotides. Default is to discard such sequences.",
+            required = False)
+    def add_arguments_prep_b(parser):
+        parser.add_argument(
+            "-b",
+            action = "store",
+            dest = "base_phred_quality_score",
+            metavar = "<INT>",
+            help = "Base PHRED quality score [default: 33]",
+            default = "33",
+            required = False)
+    def add_arguments_prep_joiner_method(parser):
+        parser.add_argument(
+            "--joiner_method",
+            action = "store",
+            dest = "joiner_method",
+            help = "[REQUIRED] Joiner method: \"PEAR\" and \"FASTQJOIN\"",
+            required = False,
+            default = "PEAR",
+            choices = ["PEAR", "FASTQJOIN"])
+
+
+    add_arguments_prep_i(parser_prep)
+    add_arguments_prep_o(parser_prep)
+    add_arguments_prep_l(parser_prep)
+    add_arguments_prep_FASTX_q(parser_prep)
+    add_arguments_prep_FASTX_p(parser_prep)
+    add_arguments_prep_FASTX_n(parser_prep)
+    add_arguments_prep_b(parser_prep)
+    add_arguments_prep_joiner_method(parser_prep)
+    add_arguments_t(parser_prep)
+    add_arguments_v(parser_prep)
+    add_arguments_r(parser_prep)
+
+
+
+    # FUNITS
+    parser_funits = subparsers.add_parser('funits')
+    parser_funits.set_defaults(which='funits')
+    def add_arguments_funits_i(parser):
+        parser.add_argument(
+            "-i",
+            action = "store",
+            dest = "input",
+            metavar = "<FILE>",
+            help = "[REQUIRED] Joined, quality filtered sequences in FASTA. Typically output from pipits_prep",
+            required = True)
+    def add_arguments_funits_o(parser):
+        parser.add_argument(
+            "-o",
+            action = "store",
+            dest = "outDir",
+            metavar = "<DIR>",
+            help = "[REQUIRED] Directory to output results",
+            required = True)
+    def add_arguments_funits_x(parser):
+        parser.add_argument(
+            "-x",
+            action = "store",
+            dest = "ITSx_subregion",
+            help = "[REQUIRED] Subregion of ITS to be extracted. Must choose between \"ITS1\" and \"ITS2\" E.g. -x ITS2",
+            required = True,
+            choices = ["ITS1", "ITS2"])
+    add_arguments_funits_i(parser_funits)
+    add_arguments_funits_o(parser_funits)
+    add_arguments_funits_x(parser_funits)
+    add_arguments_t(parser_funits)
+    add_arguments_v(parser_funits)
+    add_arguments_r(parser_funits)
+
+
+    # PROCESS
+    parser_process = subparsers.add_parser('process')
+    parser_process.set_defaults(which='process')
+    def add_arguments_process_i(parser):
+        parser.add_argument(
+            "-i",
+            action = "store",
+            dest = "input",
+            metavar = "<FILE>",
+            help = "[REQUIRED] ITS sequences in FASTA. Typically output from pipits_funits",
+            required = True)
+    def add_arguments_process_o(parser):
+        parser.add_argument(
+            "-o",
+            action = "store",
+            dest = "outDir",
+            metavar = "<DIR>",
+            help = "[REQUIRED] Directory to output results.",
+            required = True)
+    def add_arguments_process_d(parser):
+        parser.add_argument(
+            "-d",
+            action = "store",
+            dest = "VSEARCH_id",
+            metavar = "<FLOAT>",
+            help = "VSEARCH - Identity threshold [default: 0.97]",
+            default = "0.97",
+            required = False)
+    def add_arguments_process_c(parser):
+        parser.add_argument(
+            "-c",
+            action = "store",
+            dest = "RDP_assignment_threshold",
+            metavar = "<FLOAT>",
+            help = "RDP assignment confidence threshold - RDP Classifier confidence threshold for output [default: 0.85]",
+            default = "0.85",
+            required = False)
+    add_arguments_process_i(parser_process)
+    add_arguments_process_o(parser_process)
+    add_arguments_process_d(parser_process)
+    add_arguments_process_c(parser_process)
+    add_arguments_t(parser_process)
+    add_arguments_v(parser_process)
+    add_arguments_r(parser_process)
+
+
+    # ALL
+    parser_all = subparsers.add_parser('all')
+    parser_all.set_defaults(which='all')
+    def add_arguments_all_prefix(parser):
+        parser.add_argument(
+            "--prefix",
+            action = "store",
+            dest = "prefix",
+            metavar = "<STR>",
+            default = "pipits_all",
+            help = "[REQUIRED] Prefix of output directories",
+            required = False)
+    add_arguments_prep_i(parser_all)
+    add_arguments_funits_x(parser_all)
+    add_arguments_all_prefix(parser_all)
+
+    add_arguments_prep_l(parser_all)
+    add_arguments_prep_FASTX_q(parser_all)
+    add_arguments_prep_FASTX_p(parser_all)
+    add_arguments_prep_FASTX_n(parser_all)
+    add_arguments_prep_b(parser_all)
+    add_arguments_prep_joiner_method(parser_all)
+
+    add_arguments_process_d(parser_all)
+    add_arguments_process_c(parser_all)
+
+    add_arguments_t(parser_all)
+    add_arguments_v(parser_all)
+    add_arguments_r(parser_all)
+
+    options = parser.parse_args()
+
+    if options.which == "retrain":
+        from pipits import pipits_retrain
+        pipits_retrain.run(options)
+    elif options.which == "getreadpairslist":
+        from pipits import pipits_getreadpairslist
+        pipits_getreadpairslist.run(options)
+    elif options.which == "prep":
+        from pipits import pipits_prep
+        pipits_prep.run(options)
+    elif options.which == "funits":
+        from pipits import pipits_funits
+        pipits_funits.run(options)
+    elif options.which == "process":
+        from pipits import pipits_process
+        pipits_process.run(options)
+    elif options.which == "all":
+        from pipits import pipits_prep, pipits_funits, pipits_process
+
+        # PREP
+        options.outDir = options.prefix + "_prep"
+        pipits_prep.run(options)
+
+        # FUNITS
+        options.input = options.outDir + "/prepped.fasta"
+        options.outDir = options.prefix + "_funits"
+        pipits_funits.run(options)
+
+        # PROCESS
+        options.input = options.outDir + "/ITS.fasta"
+        options.outDir = options.prefix + "_process"
+        pipits_process.run(options)
