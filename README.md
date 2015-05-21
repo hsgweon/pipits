@@ -4,9 +4,12 @@
 1.1 Download and install
 ------------------------
 
-After downloading the package, extract it with:
+Download the latest package:
 
-    $ cd $HOME
+    $ wget https://github.com/hsgweon/pipits/blob/master/dist/pipits-1.0.0.tar.gz
+
+After downloading the package from github, extract it with:
+
     $ tar -zxvf pipits-1.0.0.tar.gz
 
 Then enter into the created directory and install the package with:
