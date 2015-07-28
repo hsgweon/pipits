@@ -10,11 +10,11 @@ Download the latest package:
 
 After downloading the package from github, extract it with:
 
-    $ tar -zxvf pipits-1.0.0.tar.gz
+    $ tar -zxvf pipits-1.0.1.tar.gz
 
 Then enter into the created directory and install the package with:
 
-    $ cd pipits-1.0.0
+    $ cd pipits-1.0.1
     $ sudo python setup.py install
 
 Alternatively if you want to install to a location other than the
