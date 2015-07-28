@@ -6,15 +6,11 @@
 
 Download the latest package:
 
-    $ wget https://github.com/hsgweon/pipits/blob/master/dist/pipits-1.0.0.tar.gz
-
-After downloading the package from github, extract it with:
-
-    $ tar -zxvf pipits-1.0.1.tar.gz
+    $ git clone https://github.com/hsgweon/pipits
 
 Then enter into the created directory and install the package with:
 
-    $ cd pipits-1.0.1
+    $ cd pipits
     $ sudo python setup.py install
 
 Alternatively if you want to install to a location other than the
@@ -22,9 +18,18 @@ standard location, use "prefix".
 
     $ python setup.py install --prefix=$HOME/.local
 
-This is recommended if you don't have root access. Make sure
+This is recommended if you don't have the root access. Make sure
 executables are visible to the shell by existing in the search
 path, by adding "$HOME/.local/bin" to your PATH variable.
+Assuming you are using UBUNTU, this can be achieved by adding the
+following line in "~/.zshrc" file:
+
+    export PATH=$HOME/.local/bin:$PATH
+
+Then type (or alternatively close and re-open the terminal. Basic Linux!):
+
+    $ source ~/.zshrc
+
 
 
 1.2 Dependencies
@@ -46,6 +51,7 @@ downloaded and installed.
 -   RDP Classifier 2.9 or above
     (<http://sourceforge.net/projects/rdp-classifier>) - N.B. RDP
     Classifier comes with a jar file.
+-   HMMER3 (<http://hmmer.janelia.org/download.html>) - Choose "with Linux/Intel x86_64 binaries" unless you are using an "old" 32-bit PC (unlikely for most people I presume).
 
 Once you downloaded and installed ITSx, we recommend you to re-HMMPRESS the HMM profiles as the HMMPRESS'ed profiles may not be compatible with the version of the HMMER you installed.
 So assumming you downloaded ITSx in "$HOME/Software" directory and installed it there:
