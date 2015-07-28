@@ -162,7 +162,7 @@ def run(options):
 
 
     logger.info(tc.OKBLUE + "PIPITS FUNITS ended successfully. \"" + "ITS.fasta" + "\" created in \"" + options.outDir + "\"" + tc.ENDC)
-    logger.info(tc.OKYELLOW + "Next Step: PIPITS PROCESS [ Suggestion: pipits_process -i " + options.outDir + "/" + "ITS.fasta -o out_process ]" + tc.ENDC)
+    logger.info(tc.OKYELLOW + "Next Step: PIPITS PROCESS [ Suggestion: pipits process -i " + options.outDir + "/" + "ITS.fasta -o out_process ]" + tc.ENDC)
     print("")
     summary_file.close()
 

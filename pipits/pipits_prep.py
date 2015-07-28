@@ -317,6 +317,6 @@ def run(options):
 
 
     logger.info(tc.OKBLUE + "PIPITS PREP ended successfully. \"" + PIPITS_PREP_OUTPUT + "\" created in \"" + options.outDir + "\"" + tc.ENDC)
-    logger.info(tc.OKYELLOW + "Next Step: PIPITS FUNITS [ Suggestion: pipits_funits -i " + options.outDir + "/" + PIPITS_PREP_OUTPUT + " -o out_funits -x YOUR_ITS_SUBREGION ]" + tc.ENDC)
+    logger.info(tc.OKYELLOW + "Next Step: PIPITS FUNITS [ Suggestion: pipits funits -i " + options.outDir + "/" + PIPITS_PREP_OUTPUT + " -o out_funits -x YOUR_ITS_SUBREGION ]" + tc.ENDC)
     print("")
     summary_file.close()
