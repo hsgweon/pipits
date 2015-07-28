@@ -170,14 +170,14 @@ Last but not least, once this file has been edited copy the file to your
 home directory and rename it as ".pipits_config" by typing the
 following:
 
-    $ cd $HOME/pipits-1.0.1
+    $ cd pipits
     $ cp pipits_config  $HOME/.pipits_config
 
 Ok, now you are all good to go! Let's go back to the downloaded PIPITS
 directory and test to see if everything is set up correctly by running
 PIPITS on a test dataset provided:
 
-    $ cd $HOME/pipits-1.0.1
+    $ cd pipits
     $ pipits all -i test_data -x ITS2 --prefix pipits_test -v
 
 Ensure you see "PIPITS_PROCESS ended successfully."
