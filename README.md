@@ -13,6 +13,8 @@ Then enter into the created directory and install the package with:
     $ cd pipits
     $ sudo python setup.py install
 
+- - -
+
 Alternatively if you want to install to a location other than the
 standard location, use "prefix".
 
