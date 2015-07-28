@@ -23,7 +23,7 @@ standard location, use "prefix".
 This is recommended if you don't have the root access. Make sure
 executables are visible to the shell by existing in the search
 path, by adding "$HOME/.local/bin" to your PATH variable.
-Assuming you are using UBUNTU, this can be achieved by adding the
+Assuming UBUNTU is your system, this can be achieved by adding the
 following line in "~/.zshrc" file:
 
     export PATH=$HOME/.local/bin:$PATH
@@ -40,7 +40,8 @@ Then type (or alternatively close and re-open the terminal. Basic Linux!):
 *Download and install dependencies*
 
 PIPITS depends on a number of external dependencies which need to be
-downloaded and installed.
+downloaded and installed. (If you are a Ubuntu user, it will be a lot easier to make use 
+of Bio-Linux packages rather than installing dependencies yourself. See 1.3 below)
 
 -   BIOM-FORMAT v.1.3.x
     (<https://pypi.python.org/pypi/biom-format/1.3.1>)
@@ -53,7 +54,8 @@ downloaded and installed.
 -   RDP Classifier 2.9 or above
     (<http://sourceforge.net/projects/rdp-classifier>) - N.B. RDP
     Classifier comes with a jar file.
--   HMMER3 (<http://hmmer.janelia.org/download.html>) - Choose "with Linux/Intel x86_64 binaries" unless you are using an "old" 32-bit PC (unlikely for most people I presume).
+-   HMMER3 (<http://hmmer.janelia.org/download.html>) - This is needed for ITSx. 
+    Choose "with Linux/Intel x86_64 binaries" unless you are using an "old" 32-bit PC (unlikely for most people I presume).
 
 Once you downloaded and installed ITSx, we recommend you to re-HMMPRESS the HMM profiles as the HMMPRESS'ed profiles may not be compatible with the version of the HMMER you installed.
 So assumming you downloaded ITSx in "$HOME/Software" directory and installed it there:
@@ -148,8 +150,8 @@ It looks like:
     RDP_CLASSIFIER_JAR =            $HOME/Software/rdp_classifier_2.9/dist/classifier.jar
 
     [DB]
-    UNITE_REFERENCE_DATA_CHIMERA =  $HOME/pipits/refdb/final_release_version/uchime_sh_refs_dynamic_original_985_03.07.2014.fasta
-    UNITE_RETRAINED_DIR =           $HOME/pipits/refdb/unite_retrained
+    UNITE_REFERENCE_DATA_CHIMERA =  $HOME/pipits_refdb/final_release_version/uchime_sh_refs_dynamic_original_985_03.07.2014.fasta
+    UNITE_RETRAINED_DIR =           $HOME/pipits_refdb/unite_retrained
 
 In the configuration file:
 
@@ -168,19 +170,19 @@ Last but not least, once this file has been edited copy the file to your
 home directory and rename it as ".pipits_config" by typing the
 following:
 
-    $ cd $HOME/pipits-1.0.0
+    $ cd $HOME/pipits-1.0.1
     $ cp pipits_config  $HOME/.pipits_config
 
 Ok, now you are all good to go! Let's go back to the downloaded PIPITS
 directory and test to see if everything is set up correctly by running
 PIPITS on a test dataset provided:
 
-    $ cd $HOME/pipits-1.0.0
+    $ cd $HOME/pipits-1.0.1
     $ pipits all -i test_data -x ITS2 --prefix pipits_test -v
 
 Ensure you see "PIPITS_PROCESS ended successfully."
 
-1.3 (Misc) For Ubuntu LTS users, installing dependencies using Bio-Linux packages
+1.3 (Misc) For Ubuntu users, installing dependencies using Bio-Linux packages
 ------------------------------------------------------------------------------------
 
 Some of the dependencies are available as a Bio-Linux package so
