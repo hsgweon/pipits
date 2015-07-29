@@ -178,7 +178,7 @@ cd $HOME/pipits/refdb
 pipits_retrain_rdp -f fungalits_UNITE_trainingdata_07042014/UNITE.RDP_04.07.14.rmdup.fasta -t fungalits_UNITE_trainingdata_07042014/UNITE.RDP_04.07.14.tax -j $HOME/pipits/classifier.jar -o unite_retrained
 ```
 
-(To get this working, you may need to install Java Runtime Environment especially if you are running a freshly installed UBUNTU. If so, then install the package by the following command:)
+(To get this working, you may need to install JRE (Java Runtime Environment) especially true if you are running a freshly installed UBUNTU. If so, then install JRE by the following command:)
 
 ```sh
 sudo apt-get install default-jre
