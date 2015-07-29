@@ -65,6 +65,4 @@ outfile = open(options.outDir + "/rRNAClassifier.properties", "w")
 properties = "bergeyTree=bergeyTrainingTree.xml\nprobabilityList=genus_wordConditionalProbList.txt\nprobabilityIndex=wordConditionalProbIndexArr.txt\nwordPrior=logWordPrior.txt\nclassifierVersion=RDP Naive Bayesian rRNA Classifier Version\n"
 outfile.write(properties)
 
-print("Done, now edit the \"pipits_config\" file to let PIPITS know the location of the output directory (\"" + options.outDir + "\").")
-
 exit(0)
