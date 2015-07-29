@@ -45,12 +45,15 @@ See 1.8 below for the detailed instruction on how you do this.
 
 
 1. **BIOM-FORMAT** (<https://http://biom-format.org/>)
+
    *Available as a Bio-Linux package*
 
 2. **FAST-X tools** (<http://hannonlab.cshl.edu/fastx_toolkit>)
+
    *Available as a Bio-Linux package*
 
 3. **VSEARCH** (<https://github.com/torognes/vsearch>)
+
    *Available as a Bio-Linux package*
 
 4. **ITSx** (<http://microbiology.se/software/itsx>) N.B. ITSx requires HMMER3
@@ -82,6 +85,7 @@ See 1.8 below for the detailed instruction on how you do this.
     ```
 
 7. **HMMER3** (<http://hmmer.janelia.org/download.html>) - This is needed for ITSx. Choose "with Linux/Intel x86_64 binaries" unless you are using an "old" 32-bit PC (unlikely for most people I presume).
+
    *Available as a Bio-Linux package*
 
 
