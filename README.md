@@ -152,7 +152,13 @@ There are two reference datasets to download:
 1.4 Set PATH and ENVIRONMENT VARIABLE
 -------------------------------------
 
-Make sure executables and modules are visible to the shell by existing in the search PATH. Also set some environment variables as shown below. Assuming UBUNTU is your system, this can be achieved by adding the following line in "~/.zshrc" file:
+Make sure executables and modules are visible to the shell by existing in the search PATH. Also set some environment variables as shown below. Assuming UBUNTU is your system, this can be achieved by adding the following line at the end of "~/.zshrc" file:
+
+Open a text editor such as gedit:
+    
+    gedit ~/.zshrc
+
+And then add the following lines at the end of the file:
 
     export PATH=$HOME/pipits/bin:$PATH
     export PYTHONPATH=$HOME/pipits/lib/python2.7/site-packages:$PYTHONPATH
