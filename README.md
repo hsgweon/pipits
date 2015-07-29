@@ -168,11 +168,9 @@ Then type (or alternatively close and re-open the terminal):
 
 Also once you downloaded and installed ITSx, we recommend re-HMMPRESSing the HMM profiles as the HMMPRESS'ed profiles may not be compatible with the version of the HMMER3 you installed:
 
-    ```
     $ cd $HOME/pipits/ITSx_1.0.11/ITSx_db/HMMs
     $ rm *.hmm.*
     $ echo *.hmm | xargs -n1 hmmpress
-    ```
 
 
 1.6 Retrain RDP Classifier
