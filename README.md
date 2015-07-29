@@ -45,11 +45,11 @@ Unless you are much familiar with Linux, I recommend installing dependencies thi
 All we need to do is download, install and make them "visible" to PIPITS.
 
 
-1. BIOM-FORMAT (<https://http://biom-format.org/>)
+1. **BIOM-FORMAT** (<https://http://biom-format.org/>)
 
    *Please see its webpage for detailed installation guidance*
 
-2. FAST-X tools (<http://hannonlab.cshl.edu/fastx_toolkit>)
+2. **FAST-X tools** (<http://hannonlab.cshl.edu/fastx_toolkit>)
 
     ```sh
     cd $HOME/pipits
@@ -57,7 +57,7 @@ All we need to do is download, install and make them "visible" to PIPITS.
     tar xjf fastx_toolkit_0.0.13_binaries_Linux_2.6_amd64.tar.bz2
     ```
 
-3. VSEARCH (<https://github.com/torognes/vsearch>)
+3. **VSEARCH** (<https://github.com/torognes/vsearch>)
 
     ```sh
     cd $HOME/pipits
@@ -66,7 +66,7 @@ All we need to do is download, install and make them "visible" to PIPITS.
     ln -s $HOME/pipits/vsearch-1.1.3-linux-x86_64 bin/vsearch
     ```
 
-4. ITSx (<http://microbiology.se/software/itsx>) N.B. ITSx requires HMMER3
+4. **ITSx** (<http://microbiology.se/software/itsx>) N.B. ITSx requires HMMER3
 
     ```sh
     cd $HOME/pipits
@@ -76,7 +76,7 @@ All we need to do is download, install and make them "visible" to PIPITS.
     ln -s $HOME/pipits/ITSx_1.0.11/ITSx_db bin/ITSx_db
     ```
 
-5. PEAR (<http://sco.h-its.org/exelixis/web/software/pear>) - N.B. PEAR prohibits commercial use of the code. See its page for detail.
+5. **PEAR** (<http://sco.h-its.org/exelixis/web/software/pear>) - N.B. PEAR prohibits commercial use of the code. See its page for detail.
  
     ```sh
     cd $HOME/pipits
@@ -85,7 +85,7 @@ All we need to do is download, install and make them "visible" to PIPITS.
     ln -s $HOME/pipits/pear-0.9.6-bin-64/pear-0.9.6-bin-64 bin/pear
     ```
 
-6. RDP Classifier 2.9 or above (<http://sourceforge.net/projects/rdp-classifier>) - N.B. RDP Classifier comes with a jar file.
+6. **RDP Classifier 2.9 or above** (<http://sourceforge.net/projects/rdp-classifier>) - N.B. RDP Classifier comes with a jar file.
    
     ```sh 
     cd $HOME/pipits
@@ -94,7 +94,7 @@ All we need to do is download, install and make them "visible" to PIPITS.
     ln -s rdp_classifier_2.10.2/dist/classifier.jar ./classifier.jar
     ```
 
-7. HMMER3 (<http://hmmer.janelia.org/download.html>) - This is needed for ITSx. Choose "with Linux/Intel x86_64 binaries" unless you are using an "old" 32-bit PC (unlikely for most people I presume).
+7. **HMMER3** (<http://hmmer.janelia.org/download.html>) - This is needed for ITSx. Choose "with Linux/Intel x86_64 binaries" unless you are using an "old" 32-bit PC (unlikely for most people I presume).
 
     ```sh
     cd $HOME/pipits
@@ -128,7 +128,7 @@ There are two reference datasets to download:
    The extracted directory contains UNITE training files namely (a) FASTA file and (b) taxonomy file with lineage. We will use these files for retraining RDP Classifier a moment later.
 
 
-2. UNITE UCHIME reference dataset
+2. **UNITE UCHIME reference dataset**
 
    We also need to download UNITE UCHIME reference dataset for chimera removal. Download it from UNITE repository (<http://unite.ut.ee/repository.php>).
 
