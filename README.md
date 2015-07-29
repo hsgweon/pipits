@@ -66,7 +66,7 @@ See 1.8 below for the detailed instruction on how you do this.
     ln -s $HOME/pipits/ITSx_1.0.11/ITSx_db bin/ITSx_db
     ```
 
-5. **PEAR** (<http://sco.h-its.org/exelixis/web/software/pear>) - N.B. PEAR prohibits commercial use of the code. See its page for detail.
+5. **PEAR** (<http://sco.h-its.org/exelixis/web/software/pear>) - N.B. PEAR prohibits commercial use of the code. See its webpage for detail.
  
     ```sh
     cd $HOME/pipits
@@ -84,7 +84,7 @@ See 1.8 below for the detailed instruction on how you do this.
     ln -s rdp_classifier_2.10.2/dist/classifier.jar ./classifier.jar
     ```
 
-7. **HMMER3** (<http://hmmer.janelia.org/download.html>) - This is needed for ITSx. Choose "with Linux/Intel x86_64 binaries" unless you are using an "old" 32-bit PC (unlikely for most people I presume).
+7. **HMMER3** (<http://hmmer.janelia.org/download.html>)
 
    *Available as a Bio-Linux package*
 
