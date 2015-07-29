@@ -121,7 +121,7 @@ There are two reference datasets which need to be downloaded:
 
    Download the most recent version of UNITE training data from their sourceforge webpage (<http://sourceforge.net/projects/rdp-classifier/files/RDP_Classifier_TrainingData>), save it to an appropriate directory (e.g. $HOME/pipits/refdb) and extract the file.
 
-For example:
+   For example:
     
     ```
     $ mkdir -p $HOME/pipits/refdb
@@ -130,9 +130,7 @@ For example:
     $ unzip fungalits_UNITE_trainingdata_07042014.zip
     ```
 
-The extracted directory contains UNITE training files namely (a) FASTA
-file and (b) taxonomy file with lineage. We will use these files for
-retraining RDP Classifier a moment later.
+    The extracted directory contains UNITE training files namely (a) FASTA file and (b) taxonomy file with lineage. We will use these files for retraining RDP Classifier a moment later.
 
 
 2. UNITE UCHIME reference dataset
