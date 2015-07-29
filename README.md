@@ -38,74 +38,26 @@ Of course if you are familiar with Linux, you are free to choose other ways to i
 *Download and install dependencies*
 
 PIPITS depends on a number of external dependencies which need to be
-downloaded and installed. (If you are a Ubuntu user, it is much much easier to make use 
-of Bio-Linux packages rather than installing dependencies yourself. See 1.8 below)
+downloaded and installed. 
+It is not a trivial task to install dependencies especially if you are not too familiar with Linux,
+so we *strongly* recommend using Bio-Linux packages rather than installing dependencies yourself. 
+See 1.8 below for the detailed instruction on how you do this.
 
-Unless you are much familiar with Linux, I recommend installing dependencies this way. 
-All we need to do is download, install and make them "visible" to PIPITS.
 
-
-1. **BIOM-FORMAT** (<https://http://biom-format.org/>)
-
-   *Please see its webpage for detailed installation guidance*
+1. **BIOM-FORMAT** (<https://http://biom-format.org/>)   
 
 2. **FAST-X tools** (<http://hannonlab.cshl.edu/fastx_toolkit>)
 
-    ```sh
-    cd $HOME/pipits
-    wget http://hannonlab.cshl.edu/fastx_toolkit/fastx_toolkit_0.0.13_binaries_Linux_2.6_amd64.tar.bz2
-    tar xjf fastx_toolkit_0.0.13_binaries_Linux_2.6_amd64.tar.bz2
-    ```
-
 3. **VSEARCH** (<https://github.com/torognes/vsearch>)
-
-    ```sh
-    cd $HOME/pipits
-    wget https://github.com/torognes/vsearch/releases/download/v1.1.3/vsearch-1.1.3-linux-x86_64
-    chmod +x vsearch-1.1.3-linux-x86_64
-    ln -s $HOME/pipits/vsearch-1.1.3-linux-x86_64 bin/vsearch
-    ```
 
 4. **ITSx** (<http://microbiology.se/software/itsx>) N.B. ITSx requires HMMER3
 
-    ```sh
-    cd $HOME/pipits
-    wget http://microbiology.se/sw/ITSx_1.0.11.tar.gz
-    tar xvfz ITSx_1.0.11.tar.gz
-    ln -s $HOME/pipits/ITSx_1.0.11/ITSx bin/ITSx
-    ln -s $HOME/pipits/ITSx_1.0.11/ITSx_db bin/ITSx_db
-    ```
-
 5. **PEAR** (<http://sco.h-its.org/exelixis/web/software/pear>) - N.B. PEAR prohibits commercial use of the code. See its page for detail.
  
-    ```sh
-    cd $HOME/pipits
-    wget http://sco.h-its.org/exelixis/web/software/pear/files/pear-0.9.6-bin-64.tar.gz
-    tar xvfz pear-0.9.6-bin-64.tar.gz
-    ln -s $HOME/pipits/pear-0.9.6-bin-64/pear-0.9.6-bin-64 bin/pear
-    ```
-
 6. **RDP Classifier 2.9 or above** (<http://sourceforge.net/projects/rdp-classifier>) - N.B. RDP Classifier comes with a jar file.
    
-    ```sh 
-    cd $HOME/pipits
-    wget http://sourceforge.net/projects/rdp-classifier/files/rdp-classifier/rdp_classifier_2.10.2.zip
-    unzip rdp_classifier_2.10.2.zip
-    ln -s rdp_classifier_2.10.2/dist/classifier.jar ./classifier.jar
-    ```
-
 7. **HMMER3** (<http://hmmer.janelia.org/download.html>) - This is needed for ITSx. Choose "with Linux/Intel x86_64 binaries" unless you are using an "old" 32-bit PC (unlikely for most people I presume).
 
-    ```sh
-    cd $HOME/pipits
-    wget http://selab.janelia.org/software/hmmer3/3.1b2/hmmer-3.1b2-linux-intel-x86_64.tar.gz
-    tar xfz hmmer-3.1b2-linux-intel-x86_64.tar.gz
-    cd hmmer-3.1b2-linux-intel-x86_64
-    ./configure --prefix $HOME/pipits
-    make
-    cd ..
-    ln -s $HOME/pipits/hmmer-3.1b2-linux-intel-x86_64/binaries/* bin/
-    ```
 
 1.3 Reference datasets
 ----------------------
@@ -238,12 +190,12 @@ Bio-Linux repository for these. To install Bio-Linux packages follow the
 instruction below.
 
 You first need to add Bio-Linux repositories to your system. Add the
-following lines to a file "/etc/apt/sources.list file":
+following lines to a file "/etc/apt/sources.list" file:
 
 ```sh
 deb http://nebc.nerc.ac.uk/bio-linux/ unstable bio-linux
-deb http://ppa.launchpad.net/nebc/bio-linux/ubuntu precise main
-deb-src http://ppa.launchpad.net/nebc/bio-linux/ubuntu precise main
+deb http://ppa.launchpad.net/nebc/bio-linux/ubuntu trusty main
+deb-src http://ppa.launchpad.net/nebc/bio-linux/ubuntu trusty main
 ```
 
 Then run the command:
@@ -260,7 +212,7 @@ our repository.
 Then install the packages, for example:
 
 ```sh
-sudo apt-get install python-biom-format vsearch fastx-toolkit
+sudo apt-get install python-biom-format vsearch fastx-toolkit hmmer
 ```
 
 
