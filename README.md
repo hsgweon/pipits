@@ -24,6 +24,7 @@ Download the latest package:
 
 Then enter into the created directory and install the package with:
 
+    $ unzip master.zip
     $ cd pipits-master
     $ python setup.py install --prefix=$HOME/pipits
 
