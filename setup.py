@@ -1,7 +1,7 @@
 from distutils.core import setup
 import os
 
-__version__ = os.environ.get("VERSION", "1.1.0")
+__version__ = os.environ.get("VERSION", "1.1.1")
 
 setup(name = "pipits",
       version = __version__,
@@ -9,7 +9,7 @@ setup(name = "pipits",
       author = "Hyun Soon Gweon",
       author_email = "hyugwe@ceh.ac.uk",
       url = "http://sourceforge.net/projects/pipits",
-      packages = ["pipits", "dist"],
+      packages = ["pipits"],
       scripts = ["bin/pipits_retrain_rdp", 
                  "bin/pipits_getreadpairslist", 
                  "bin/pipits_prep", 

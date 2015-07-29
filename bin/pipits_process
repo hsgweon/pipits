@@ -229,7 +229,7 @@ if __name__ == '__main__':
 
     # Reformatting RDP_CLASSIFIER output for biom
     logger.info("Reformatting RDP_Classifier output")
-    cmd = " ".join(["python", EXE_DIR + "/reformatAssignedTaxonomy", 
+    cmd = " ".join(["python", EXE_DIR + "/pipits_reformatAssignedTaxonomy", 
                     "-i", options.outDir + "/assigned_taxonomy.txt" , 
                     "-o", options.outDir + "/assigned_taxonomy_reformatted_filtered.txt",
                     "-c", options.RDP_assignment_threshold])

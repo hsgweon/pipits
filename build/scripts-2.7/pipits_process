@@ -14,6 +14,11 @@ __email__ = "hyugwe@ceh.ac.uk"
 VSEARCH = "vsearch"
 BIOM = "biom"
 
+
+
+
+
+
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser("PIPITS_PROCESS: Sequences to OTU Table")
@@ -119,19 +124,16 @@ if __name__ == '__main__':
     fileLogger.setFormatter(fileLoggerFormatter)
     logger.addHandler(fileLogger)
 
-    # Summary file
-    #summary_file = open(options.outDir + "/summary_pipits_process.txt", "w")
 
     # Start
     logger.info(tc.OKBLUE + "PIPITS PROCESS started" + tc.ENDC)
-
 
     # Check if the file is empty
     if os.stat(options.input).st_size == 0:
         logger.error("Input file is empty!")
         exit(0)
         
-    # Derep with sgtk
+    # Derep
     logger.info("Dereplicating and removing unique sequences prior to picking OTUs")
     cmd = " ".join([VSEARCH, "--derep_fulllength", options.input, 
                     "--output", tmpDir + "/input_nr.fasta", 
@@ -139,9 +141,6 @@ if __name__ == '__main__':
                     "--sizeout",
                     "--threads", options.threads])
     rc.run_cmd_VSEARCH(cmd, logger, options.verbose)
-    #filesize = os.path.getsize(tmpDir + "/input_nr.fasta") / 1000.0
-    #logger.info("Dereplicating " + tc.OKGREEN + "(Done) " + tc.ENDC)
-    #logger.info("\t" + tc.RED + "File size after initial dereplication: " + str(filesize) + " MB" + tc.ENDC)
 
     # Check if the file is empty
     if os.stat(tmpDir + "/input_nr.fasta").st_size == 0:
@@ -230,7 +229,7 @@ if __name__ == '__main__':
 
     # Reformatting RDP_CLASSIFIER output for biom
     logger.info("Reformatting RDP_Classifier output")
-    cmd = " ".join(["python", EXE_DIR + "/reformatAssignedTaxonomy", 
+    cmd = " ".join(["python", EXE_DIR + "/pipits_reformatAssignedTaxonomy", 
                     "-i", options.outDir + "/assigned_taxonomy.txt" , 
                     "-o", options.outDir + "/assigned_taxonomy_reformatted_filtered.txt",
                     "-c", options.RDP_assignment_threshold])
