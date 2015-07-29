@@ -194,9 +194,10 @@ output directory name; and (iv) the location of the RDP Classifier .jar
 file. Note that this step does not need to be repeated until a new set
 of training data is available to retrain the classifier. For example:
 
-    $ cd $HOME/pipits/refdb
-    $ pipits_retrain_rdp -f fungalits_UNITE_trainingdata_07042014/UNITE.RDP_04.07.14.rmdup.fasta -t fungalits_UNITE_trainingdata_07042014/UNITE.RDP_04.07.14.tax -j $HOME/pipits/classifier.jar -o unite_retrained
-
+```sh
+cd $HOME/pipits/refdb
+pipits_retrain_rdp -f fungalits_UNITE_trainingdata_07042014/UNITE.RDP_04.07.14.rmdup.fasta -t fungalits_UNITE_trainingdata_07042014/UNITE.RDP_04.07.14.tax -j $HOME/pipits/classifier.jar -o unite_retrained
+```
 
 
 1.7 Test Dependencies and PIPITS
@@ -205,23 +206,25 @@ of training data is available to retrain the classifier. For example:
 When you have successfully installed these, check if they are *indeed* successfully installed by running each applications. If you get an error,
 check to see if you have followed the instruction carefully.
 
-    $ biom
-    $ fastq_to_fasta -h
-    $ vsearch
-    $ ITSx -h
-    $ pear
-    $ ls $HOME/pipits/classifier.jar
-    $ hmmpress -h
-
+```sh
+biom
+fastq_to_fasta -h
+vsearch
+ITSx -h
+pear
+ls $HOME/pipits/classifier.jar
+hmmpress -h
+```
 
 Ok, let's test if PIPITS is all setup. Open up the very first original PIPITS which you downloaded. 
 
-    $ cd pipits-master
-    $ pipits_getreadpairslist -i test_data
-    $ pipits_prep -i test_data
-    $ pipits_funits -i pipits_prep/prepped.fasta -x ITS2 
-    $ pipits_process -i pipits_funits/ITS.fasta -l readpairslist.txt
-
+```sh
+cd pipits-master
+pipits_getreadpairslist -i test_data
+pipits_prep -i test_data
+pipits_funits -i pipits_prep/prepped.fasta -x ITS2 
+pipits_process -i pipits_funits/ITS.fasta -l readpairslist.txt
+```
 
 Ensure everything works and you don't get an error message.
 
@@ -237,14 +240,18 @@ instruction below.
 You first need to add Bio-Linux repositories to your system. Add the
 following lines to a file "/etc/apt/sources.list file":
 
-    $ deb http://nebc.nerc.ac.uk/bio-linux/ unstable bio-linux
-    $ deb http://ppa.launchpad.net/nebc/bio-linux/ubuntu precise main
-    $ deb-src http://ppa.launchpad.net/nebc/bio-linux/ubuntu precise main
+```sh
+deb http://nebc.nerc.ac.uk/bio-linux/ unstable bio-linux
+deb http://ppa.launchpad.net/nebc/bio-linux/ubuntu precise main
+deb-src http://ppa.launchpad.net/nebc/bio-linux/ubuntu precise main
+```
 
 Then run the command:
 
-    $ sudo apt-get update
-    $ sudo apt-get install bio-linux-keyring
+```sh
+sudo apt-get update
+sudo apt-get install bio-linux-keyring
+```
 
 Your system will then download the Bio-Linux Software Package List from
 our server. After the download you may install any of the packages from
@@ -252,7 +259,10 @@ our repository.
 
 Then install the packages, for example:
 
-    $ sudo apt-get install python-biom-format vsearch fastx-toolkit
+```sh
+sudo apt-get install python-biom-format vsearch fastx-toolkit
+```
+
 
 1.9 (Misc) How to uninstall PIPITS
 ----------------------------------
@@ -283,7 +293,9 @@ PIPITS provides a script called PIPITS_GETREADPAIRSLIST which generates
 a tab-delimited text file for all read-pairs from the raw sequence
 directory:
 
-    $ pipits_getreadpairslist -i illumina_rawdata/ -o readpairslist.txt
+```sh
+pipits_getreadpairslist -i illumina_rawdata/ -o readpairslist.txt
+```
 
 *Note*
 
@@ -300,8 +312,9 @@ directory:
 
 Once we have the list file, we can begin to process the sequences:
 
-    $ pipits_prep -i illumina_rawdata_directory -o out_prep -l readpairslist.txt
-
+```sh
+pipits_prep -i illumina_rawdata_directory -o out_prep -l readpairslist.txt
+```
 
 *Note*
 
@@ -327,8 +340,9 @@ The output from PIPITS PREP is taken as an input for this step. It is
 also mandatory to provide the script with which ITS subregion (i.e. ITS1
 or ITS2) is to be extracted:
 
-    $ pipits_funits -i pipits_prep/prepped.fasta -o out_funits -x ITS2
-
+```sh
+pipits_funits -i pipits_prep/prepped.fasta -o out_funits -x ITS2
+```
 
 *Note*
 
@@ -357,8 +371,9 @@ or ITS2) is to be extracted:
 This is the final process involving clustering and assigning of taxonomy
 to OTUs:
 
-    $ pipits_process -i pipits_funits/ITS.fasta -o out_process
-
+```sh
+pipits_process -i pipits_funits/ITS.fasta -o out_process
+```
 
 *Note*
 
@@ -392,8 +407,9 @@ PIPITS scripts come with a number of options for the users to alter
 parameters such as distance threshold. The options can be viewed by
 providing "-h" after the command, for example:
 
-    $ pipits_prep -h
-
+```sh
+pipits_prep -h
+```
 
 
 5. Citation
