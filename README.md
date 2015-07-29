@@ -45,17 +45,11 @@ See 1.8 below for the detailed instruction on how you do this.
 
 
 1. **BIOM-FORMAT** (<https://http://biom-format.org/>)   
-
 2. **FAST-X tools** (<http://hannonlab.cshl.edu/fastx_toolkit>)
-
 3. **VSEARCH** (<https://github.com/torognes/vsearch>)
-
 4. **ITSx** (<http://microbiology.se/software/itsx>) N.B. ITSx requires HMMER3
-
 5. **PEAR** (<http://sco.h-its.org/exelixis/web/software/pear>) - N.B. PEAR prohibits commercial use of the code. See its page for detail.
- 
 6. **RDP Classifier 2.9 or above** (<http://sourceforge.net/projects/rdp-classifier>) - N.B. RDP Classifier comes with a jar file.
-   
 7. **HMMER3** (<http://hmmer.janelia.org/download.html>) - This is needed for ITSx. Choose "with Linux/Intel x86_64 binaries" unless you are using an "old" 32-bit PC (unlikely for most people I presume).
 
 
