@@ -152,9 +152,9 @@ There are two reference datasets to download:
 1.4 Set PATH and ENVIRONMENT VARIABLE
 -------------------------------------
 
-Make sure executables and modules are visible to the shell by existing in the search PATH. Also set some environment variables as shown below. Assuming UBUNTU is your system, this can be achieved by adding the following line at the end of "~/.zshrc" file:
+Now we will make sure executables and modules are visible to the shell by existing in the search PATH. Also we will set some environment variables. Assuming UBUNTU is your system, this can be easily achieved by adding the following lines at the end of your profile file. The name of your profile file will depend on which shell your system is using. You can check which shell your system is using by typing echo $SHELL . If it says /bin/bash, then your profile file is "~/.bashrc". N.B. UBUNTU's default shell is bash. Bio-Linux's default shell is zsh.
 
-Open "~/.bashrc" or "~/.zshrc" (depending on which shell you are using) with a text editor such as gedit. You can check which shell your system is using by typing echo $SHELL
+Open "~/.bashrc" or "~/.zshrc" (depending on which shell you are using) with a text editor such as gedit.
     
     gedit ~/.bashrc
 
@@ -198,6 +198,12 @@ of training data is available to retrain the classifier. For example:
 ```sh
 cd $HOME/pipits/refdb
 pipits_retrain_rdp -f fungalits_UNITE_trainingdata_07042014/UNITE.RDP_04.07.14.rmdup.fasta -t fungalits_UNITE_trainingdata_07042014/UNITE.RDP_04.07.14.tax -j $HOME/pipits/classifier.jar -o unite_retrained
+```
+
+(You may need to install Java Runtime Environment. If so, then install the package by the following command:)
+
+```sh
+sudo apt-get install default-jre
 ```
 
 
