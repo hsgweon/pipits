@@ -47,7 +47,7 @@ All we need to do is download, install and make them "visible" to PIPITS.
 
 1. BIOM-FORMAT (<https://http://biom-format.org/>)
 
-   *Please refer to its webpage for installation*
+   *Please see its webpage for detailed installation guidance*
 
 2. FAST-X tools (<http://hannonlab.cshl.edu/fastx_toolkit>)
 
@@ -112,7 +112,7 @@ All we need to do is download, install and make them "visible" to PIPITS.
 
 There are two reference datasets to download:
 
-1. UNITE fungal ITS reference training dataset
+1. **UNITE fungal ITS reference training dataset**
 
    Download the most recent version of UNITE training data from their sourceforge webpage (<http://sourceforge.net/projects/rdp-classifier/files/RDP_Classifier_TrainingData>), save it to an appropriate directory (e.g. $HOME/pipits/refdb) and extract the file.
 
