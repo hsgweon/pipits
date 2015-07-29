@@ -43,18 +43,11 @@ of Bio-Linux packages rather than installing dependencies yourself. See 1.8 belo
 
 Unless you are much familiar with Linux, I recommend installing dependencies this way. 
 All we need to do is download, install and make them "visible" to PIPITS.
-We will install every dependencies in the following directory.
 
 
-1. BIOM-FORMAT v.1.3.x (<https://pypi.python.org/pypi/biom-format/1.3.1>)
+1. BIOM-FORMAT (<https://http://biom-format.org/>)
 
-    ```sh
-    cd $HOME/pipits
-    wget https://pypi.python.org/packages/source/b/biom-format/biom-format-1.3.1.tar.gz
-    tar xfz biom-format-1.3.1.tar.gz
-    cd biom-format-1.3.1
-    python setup.py install --prefix=$HOME/pipits
-    ```
+   *Please refer to its webpage for installation*
 
 2. FAST-X tools (<http://hannonlab.cshl.edu/fastx_toolkit>)
 
@@ -226,7 +219,7 @@ $ hmmpress -h
 Ok, let's test if PIPITS is all setup. Open up the very first original PIPITS which you downloaded. 
 
 ```sh
-cd pipits-master
+cd $HOME/pipits-master
 pipits_getreadpairslist -i test_data
 pipits_prep -i test_data
 pipits_funits -i pipits_prep/prepped.fasta -x ITS2 
