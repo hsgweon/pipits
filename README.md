@@ -54,45 +54,54 @@ We will install every dependencies in the following directory.
     $ python setup.py install --prefix=$HOME/pipits
     ```
 
-FAST-X tools (<http://hannonlab.cshl.edu/fastx_toolkit>)
+2. FAST-X tools (<http://hannonlab.cshl.edu/fastx_toolkit>)
 
+    ```
     $ cd $HOME/pipits
     $ wget http://hannonlab.cshl.edu/fastx_toolkit/fastx_toolkit_0.0.13_binaries_Linux_2.6_amd64.tar.bz2
     $ tar xjf fastx_toolkit_0.0.13_binaries_Linux_2.6_amd64.tar.bz2
+    ```
 
-VSEARCH (<https://github.com/torognes/vsearch>)
+3. VSEARCH (<https://github.com/torognes/vsearch>)
 
+    ```
     $ cd $HOME/pipits
     $ wget https://github.com/torognes/vsearch/releases/download/v1.1.3/vsearch-1.1.3-linux-x86_64
     $ chmod +x vsearch-1.1.3-linux-x86_64
     $ ln -s $HOME/pipits/vsearch-1.1.3-linux-x86_64 bin/vsearch
+    ```
 
-ITSx (<http://microbiology.se/software/itsx>) N.B. ITSx requires HMMER3
+4. ITSx (<http://microbiology.se/software/itsx>) N.B. ITSx requires HMMER3
 
+    ```
     $ cd $HOME/pipits
     $ wget http://microbiology.se/sw/ITSx_1.0.11.tar.gz
     $ tar xvfz ITSx_1.0.11.tar.gz
     $ ln -s $HOME/pipits/ITSx_1.0.11/ITSx bin/ITSx
     $ ln -s $HOME/pipits/ITSx_1.0.11/ITSx_db bin/ITSx_db
+    ```
 
-PEAR (<http://sco.h-its.org/exelixis/web/software/pear>) - N.B. PEAR prohibits commercial use of the code. See its page for detail.
-
+5. PEAR (<http://sco.h-its.org/exelixis/web/software/pear>) - N.B. PEAR prohibits commercial use of the code. See its page for detail.
+ 
+    ```
     $ cd $HOME/pipits
     $ wget http://sco.h-its.org/exelixis/web/software/pear/files/pear-0.9.6-bin-64.tar.gz
     $ tar xvfz pear-0.9.6-bin-64.tar.gz
     $ ln -s $HOME/pipits/pear-0.9.6-bin-64/pear-0.9.6-bin-64 bin/pear
+    ```
 
-RDP Classifier 2.9 or above (<http://sourceforge.net/projects/rdp-classifier>) - N.B. RDP
-    Classifier comes with a jar file.
-    
+6. RDP Classifier 2.9 or above (<http://sourceforge.net/projects/rdp-classifier>) - N.B. RDP Classifier comes with a jar file.
+   
+    ``` 
     $ cd $HOME/pipits
     $ wget http://sourceforge.net/projects/rdp-classifier/files/rdp-classifier/rdp_classifier_2.10.2.zip
     $ unzip rdp_classifier_2.10.2.zip
     $ ln -s rdp_classifier_2.10.2/dist/classifier.jar ./classifier.jar
+    ```
 
-HMMER3 (<http://hmmer.janelia.org/download.html>) - This is needed for ITSx. 
-    Choose "with Linux/Intel x86_64 binaries" unless you are using an "old" 32-bit PC (unlikely for most people I presume).
+7. HMMER3 (<http://hmmer.janelia.org/download.html>) - This is needed for ITSx. Choose "with Linux/Intel x86_64 binaries" unless you are using an "old" 32-bit PC (unlikely for most people I presume).
 
+    ```
     $ cd $HOME/pipits
     $ wget http://selab.janelia.org/software/hmmer3/3.1b2/hmmer-3.1b2-linux-intel-x86_64.tar.gz
     $ tar xfz hmmer-3.1b2-linux-intel-x86_64.tar.gz
@@ -101,7 +110,7 @@ HMMER3 (<http://hmmer.janelia.org/download.html>) - This is needed for ITSx.
     $ make
     $ cd ..
     $ ln -s $HOME/pipits/hmmer-3.1b2-linux-intel-x86_64/binaries/* bin/
-
+    ```
 
 1.3 Reference datasets
 ----------------------
