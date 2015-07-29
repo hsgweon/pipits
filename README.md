@@ -4,11 +4,12 @@ Major update (29 July 2015)
 Before start using PIPITS, it is important to note that PIPITS works on
 Illumina sequences which have already been demultiplexed (i.e. each sample is already divided into different files)
 Although it's most likely that your sequencing certre provided you with demultiplxed
-FASTQ files, if this isn't the case, we recommend using deML (https://bioinf.eva.mpg.de/deml)
-to demultiplex you files before using PIPITS.
+FASTQ files, if this isn't the case, we recommend deML (https://bioinf.eva.mpg.de/deml)
+to demultiplex the files before using PIPITS.
 
-Also, please note that PIPITS has gone through some substantial changes since its publication,
-so the commands listed in the paper is going to be slightly different, so please refer to this documentation for detail.
+Also, do note that PIPITS has gone through some substantial changes since its publication,
+so the commands from the paper are slightly different in the current version, so please refer to this documentation rather than
+typing commands in the paper!
 
 
 1 PIPITS Setup
