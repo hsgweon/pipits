@@ -58,60 +58,60 @@ We will install every dependencies in the following directory.
 
 2. FAST-X tools (<http://hannonlab.cshl.edu/fastx_toolkit>)
 
-    ```
-    $ cd $HOME/pipits
-    $ wget http://hannonlab.cshl.edu/fastx_toolkit/fastx_toolkit_0.0.13_binaries_Linux_2.6_amd64.tar.bz2
-    $ tar xjf fastx_toolkit_0.0.13_binaries_Linux_2.6_amd64.tar.bz2
+    ```sh
+    cd $HOME/pipits
+    wget http://hannonlab.cshl.edu/fastx_toolkit/fastx_toolkit_0.0.13_binaries_Linux_2.6_amd64.tar.bz2
+    tar xjf fastx_toolkit_0.0.13_binaries_Linux_2.6_amd64.tar.bz2
     ```
 
 3. VSEARCH (<https://github.com/torognes/vsearch>)
 
-    ```
-    $ cd $HOME/pipits
-    $ wget https://github.com/torognes/vsearch/releases/download/v1.1.3/vsearch-1.1.3-linux-x86_64
-    $ chmod +x vsearch-1.1.3-linux-x86_64
-    $ ln -s $HOME/pipits/vsearch-1.1.3-linux-x86_64 bin/vsearch
+    ```sh
+    cd $HOME/pipits
+    wget https://github.com/torognes/vsearch/releases/download/v1.1.3/vsearch-1.1.3-linux-x86_64
+    chmod +x vsearch-1.1.3-linux-x86_64
+    ln -s $HOME/pipits/vsearch-1.1.3-linux-x86_64 bin/vsearch
     ```
 
 4. ITSx (<http://microbiology.se/software/itsx>) N.B. ITSx requires HMMER3
 
-    ```
-    $ cd $HOME/pipits
-    $ wget http://microbiology.se/sw/ITSx_1.0.11.tar.gz
-    $ tar xvfz ITSx_1.0.11.tar.gz
-    $ ln -s $HOME/pipits/ITSx_1.0.11/ITSx bin/ITSx
-    $ ln -s $HOME/pipits/ITSx_1.0.11/ITSx_db bin/ITSx_db
+    ```sh
+    cd $HOME/pipits
+    wget http://microbiology.se/sw/ITSx_1.0.11.tar.gz
+    tar xvfz ITSx_1.0.11.tar.gz
+    ln -s $HOME/pipits/ITSx_1.0.11/ITSx bin/ITSx
+    ln -s $HOME/pipits/ITSx_1.0.11/ITSx_db bin/ITSx_db
     ```
 
 5. PEAR (<http://sco.h-its.org/exelixis/web/software/pear>) - N.B. PEAR prohibits commercial use of the code. See its page for detail.
  
-    ```
-    $ cd $HOME/pipits
-    $ wget http://sco.h-its.org/exelixis/web/software/pear/files/pear-0.9.6-bin-64.tar.gz
-    $ tar xvfz pear-0.9.6-bin-64.tar.gz
-    $ ln -s $HOME/pipits/pear-0.9.6-bin-64/pear-0.9.6-bin-64 bin/pear
+    ```sh
+    cd $HOME/pipits
+    wget http://sco.h-its.org/exelixis/web/software/pear/files/pear-0.9.6-bin-64.tar.gz
+    tar xvfz pear-0.9.6-bin-64.tar.gz
+    ln -s $HOME/pipits/pear-0.9.6-bin-64/pear-0.9.6-bin-64 bin/pear
     ```
 
 6. RDP Classifier 2.9 or above (<http://sourceforge.net/projects/rdp-classifier>) - N.B. RDP Classifier comes with a jar file.
    
-    ``` 
-    $ cd $HOME/pipits
-    $ wget http://sourceforge.net/projects/rdp-classifier/files/rdp-classifier/rdp_classifier_2.10.2.zip
-    $ unzip rdp_classifier_2.10.2.zip
-    $ ln -s rdp_classifier_2.10.2/dist/classifier.jar ./classifier.jar
+    ```sh 
+    cd $HOME/pipits
+    wget http://sourceforge.net/projects/rdp-classifier/files/rdp-classifier/rdp_classifier_2.10.2.zip
+    unzip rdp_classifier_2.10.2.zip
+    ln -s rdp_classifier_2.10.2/dist/classifier.jar ./classifier.jar
     ```
 
 7. HMMER3 (<http://hmmer.janelia.org/download.html>) - This is needed for ITSx. Choose "with Linux/Intel x86_64 binaries" unless you are using an "old" 32-bit PC (unlikely for most people I presume).
 
-    ```
-    $ cd $HOME/pipits
-    $ wget http://selab.janelia.org/software/hmmer3/3.1b2/hmmer-3.1b2-linux-intel-x86_64.tar.gz
-    $ tar xfz hmmer-3.1b2-linux-intel-x86_64.tar.gz
-    $ cd hmmer-3.1b2-linux-intel-x86_64
-    $ ./configure --prefix $HOME/pipits
-    $ make
-    $ cd ..
-    $ ln -s $HOME/pipits/hmmer-3.1b2-linux-intel-x86_64/binaries/* bin/
+    ```sh
+    cd $HOME/pipits
+    wget http://selab.janelia.org/software/hmmer3/3.1b2/hmmer-3.1b2-linux-intel-x86_64.tar.gz
+    tar xfz hmmer-3.1b2-linux-intel-x86_64.tar.gz
+    cd hmmer-3.1b2-linux-intel-x86_64
+    ./configure --prefix $HOME/pipits
+    make
+    cd ..
+    ln -s $HOME/pipits/hmmer-3.1b2-linux-intel-x86_64/binaries/* bin/
     ```
 
 1.3 Reference datasets
@@ -125,11 +125,11 @@ There are two reference datasets to download:
 
    For example:
     
-    ```
-    $ mkdir -p $HOME/pipits/refdb
-    $ cd $HOME/pipits/refdb
-    $ wget http://sourceforge.net/projects/rdp-classifier/files/RDP_Classifier_TrainingData/fungalits_UNITE_trainingdata_07042014.zip
-    $ unzip fungalits_UNITE_trainingdata_07042014.zip
+    ```sh
+    mkdir -p $HOME/pipits/refdb
+    cd $HOME/pipits/refdb
+    wget http://sourceforge.net/projects/rdp-classifier/files/RDP_Classifier_TrainingData/fungalits_UNITE_trainingdata_07042014.zip
+    unzip fungalits_UNITE_trainingdata_07042014.zip
     ```
 
     The extracted directory contains UNITE training files namely (a) FASTA file and (b) taxonomy file with lineage. We will use these files for retraining RDP Classifier a moment later.
@@ -141,11 +141,11 @@ There are two reference datasets to download:
 
    For example:
 
-    ```
-    $ mkdir -p $HOME/pipits/refdb
-    $ cd $HOME/pipits/refdb
-    $ wget https://unite.ut.ee/sh_files/uchime_reference_dataset_26.07.2014.zip
-    $ unzip uchime_reference_dataset_26.07.2014.zip
+    ```sh
+    mkdir -p $HOME/pipits/refdb
+    cd $HOME/pipits/refdb
+    wget https://unite.ut.ee/sh_files/uchime_reference_dataset_26.07.2014.zip
+    unzip uchime_reference_dataset_26.07.2014.zip
     ```
 
 
@@ -162,18 +162,20 @@ Make sure executables and modules are visible to the shell by existing in the se
 
 Then type (or alternatively close and re-open the terminal):
 
-    $ source ~/.zshrc
-
+    ```sh
+    source ~/.zshrc
+    ```
 
 1.5 Re-HMMPressing
 ------------------
 
 Also once you downloaded and installed ITSx, we recommend re-HMMPRESSing the HMM profiles as the HMMPRESS'ed profiles may not be compatible with the version of the HMMER3 you installed:
 
-    $ cd $HOME/pipits/ITSx_1.0.11/ITSx_db/HMMs
-    $ rm *.hmm.*
-    $ echo *.hmm | xargs -n1 hmmpress
-
+    ```sh
+    cd $HOME/pipits/ITSx_1.0.11/ITSx_db/HMMs
+    rm *.hmm.*
+    echo *.hmm | xargs -n1 hmmpress
+    ```
 
 1.6 Retrain RDP Classifier
 --------------------------
