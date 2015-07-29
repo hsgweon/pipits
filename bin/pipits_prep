@@ -1,12 +1,7 @@
 #!/usr/bin/env python
 
-"""
-PREPSEQ = reindex, join, quality filter, convert and merge!
-
-This works with demultiplexed files from Illumina platform.
-"""
-
 import argparse, sys, os, argparse, shutil, subprocess, textwrap, logging, gzip, bz2
+from pipits import tcolours as tc
 
 __author__ = "Hyun Soon Gweon"
 __copyright__ = "Copyright 2015, The PIPITS Project"
@@ -14,17 +9,6 @@ __credits__ = ["Hyun Soon Gweon", "Anna Oliver", "Joanne Taylor", "Tim Booth", "
 __license__ = "GPL"
 __maintainer__ = "Hyun Soon Gweon"
 __email__ = "hyugwe@ceh.ac.uk"
-
-Red = '\033[91m'
-Green = '\033[92m'
-Blue = '\033[94m'
-Cyan = '\033[96m'
-White = '\033[97m'
-Yellow = '\033[93m'
-Magenta = '\033[95m'
-Grey = '\033[90m'
-Black = '\033[90m'
-Default = '\033[0m'
 
 PEAR= "pear"
 FASTQJOIN = "fastq-join"
@@ -291,7 +275,8 @@ def clean(options):
         logger.info("Cleaning temporary directory")
         shutil.rmtree(tmpDir)
 
-    logger.info("PIPITS_PREP completed.")
+    logger.info(tc.OKBLUE + "PIPITS_PREP completed." + tc.ENDC)
+    logger.info(tc.OKYELLOW + "Next Step: PIPITS_PROCESS [ Example: pipits_funits -i " + options.outputdir + "/" + "ITS.fasta -o pipits_funits -x ITS2]" + tc.ENDC)
     summary_file.close()
 
 
@@ -363,7 +348,7 @@ if __name__ == '__main__':
         "-r",
         action = "store_true",
         dest = "retain",
-        help = "Retain intermediate files (Intermediate files use excessive disk space)",
+        help = "Retain intermediate files (Beware intermediate files use excessive disk space!)",
         required = False)
     parser.add_argument(
         "-v",
@@ -395,7 +380,7 @@ if __name__ == '__main__':
     logger = logging.getLogger("prepseq")
     logger.setLevel(logging.DEBUG)
 
-    streamLoggerFormatter = logging.Formatter("%(asctime)s %(levelname)s: %(message)s", "%Y-%m-%d %H:%M:%S")
+    streamLoggerFormatter = logging.Formatter("%(asctime)s %(levelname)s: %(message)s", tc.HEADER + "%Y-%m-%d %H:%M:%S" + tc.ENDC)
     streamLogger = logging.StreamHandler()
     if options.verbose:
         streamLogger.setLevel(logging.DEBUG)
@@ -404,7 +389,7 @@ if __name__ == '__main__':
     streamLogger.setFormatter(streamLoggerFormatter)
     logger.addHandler(streamLogger)
 
-    fileLoggerFormatter = logging.Formatter("%(asctime)s %(levelname)s: %(message)s", "%Y-%m-%d %H:%M:%S")
+    fileLoggerFormatter = logging.Formatter("%(asctime)s %(levelname)s: %(message)s", tc.HEADER + "%Y-%m-%d %H:%M:%S" + tc.ENDC)
     fileLogger = logging.FileHandler(options.outputdir + "/log.txt", "w")
     fileLogger.setLevel(logging.DEBUG)
     fileLogger.setFormatter(fileLoggerFormatter)
@@ -414,7 +399,7 @@ if __name__ == '__main__':
     summary_file = open(options.outputdir + "/summary.log", "w")
 
     # Start!
-    logger.info("PIPITS_PREP started")
+    logger.info(tc.OKBLUE + "PIPITS_PREP started" + tc.ENDC)
 
 
     # Check for the presence of rawdata directory
@@ -453,7 +438,7 @@ if __name__ == '__main__':
 
     # if not provided
     if not options.listfile:
-        logger.info(Default + "Getting list of fastq files and sample ID from input folder")
+        logger.info("Getting list of fastq files and sample ID from input folder")
         fastqs = []
         for file in os.listdir(options.dataDir):
             if \
@@ -494,7 +479,6 @@ if __name__ == '__main__':
         logger.error("More than two types of extensions")
         exit(1)
     extensionType = next(iter(filenameextensions))
-
 
     count_sequences(options)
     reindex_fastq(options)

@@ -3,7 +3,6 @@
 import sys, os, argparse, subprocess, shutil, textwrap
 from pipits import runcmd as rc
 from pipits import tcolours as tc
-from pipits import dependencies as pd
 
 __author__ = "Hyun Soon Gweon"
 __copyright__ = "Copyright 2015, The PIPITS Project"
@@ -14,6 +13,11 @@ __email__ = "hyugwe@ceh.ac.uk"
 
 VSEARCH = "vsearch"
 BIOM = "biom"
+
+
+
+
+
 
 if __name__ == '__main__':
 
@@ -62,7 +66,7 @@ if __name__ == '__main__':
         "-r",
         action = "store_true",
         dest = "retain",
-        help = "Retain intermediate files (Intermediate files use excessive disk space)",
+        help = "Retain intermediate files (Beware intermediate files use excessive disk space!)",
         required = False)
     parser.add_argument(
         "-v",
@@ -120,19 +124,16 @@ if __name__ == '__main__':
     fileLogger.setFormatter(fileLoggerFormatter)
     logger.addHandler(fileLogger)
 
-    # Summary file
-    #summary_file = open(options.outDir + "/summary_pipits_process.txt", "w")
 
     # Start
     logger.info(tc.OKBLUE + "PIPITS PROCESS started" + tc.ENDC)
-
 
     # Check if the file is empty
     if os.stat(options.input).st_size == 0:
         logger.error("Input file is empty!")
         exit(0)
         
-    # Derep with sgtk
+    # Derep
     logger.info("Dereplicating and removing unique sequences prior to picking OTUs")
     cmd = " ".join([VSEARCH, "--derep_fulllength", options.input, 
                     "--output", tmpDir + "/input_nr.fasta", 
@@ -140,9 +141,6 @@ if __name__ == '__main__':
                     "--sizeout",
                     "--threads", options.threads])
     rc.run_cmd_VSEARCH(cmd, logger, options.verbose)
-    #filesize = os.path.getsize(tmpDir + "/input_nr.fasta") / 1000.0
-    #logger.info("Dereplicating " + tc.OKGREEN + "(Done) " + tc.ENDC)
-    #logger.info("\t" + tc.RED + "File size after initial dereplication: " + str(filesize) + " MB" + tc.ENDC)
 
     # Check if the file is empty
     if os.stat(tmpDir + "/input_nr.fasta").st_size == 0:

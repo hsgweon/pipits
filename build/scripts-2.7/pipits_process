@@ -3,7 +3,6 @@
 import sys, os, argparse, subprocess, shutil, textwrap
 from pipits import runcmd as rc
 from pipits import tcolours as tc
-from pipits import dependencies as pd
 
 __author__ = "Hyun Soon Gweon"
 __copyright__ = "Copyright 2015, The PIPITS Project"
@@ -62,7 +61,7 @@ if __name__ == '__main__':
         "-r",
         action = "store_true",
         dest = "retain",
-        help = "Retain intermediate files (Intermediate files use excessive disk space)",
+        help = "Retain intermediate files (Beware intermediate files use excessive disk space!)",
         required = False)
     parser.add_argument(
         "-v",
