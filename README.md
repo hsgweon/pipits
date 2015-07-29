@@ -150,7 +150,7 @@ There are two reference datasets which need to be downloaded:
 1.4 Set PATH and ENVIRONMENT VARIABLE
 -------------------------------------
 
-    Make sure executables and modules are visible to the shell by existing in the search PATH. Also set some environment variables as shown below. Assuming UBUNTU is your system, this can be achieved by adding the following line in "~/.zshrc" file:
+Make sure executables and modules are visible to the shell by existing in the search PATH. Also set some environment variables as shown below. Assuming UBUNTU is your system, this can be achieved by adding the following line in "~/.zshrc" file:
 
     ```
     export PATH=$HOME/pipits/bin:$PATH
