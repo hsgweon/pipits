@@ -44,7 +44,7 @@ All we need to do is download, install and make them "visible" to PIPITS.
 We will install every dependencies in the following directory.
 
 
--   BIOM-FORMAT v.1.3.x (<https://pypi.python.org/pypi/biom-format/1.3.1>)
+BIOM-FORMAT v.1.3.x (<https://pypi.python.org/pypi/biom-format/1.3.1>)
 
     $ cd $HOME/pipits
     $ wget https://pypi.python.org/packages/source/b/biom-format/biom-format-1.3.1.tar.gz
