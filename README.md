@@ -1,3 +1,6 @@
+Major update (29 July 2015)
+---------------------------
+
 Before start using PIPITS, it is important to note that PIPITS works on
 Illumina sequences which have already been demultiplexed (i.e. each sample is already divided into different files)
 Although it's most likely that your sequencing certre provided you with demultiplxed
