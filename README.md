@@ -44,13 +44,45 @@ so we *strongly* recommend using Bio-Linux packages rather than installing depen
 See 1.8 below for the detailed instruction on how you do this.
 
 
-1. **BIOM-FORMAT** (<https://http://biom-format.org/>)   
+1. **BIOM-FORMAT** (<https://http://biom-format.org/>)
+   *Available as a Bio-Linux package*
+
 2. **FAST-X tools** (<http://hannonlab.cshl.edu/fastx_toolkit>)
+   *Available as a Bio-Linux package*
+
 3. **VSEARCH** (<https://github.com/torognes/vsearch>)
+   *Available as a Bio-Linux package*
+
 4. **ITSx** (<http://microbiology.se/software/itsx>) N.B. ITSx requires HMMER3
+
+    ```sh
+    cd $HOME/pipits
+    wget http://microbiology.se/sw/ITSx_1.0.11.tar.gz
+    tar xvfz ITSx_1.0.11.tar.gz
+    ln -s $HOME/pipits/ITSx_1.0.11/ITSx bin/ITSx
+    ln -s $HOME/pipits/ITSx_1.0.11/ITSx_db bin/ITSx_db
+    ```
+
 5. **PEAR** (<http://sco.h-its.org/exelixis/web/software/pear>) - N.B. PEAR prohibits commercial use of the code. See its page for detail.
+ 
+    ```sh
+    cd $HOME/pipits
+    wget http://sco.h-its.org/exelixis/web/software/pear/files/pear-0.9.6-bin-64.tar.gz
+    tar xvfz pear-0.9.6-bin-64.tar.gz
+    ln -s $HOME/pipits/pear-0.9.6-bin-64/pear-0.9.6-bin-64 bin/pear
+    ```
+
 6. **RDP Classifier 2.9 or above** (<http://sourceforge.net/projects/rdp-classifier>) - N.B. RDP Classifier comes with a jar file.
+   
+    ```sh 
+    cd $HOME/pipits
+    wget http://sourceforge.net/projects/rdp-classifier/files/rdp-classifier/rdp_classifier_2.10.2.zip
+    unzip rdp_classifier_2.10.2.zip
+    ln -s rdp_classifier_2.10.2/dist/classifier.jar ./classifier.jar
+    ```
+
 7. **HMMER3** (<http://hmmer.janelia.org/download.html>) - This is needed for ITSx. Choose "with Linux/Intel x86_64 binaries" unless you are using an "old" 32-bit PC (unlikely for most people I presume).
+   *Available as a Bio-Linux package*
 
 
 1.3 Reference datasets
