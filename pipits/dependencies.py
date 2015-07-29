@@ -19,42 +19,6 @@ def init(config_file):
         print("Error: \"" + config_file + "\" not found.")
         exit(1)
 
-    global FASTX_FASTQ_QUALITY_FILTER
-    try:
-        FASTX_FASTQ_QUALITY_FILTER = config.get("DEPENDENCIES", "FASTX_FASTQ_QUALITY_FILTER")
-    except ConfigParser.NoOptionError:
-        FASTX_FASTQ_QUALITY_FILTER = "fastq_quality_filter"
-
-    global FASTX_FASTQ_TO_FASTA
-    try:
-        FASTX_FASTQ_TO_FASTA = config.get("DEPENDENCIES", "FASTX_FASTQ_TO_FASTA") 
-    except ConfigParser.NoOptionError:
-        FASTX_FASTQ_TO_FASTA = "fastq_to_fasta"
-
-    global PEAR
-    try:
-        PEAR = config.get("DEPENDENCIES", "PEAR")
-    except ConfigParser.NoOptionError:
-        PEAR = "pear"
-
-    global ITSx
-    try:
-        ITSx = config.get("DEPENDENCIES", "ITSx")
-    except ConfigParser.NoOptionError:
-        ITSx = "ITSx"
-
-    global VSEARCH
-    try:
-        VSEARCH = config.get("DEPENDENCIES", "VSEARCH")
-    except ConfigParser.NoOptionError:
-        VSEARCH = "vsearch"
-
-    global BIOM
-    try:
-        BIOM = config.get("DEPENDENCIES", "BIOM")
-    except ConfigParser.NoOptionError:
-        BIOM = "biom"
-
     global RDP_CLASSIFIER_JAR
     RDP_CLASSIFIER_JAR = config.get("DEPENDENCIES", "RDP_CLASSIFIER_JAR")
     

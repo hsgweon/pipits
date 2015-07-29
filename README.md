@@ -1,3 +1,13 @@
+Before start using PIPITS, it is important to note that PIPITS works on
+Illumina sequences which have already been demultiplexed (i.e. each sample is already divided into different files)
+Although it's most likely that your sequencing certre provided you with demultiplxed
+FASTQ files, if this isn't the case, we recommend using deML (https://bioinf.eva.mpg.de/deml)
+to demultiplex you files before using PIPITS.
+
+Also, please note that PIPITS has gone through some substantial changes since its publication,
+so the commands listed in the paper is going to be slightly different, so please refer to this documentation for detail.
+
+
 1 PIPITS Setup
 ==============
 
@@ -6,32 +16,15 @@
 
 Download the latest package:
 
-    $ git clone https://github.com/hsgweon/pipits
+    $ wget https://github.com/hsgweon/pipits/archive/master.zip
 
 Then enter into the created directory and install the package with:
 
-    $ cd pipits
-    $ sudo python setup.py install
+    $ cd pipits-master
+    $ python setup.py install --prefix=$HOME/pipits
 
-- - -
-
-Alternatively if you want to install to a location other than the
-standard location, use "prefix".
-
-    $ python setup.py install --prefix=$HOME/.local
-
-This is recommended if you don't have the root access. Make sure
-executables are visible to the shell by existing in the search
-path, by adding "$HOME/.local/bin" to your PATH variable.
-Assuming UBUNTU is your system, this can be achieved by adding the
-following line in "~/.zshrc" file:
-
-    export PATH=$HOME/.local/bin:$PATH
-
-Then type (or alternatively close and re-open the terminal. Basic Linux!):
-
-    $ source ~/.zshrc
-
+This creates a "pipits" directory in your $HOME and we will be installing pipits and all of its dependencies into this directory.
+Of course if you know what you are doing, you can choose to install using other methods, otherwise do follow the instruction.
 
 
 1.2 Dependencies
@@ -40,29 +33,73 @@ Then type (or alternatively close and re-open the terminal. Basic Linux!):
 *Download and install dependencies*
 
 PIPITS depends on a number of external dependencies which need to be
-downloaded and installed. (If you are a Ubuntu user, it will be a lot easier to make use 
-of Bio-Linux packages rather than installing dependencies yourself. See 1.3 below)
+downloaded and installed. (If you are a Ubuntu user, it is much much easier to make use 
+of Bio-Linux packages rather than installing dependencies yourself. See 1.8 below)
+
+Unless you are much familiar with Linux, I recommend installing dependencies this way. 
+All we need to do is download, install and make them "visible" to PIPITS.
+We will install every dependencies in the following directory.
+
 
 -   BIOM-FORMAT v.1.3.x
     (<https://pypi.python.org/pypi/biom-format/1.3.1>)
--   FAST-X tools (<http://hannonlab.cshl.edu/fastx_toolkit>).
+
+    $ cd $HOME/pipits
+    $ wget https://pypi.python.org/packages/source/b/biom-format/biom-format-1.3.1.tar.gz
+    $ tar xfz biom-format-1.3.1.tar.gz
+    $ cd biom-format-1.3.1
+    $ python setup.py install --prefix=$HOME/pipits
+
+-   FAST-X tools (<http://hannonlab.cshl.edu/fastx_toolkit>)
+
+    $ cd $HOME/pipits
+    $ wget http://hannonlab.cshl.edu/fastx_toolkit/fastx_toolkit_0.0.13_binaries_Linux_2.6_amd64.tar.bz2
+    $ tar xjf fastx_toolkit_0.0.13_binaries_Linux_2.6_amd64.tar.bz2
+
 -   VSEARCH (<https://github.com/torognes/vsearch>)
+
+    $ cd $HOME/pipits
+    $ wget https://github.com/torognes/vsearch/releases/download/v1.1.3/vsearch-1.1.3-linux-x86_64
+    $ chmod +x vsearch-1.1.3-linux-x86_64
+    $ ln -s $HOME/pipits/vsearch-1.1.3-linux-x86_64 bin/vsearch
+
 -   ITSx (<http://microbiology.se/software/itsx>) N.B. ITSx requires
     HMMER3
+
+    $ cd $HOME/pipits
+    $ wget http://microbiology.se/sw/ITSx_1.0.11.tar.gz
+    $ tar xvfz ITSx_1.0.11.tar.gz
+    $ ln -s $HOME/pipits/ITSx_1.0.11/ITSx bin/ITSx
+    $ ln -s $HOME/pipits/ITSx_1.0.11/ITSx_db bin/ITSx_db
+
 -   PEAR (<http://sco.h-its.org/exelixis/web/software/pear>) - N.B. PEAR
     prohibits commercial use of the code. See its page for detail.
+
+    $ cd $HOME/pipits
+    $ wget http://sco.h-its.org/exelixis/web/software/pear/files/pear-0.9.6-bin-64.tar.gz
+    $ tar xvfz pear-0.9.6-bin-64.tar.gz
+    $ ln -s $HOME/pipits/pear-0.9.6-bin-64/pear-0.9.6-bin-64 bin/pear
+
 -   RDP Classifier 2.9 or above
     (<http://sourceforge.net/projects/rdp-classifier>) - N.B. RDP
     Classifier comes with a jar file.
+    
+    $ cd $HOME/pipits
+    $ wget http://sourceforge.net/projects/rdp-classifier/files/rdp-classifier/rdp_classifier_2.10.2.zip
+    $ unzip rdp_classifier_2.10.2.zip
+    $ ln -s rdp_classifier_2.10.2/dist/classifier.jar ./classifier.jar
+
 -   HMMER3 (<http://hmmer.janelia.org/download.html>) - This is needed for ITSx. 
     Choose "with Linux/Intel x86_64 binaries" unless you are using an "old" 32-bit PC (unlikely for most people I presume).
 
-Once you downloaded and installed ITSx, we recommend you to re-HMMPRESS the HMM profiles as the HMMPRESS'ed profiles may not be compatible with the version of the HMMER you installed.
-So assumming you downloaded ITSx in "$HOME/Software" directory and installed it there:
-
-    $ cd $HOME/Software/ITSx_1.0.11/ITSx_db/HMMs
-    $ rm *.hmm.*
-    $ echo *.hmm | xargs -n1 hmmpress
+    $ cd $HOME/pipits
+    $ wget http://selab.janelia.org/software/hmmer3/3.1b2/hmmer-3.1b2-linux-intel-x86_64.tar.gz
+    $ tar xfz hmmer-3.1b2-linux-intel-x86_64.tar.gz
+    $ cd hmmer-3.1b2-linux-intel-x86_64
+    $ ./configure --prefix $HOME/pipits
+    $ make
+    $ cd ..
+    $ ln -s $HOME/pipits/hmmer-3.1b2-linux-intel-x86_64/binaries/* bin/
 
 
 1.3 Reference datasets
@@ -80,8 +117,8 @@ extract the file.
 
 For example:
 
-    $ mkdir -p $HOME/pipits_refdb
-    $ cd $HOME/pipits_refdb
+    $ mkdir -p $HOME/pipits/refdb
+    $ cd $HOME/pipits/refdb
     $ wget http://sourceforge.net/projects/rdp-classifier/files/RDP_Classifier_TrainingData/fungalits_UNITE_trainingdata_07042014.zip
     $ unzip fungalits_UNITE_trainingdata_07042014.zip
 
@@ -98,15 +135,44 @@ removal. Download it from UNITE repository
 
 For example:
 
-    $ cd $HOME/pipits_refdb
+    $ mkdir -p $HOME/pipits/refdb
+    $ cd $HOME/pipits/refdb
     $ wget https://unite.ut.ee/sh_files/uchime_reference_dataset_26.07.2014.zip
     $ unzip uchime_reference_dataset_26.07.2014.zip
 
 
-1.4 Retrain RDP Classifier
+1.4 Set PATH and ENVIRONMENT VARIABLE
+-------------------------------------
+
+Make sure executables and modules are visible to the shell by existing in the search
+PATH. Also set some environment variables as shown below. 
+Assuming UBUNTU is your system, this can be achieved by adding the following line in "~/.zshrc" file:
+
+    export PATH=$HOME/pipits/bin:$PATH
+    export PYTHONPATH=$HOME/pipits/lib/python2.7/site-packages:$PYTHONPATH
+    export PIPITS_UNITE_REFERENCE_DATA_CHIMERA=$HOME/pipits/refdb/final_release_version/uchime_sh_refs_dynamic_original_985_03.07.2014.fasta
+    export PIPITS_UNITE_RETRAINED_DIR=$HOME/pipits/refdb/unite_retrained
+    export PIPITS_RDP_CLASSIFIER_JAR=$HOME/pipits/classifier.jar
+
+Then type (or alternatively close and re-open the terminal):
+
+    $ source ~/.zshrc
+
+
+1.5 Re-HMMPressing
+------------------
+
+Also once you downloaded and installed ITSx, we recommend re-HMMPRESSing the HMM profiles as the HMMPRESS'ed profiles may not be compatible with the version of the HMMER3 you installed:
+
+    $ cd $HOME/pipits/ITSx_1.0.11/ITSx_db/HMMs
+    $ rm *.hmm.*
+    $ echo *.hmm | xargs -n1 hmmpress
+
+
+1.6 Retrain RDP Classifier
 --------------------------
 
-We need to re-train RDP Classifier with the downloaded "UNITE fungal ITS
+Lastly we need to re-train RDP Classifier with the downloaded "UNITE fungal ITS
 reference training dataset". PIPITS provides a script called
 "retrain_rdp" for this task. To run the command, you need to give (i,
 ii) the files from "UNITE fungal ITS reference training dataset"; (iii)
@@ -114,75 +180,37 @@ output directory name; and (iv) the location of the RDP Classifier .jar
 file. Note that this step does not need to be repeated until a new set
 of training data is available to retrain the classifier. For example:
 
-    $ cd $HOME/pipits_refdb
-    $ retrain_rdp -f fungalits_UNITE_trainingdata_07042014/UNITE.RDP_04.07.14.rmdup.fasta -t fungalits_UNITE_trainingdata_07042014/UNITE.RDP_04.07.14.tax -j $HOME/Software/rdp_classifier_2.9/dist/classifier.jar -o unite_retrained
+    $ cd $HOME/pipits/refdb
+    $ pipits_retrain_rdp -f fungalits_UNITE_trainingdata_07042014/UNITE.RDP_04.07.14.rmdup.fasta -t fungalits_UNITE_trainingdata_07042014/UNITE.RDP_04.07.14.tax -j $HOME/pipits/classifier.jar -o unite_retrained
 
 
-1.5 Configuration file
-----------------------
+1.7 Test Dependencies and PIPITS
+--------------------------------
 
-Good! Now everything is set up, but before we get started, we need to
-let PIPITS know where all these dependencies, datasets, trained datasets
-are by editing a PIPITS configuration file. You can find a template
-"pipits_config" file in the downloaded PIPITS directory.
+When you have successfully installed these, check if they are *indeed* successfully installed by running each applications. If you get an error,
+check to see if you have followed the instruction carefully.
 
-It looks like:
-
-    ########################
-    # PIPITS configuration #
-    ########################
-
-    # Lines beginning with "#" is ignored.
-
-    [DEPENDENCIES]
-    # If the dependencies are not visible to the shell, then their locations need to be defined here, for example:
-
-    FASTX_FASTQ_QUALITY_FILTER = /usr/bin/fastq_quality_filter
-    FASTX_FASTQ_TO_FASTA =       /usr/bin/fastq_to_fasta
-    BIOM =                       /usr/bin/biom
-    PEAR =                       $HOME/Software/pear-0.9.5-bin-64/pear-0.9.5-64
-    VSEARCH =                    $HOME/Software/vsearch
-    ITSx =                       $HOME/Software/ITSx_1.0.10/ITSx
+    $ biom
+    $ fastq_to_fasta -h
+    $ vsearch
+    $ ITSx -h
+    $ pear
+    $ ls $HOME/pipits/classifier.jar
+    $ hmmpress -h
 
 
-    # Location of RDP Classifier jar file must be specified, for example:
+Ok, let's test if PIPITS is all setup. Open up the very first original PIPITS which you downloaded. 
 
-    RDP_CLASSIFIER_JAR =            $HOME/Software/rdp_classifier_2.9/dist/classifier.jar
+    $ cd pipits-master
+    $ pipits_getreadpairslist -i test_data
+    $ pipits_prep -i test_data
+    $ pipits_funits -i pipits_prep/prepped.fasta -x ITS2 
+    $ pipits_process -i pipits_funits/ITS.fasta -l readpairslist.txt
 
-    [DB]
-    UNITE_REFERENCE_DATA_CHIMERA =  $HOME/pipits_refdb/final_release_version/uchime_sh_refs_dynamic_original_985_03.07.2014.fasta
-    UNITE_RETRAINED_DIR =           $HOME/pipits_refdb/unite_retrained
+Ensure everything works and you don't get an error message.
 
-In the configuration file:
 
-First, the dependency executables (except RDP Classifier as this comes
-with a .jar file) need to be specified in the "pipits_config" file
-unless the executables are visible to the shell by existing in
-executable search path (i.e. listed in the $PATH environment variable).
-
-Second, you need to let PIPITS know where RDP Classifier is by adding
-the location of RDP Classifier ".jar"" file.
-
-Third,the location of the UNITE UCHIME reference data, and the
-re-trained UNITE directory need to be specified.
-
-Last but not least, once this file has been edited copy the file to your
-home directory and rename it as ".pipits_config" by typing the
-following:
-
-    $ cd pipits
-    $ cp pipits_config  $HOME/.pipits_config
-
-Ok, now you are all good to go! Let's go back to the downloaded PIPITS
-directory and test to see if everything is set up correctly by running
-PIPITS on a test dataset provided:
-
-    $ cd pipits
-    $ pipits all -i test_data -x ITS2 --prefix pipits_test -v
-
-Ensure you see "PIPITS_PROCESS ended successfully."
-
-1.3 (Misc) For Ubuntu users, installing dependencies using Bio-Linux packages
+1.8 (Misc) For Ubuntu users, installing dependencies using Bio-Linux packages
 ------------------------------------------------------------------------------------
 
 Some of the dependencies are available as a Bio-Linux package so
@@ -210,19 +238,26 @@ Then install the packages, for example:
 
     $ sudo apt-get install python-biom-format vsearch fastx-toolkit
 
+
+1.9 (Misc) How to uninstall PIPITS
+----------------------------------
+
+You can uninstall PIPITS simply by deleting $HOME/pipits directory.
+
+
 2. Getting started
 ==================
 
 The PIPITS pipeline is divided into three parts:
 
-1.  PIPITS PREP: prepares raw reads from Illumina MiSeq sequencers for
+1.  PIPITS_PREP: prepares raw reads from Illumina MiSeq sequencers for
     ITS extraction
-2.  PIPITS FUNITS: extracts fungal ITS regions from the reads
-3.  PIPITS PROCESS: analyses the reads to produce Operational Taxonomic
+2.  PIPITS_FUNITS: extracts fungal ITS regions from the reads
+3.  PIPITS_PROCESS: analyses the reads to produce Operational Taxonomic
     Unit (OTU) abundance tables and the RDP taxonomic assignment table
     for downstream analysis
 
-2.1 PIPITS PREP
+2.1 PIPITS_PREP
 ---------------
 
 Illumina reads are generally provided as demultiplexed FASTQ files where
@@ -233,7 +268,7 @@ PIPITS provides a script called PIPITS_GETREADPAIRSLIST which generates
 a tab-delimited text file for all read-pairs from the raw sequence
 directory:
 
-    pipits getreadpairslist -i illumina_rawdata/ -o readpairslist.txt
+    pipits_getreadpairslist -i illumina_rawdata/ -o readpairslist.txt
 
 *Note*
 
@@ -250,7 +285,7 @@ directory:
 
 Once we have the list file, we can begin to process the sequences:
 
-    pipits prep -i illumina_rawdata -o out_prep -l readpairslist.txt
+    pipits_prep -i illumina_rawdata_directory -o out_prep -l readpairslist.txt
 
 *Note*
 
@@ -258,15 +293,16 @@ Once we have the list file, we can begin to process the sequences:
     sequences with PEAR
 2.  The resulting assembled reads are then quality filtered with
     FASTX_FASTQ_QUALITY_FILTER
-3.  The header of each read is then relabelled with an index number and
+3.  The header of each read is then relabelled with an index number followed by 
     a sample ID
 4.  The resulting files are converted into a FASTA format with
     FASTX_FASTQ_TO_FASTA and merged into a single file to produce the
     final output file "prepped.fasta"" in the output directory
-5.  PIPITS PREP can be run without the list file provided that the files
+5.  PIPITS_PREP can be run without the list file provided that the files
     in the input directory follow illumina file naming convention. It is
     generally recommended however to first make a list file of
     read-pairs prior to running the script
+
 
 2.2 PIPITS FUNITS
 -----------------
@@ -275,7 +311,7 @@ The output from PIPITS PREP is taken as an input for this step. It is
 also mandatory to provide the script with which ITS subregion (i.e. ITS1
 or ITS2) is to be extracted:
 
-    pipits funits -i out_prep/prepped.fasta -o out_funits/ -x ITS2
+    pipits_funits -i pipits_prep/prepped.fasta -o out_funits -x ITS2
 
 *Note*
 
@@ -304,7 +340,7 @@ or ITS2) is to be extracted:
 This is the final process involving clustering and assigning of taxonomy
 to OTUs:
 
-    pipits process -i out_funits/ITS.fasta -o out_process
+    pipits_process -i pipits_funits/ITS.fasta -o out_process
 
 *Note*
 
@@ -329,14 +365,6 @@ to OTUs:
     2.  “phylotype abundance table”, an OTU is defined as a cluster of
         sequences binned into the same taxonomic assignments.
 
-3. All in one!
-==============
-
-Provided the user is aware of the three steps above, it is possible to
-run the entire PIPITS pipeline with a single command (which was used for
-testing the whole pipeline above):
-
-    pipits all -i illumina_rawdata -x ITS2 --prefix mypipits
 
 4. Options
 ==========
@@ -345,4 +373,10 @@ PIPITS scripts come with a number of options for the users to alter
 parameters such as distance threshold. The options can be viewed by
 providing "-h" after the command, for example:
 
-    pipits prep -h
+    $ pipits_prep -h
+
+
+5. Citation
+===========
+
+Hyun S. Gweon, Anna Oliver, Joanne Taylor, Tim Booth, Melanie Gibbs, Daniel S. Read, Robert I. Griffiths and Karsten Schonrogge, PIPITS: an automated pipeline for analyses of fungal internal transcribed spacer sequences from the Illumina sequencing platform, Methods in Ecology and Evolution, DOI: 10.1111/2041-210X.12399

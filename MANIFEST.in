@@ -1,4 +1,3 @@
-include pipits_config
 include MANIFEST.in
 include MANUAL.txt
 include LICENSE

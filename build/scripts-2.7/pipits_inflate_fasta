@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 
 import sys, json
 
@@ -32,7 +32,7 @@ options = parser.parse_args()
 
 ############################################################
 
-import sgtk_SeqIO as SeqIO
+from pipits import sgtk_SeqIO as SeqIO
 
 def re_inflate(inputFASTA, outputFASTA, dictionary):
 

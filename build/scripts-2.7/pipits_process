@@ -1,9 +1,9 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 
 import sys, os, argparse, subprocess, shutil, textwrap
-import runcmd as rc
-import tcolours as tc
-import dependencies as pd
+from pipits import runcmd as rc
+from pipits import tcolours as tc
+from pipits import dependencies as pd
 
 __author__ = "Hyun Soon Gweon"
 __copyright__ = "Copyright 2015, The PIPITS Project"
@@ -12,8 +12,75 @@ __license__ = "GPL"
 __maintainer__ = "Hyun Soon Gweon"
 __email__ = "hyugwe@ceh.ac.uk"
 
+VSEARCH = "vsearch"
+BIOM = "biom"
 
-def run(options):
+if __name__ == '__main__':
+
+    parser = argparse.ArgumentParser("PIPITS_PROCESS: Sequences to OTU Table")
+    parser.add_argument(
+        "-i",
+        action = "store",
+        dest = "input",
+        metavar = "<FILE>",
+        help = "[REQUIRED] ITS sequences in FASTA. Typically output from pipits_funits",
+        required = True)
+    parser.add_argument(
+        "-o",
+        action = "store",
+        dest = "outDir",
+        metavar = "<DIR>",
+        default = "pipits_process",
+        help = "[REQUIRED] Directory to output results.",
+        required = False)
+    parser.add_argument(
+        "-d",
+        action = "store",
+        dest = "VSEARCH_id",
+        metavar = "<FLOAT>",
+        help = "VSEARCH - Identity threshold [default: 0.97]",
+        default = "0.97",
+        required = False)
+    parser.add_argument(
+        "-c",
+        action = "store",
+        dest = "RDP_assignment_threshold",
+        metavar = "<FLOAT>",
+        help = "RDP assignment confidence threshold - RDP Classifier confidence threshold for output [default: 0.85]",
+        default = "0.85",
+        required = False)
+    parser.add_argument(
+        "-l",
+        action = "store",
+        dest = "sortedlist",
+        metavar = "<TXT>",
+        help = "[REQUIRED] Sample list file. Generated with PIPITS_GETREADPAIRSLIST prior to PIPITS_PREP",
+        required = True)
+
+    # Generic
+    parser.add_argument(
+        "-r",
+        action = "store_true",
+        dest = "retain",
+        help = "Retain intermediate files (Intermediate files use excessive disk space)",
+        required = False)
+    parser.add_argument(
+        "-v",
+        action = "store_true",
+        dest = "verbose",
+        help = "Verbose mode",
+        required = False)
+    parser.add_argument(
+        "-t",
+        action = "store",
+        dest = "threads",
+        metavar = "<INT>",
+        help = "Number of Threads [default: 1]",
+        default = "1",
+        required = False)
+
+    options = parser.parse_args()
+
 
     # Check file exists
     if not os.path.exists(options.input):
@@ -67,7 +134,7 @@ def run(options):
         
     # Derep with sgtk
     logger.info("Dereplicating and removing unique sequences prior to picking OTUs")
-    cmd = " ".join([pd.VSEARCH, "--derep_fulllength", options.input, 
+    cmd = " ".join([VSEARCH, "--derep_fulllength", options.input, 
                     "--output", tmpDir + "/input_nr.fasta", 
                     "--minuniquesize 2", 
                     "--sizeout",
@@ -85,7 +152,7 @@ def run(options):
 
     # OTU clustering
     logger.info("Picking OTUs [VSEARCH]")
-    cmd = " ".join([pd.VSEARCH, 
+    cmd = " ".join([VSEARCH, 
                     "--cluster_fast", tmpDir + "/input_nr.fasta", 
                     "--id", options.VSEARCH_id,
                     "--centroids", tmpDir + "/input_nr_otus.fasta",
@@ -96,9 +163,9 @@ def run(options):
 
     # Chimera removal
     logger.info("Removing chimeras [VSEARCH]")
-    cmd = " ".join([pd.VSEARCH, 
+    cmd = " ".join([VSEARCH, 
                     "--uchime_ref", tmpDir + "/input_nr_otus.fasta", 
-                    "--db", pd.UNITE_REFERENCE_DATA_CHIMERA, 
+                    "--db $PIPITS_UNITE_REFERENCE_DATA_CHIMERA",
                     "--nonchimeras", tmpDir + "/input_nr_otus_nonchimeras.fasta",
                     "--threads", options.threads])
     rc.run_cmd_VSEARCH(cmd, logger, options.verbose)
@@ -122,7 +189,7 @@ def run(options):
 
     # Map reads to OTUs
     logger.info("Mapping reads onto centroids [VSEARCH]")
-    cmd = " ".join([pd.VSEARCH, 
+    cmd = " ".join([VSEARCH, 
                     "--usearch_global", options.input, 
                     "--db", tmpDir + "/input_nr_otus_nonchimeras_relabelled.fasta", 
                     "--id", options.VSEARCH_id, 
@@ -133,11 +200,11 @@ def run(options):
 
     # OTU construction
     logger.info("Making OTU table")
-    cmd = " ".join(["python", EXE_DIR + "/pipits_uc/uc2otutab.py", tmpDir + "/otus.uc", 
-                    ">", 
-                    tmpDir + "/otu_table_prelim.txt"])
+    cmd = " ".join(["python", EXE_DIR + "/pipits_uc2otutable", 
+                    "-i", tmpDir + "/otus.uc", 
+                    "-o", tmpDir + "/otu_table_prelim.txt",
+                    "-l", options.sortedlist])
     rc.run_cmd_VSEARCH(cmd, logger, options.verbose)
-
 
     # Convert to biom
     logger.info("Converting classic tabular OTU into a BIOM format [BIOM]")
@@ -145,7 +212,7 @@ def run(options):
         os.remove(tmpDir + "/otu_table_prelim.biom")
     except OSError:
         pass
-    cmd = " ".join([pd.BIOM, "convert", 
+    cmd = " ".join([BIOM, "convert", 
                     "-i", tmpDir + "/otu_table_prelim.txt", 
                     "-o", tmpDir + "/otu_table_prelim.biom", 
                     "--table-type=\"OTU table\""])
@@ -155,8 +222,8 @@ def run(options):
     # Classifying OTUs
     # http://sourceforge.net/projects/rdp-classifier/files/RDP_Classifier_TrainingData/ 
     logger.info("Assigning taxonomy [RDP Classifier]")
-    cmd = " ".join(["java", "-jar", pd.RDP_CLASSIFIER_JAR, "classify", 
-                    "-t", pd.UNITE_RETRAINED_DIR + "/rRNAClassifier.properties", 
+    cmd = " ".join(["java", "-jar $PIPITS_RDP_CLASSIFIER_JAR classify", 
+                    "-t $PIPITS_UNITE_RETRAINED_DIR" + "/rRNAClassifier.properties", 
                     "-o", options.outDir + "/assigned_taxonomy.txt", 
                     tmpDir + "/input_nr_otus_nonchimeras_relabelled.fasta"])
     rc.run_cmd(cmd, logger, options.verbose)
@@ -164,7 +231,7 @@ def run(options):
 
     # Reformatting RDP_CLASSIFIER output for biom
     logger.info("Reformatting RDP_Classifier output")
-    cmd = " ".join(["python", EXE_DIR + "/reformatAssignedTaxonomy.py", 
+    cmd = " ".join(["python", EXE_DIR + "/reformatAssignedTaxonomy", 
                     "-i", options.outDir + "/assigned_taxonomy.txt" , 
                     "-o", options.outDir + "/assigned_taxonomy_reformatted_filtered.txt",
                     "-c", options.RDP_assignment_threshold])
@@ -174,10 +241,10 @@ def run(options):
     # Adding RDP_CLASSIFIER output to OTU table
     logger.info("Adding assignment to OTU table [BIOM]")
     try:
-            os.remove(options.outDir + "/otu_table.biom")
+        os.remove(options.outDir + "/otu_table.biom")
     except OSError:
-            pass
-    cmd = " ".join([pd.BIOM, "add-metadata", 
+        pass
+    cmd = " ".join([BIOM, "add-metadata", 
                     "-i", tmpDir + "/otu_table_prelim.biom", 
                     "-o", options.outDir + "/otu_table.biom", 
                     "--observation-metadata-fp", options.outDir + "/assigned_taxonomy_reformatted_filtered.txt", 
@@ -193,7 +260,7 @@ def run(options):
         os.remove(options.outDir + "/otu_table.txt")
     except OSError:
         pass
-    cmd = " ".join([pd.BIOM, "convert", 
+    cmd = " ".join([BIOM, "convert", 
                     "-i", options.outDir + "/otu_table.biom", 
                     "-o", options.outDir + "/otu_table.txt", 
                     "--header-key taxonomy",  
@@ -203,14 +270,14 @@ def run(options):
 
     # Make phylotyp table
     logger.info("Phylotyping OTU table")
-    cmd = " ".join(["python", EXE_DIR + "/phylotype_biom.py", "-i", options.outDir + "/otu_table.biom", "-o", options.outDir + "/phylotype_table.txt"])
+    cmd = " ".join(["python", EXE_DIR + "/pipits_phylotype_biom", "-i", options.outDir + "/otu_table.biom", "-o", options.outDir + "/phylotype_table.txt"])
     rc.run_cmd(cmd, logger, options.verbose)
 
     try:
         os.remove(options.outDir + "/phylotype_table.biom")
     except OSError:
         pass
-    cmd = " ".join([pd.BIOM, "convert",
+    cmd = " ".join([BIOM, "convert",
                     "-i", options.outDir + "/phylotype_table.txt",
                     "-o", options.outDir + "/phylotype_table.biom",
                     "--table-type=\"OTU table\" --process-obs-metadata=\"taxonomy\""])
@@ -222,7 +289,7 @@ def run(options):
 
 
     # Remove tmp
-    if options.remove:
+    if not options.retain:
         logger.info("Cleaning temporary directory")
         shutil.rmtree(tmpDir)
 

@@ -1,11 +1,13 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 
 import sys, os, argparse, subprocess, shutil, textwrap
-import sgtk_SeqIO as SeqIO
-
-import runcmd as rc
-import tcolours as tc
-import dependencies as pd
+from pipits import sgtk_SeqIO as SeqIO
+from pipits import runcmd as rc
+from pipits import tcolours as tc
+from pipits import dependencies as pd
+#import runcmd as rc
+#import tcolours as tc
+#import dependencies as pd
 
 __author__ = "Hyun Soon Gweon"
 __copyright__ = "Copyright 2015, The PIPITS Project"
@@ -14,8 +16,58 @@ __license__ = "GPL"
 __maintainer__ = "Hyun Soon Gweon"
 __email__ = "hyugwe@ceh.ac.uk"
 
+ITSx = "ITSx"
 
-def run(options):
+if __name__ == '__main__':
+
+    parser = argparse.ArgumentParser("PIPITS_FUNITS: Extract ITS1 or ITS2")
+    parser.add_argument(
+        "-i",
+        action = "store",
+        dest = "input",
+        metavar = "<FILE>",
+        help = "[REQUIRED] Joined, quality filtered sequences in FASTA. Typically output from pipits_prep",
+        required = True)
+    parser.add_argument(
+        "-o",
+        action = "store",
+        dest = "outDir",
+        metavar = "<DIR>",
+        help = "[REQUIRED] Directory to output results",
+        default = "pipits_funits",
+        required = False)
+    parser.add_argument(
+        "-x",
+        action = "store",
+        dest = "ITSx_subregion",
+        help = "[REQUIRED] Subregion of ITS to be extracted. Must choose between \"ITS1\" and \"ITS2\" E.g. -x ITS2",
+        required = True,
+        choices = ["ITS1", "ITS2"])
+
+    # Generic
+    parser.add_argument(
+        "-r",
+        action = "store_true",
+        dest = "retain",
+        help = "Retain intermediate files (Intermediate files use excessive disk space)",
+        required = False)
+    parser.add_argument(
+        "-v",
+        action = "store_true",
+        dest = "verbose",
+        help = "Verbose mode",
+        required = False)
+    parser.add_argument(
+        "-t",
+        action = "store",
+        dest = "threads",
+        metavar = "<INT>",
+        help = "Number of Threads [default: 1]",
+        default = "1",
+        required = False)
+
+
+    options = parser.parse_args()
 
     if not os.path.exists(options.outDir):
         os.mkdir(options.outDir)
@@ -54,7 +106,7 @@ def run(options):
 
 
     # Start! 
-    logger.info(tc.OKBLUE + "PIPITS FUNITS started" + tc.ENDC)
+    logger.info(tc.OKBLUE + "PIPITS_FUNITS started" + tc.ENDC)
 
 
     # Scripts
@@ -83,7 +135,7 @@ def run(options):
 
     # Dereplicate
     logger.info("Dereplicating sequences for efficiency")
-    cmd = " ".join(["python", PIPITS_SCRIPTS_DIR + "/dereplicate_fasta.py", "-i", options.input, "-o", tmpDir + "/derep.fasta", "--cluster", tmpDir + "/derep.json"])
+    cmd = " ".join(["python", PIPITS_SCRIPTS_DIR + "/pipits_dereplicate_fasta", "-i", options.input, "-o", tmpDir + "/derep.fasta", "--cluster", tmpDir + "/derep.json"])
     rc.run_cmd(cmd, logger, options.verbose)
 
 
@@ -102,13 +154,13 @@ def run(options):
     # Returncode is always 0 no matter what...
     # No way to tell whether it quits with an error or not other than by capturing STDERR with a phrase "FATAL ERROR" - not implemented
     logger.info("Extracting " + options.ITSx_subregion + " from sequences [ITSx]")
-    cmd = " ".join([pd.ITSx, "-i", tmpDir + "/derep.fasta", "-o", tmpDir + "/derep", "--preserve", "T", "-t", "F", "--cpu", options.threads, "--save_regions", options.ITSx_subregion])
+    cmd = " ".join([ITSx, "-i", tmpDir + "/derep.fasta", "-o", tmpDir + "/derep", "--preserve", "T", "-t", "F", "--cpu", options.threads, "--save_regions", options.ITSx_subregion])
     rc.run_cmd_ITSx(cmd, logger, options.verbose)
 
 
     # Removing short sequences (<100bp)
     logger.info("Removing sequences below < 100bp")
-    cmd = " ".join(["python", PIPITS_SCRIPTS_DIR + "/fasta_filter_by_length.py", 
+    cmd = " ".join(["python", PIPITS_SCRIPTS_DIR + "/pipits_fasta_filter_by_length", 
                     "-i", tmpDir + "/derep." + options.ITSx_subregion + ".fasta", 
                     "-o", tmpDir + "/derep." + options.ITSx_subregion + ".sizefiltered.fasta", 
                     "-l 100"])
@@ -117,7 +169,7 @@ def run(options):
 
     # Re-inflate
     logger.info("Re-inflating sequences")
-    cmd = " ".join(["python", PIPITS_SCRIPTS_DIR + "/inflate_fasta.py", 
+    cmd = " ".join(["python", PIPITS_SCRIPTS_DIR + "/pipits_inflate_fasta", 
                     "-i", tmpDir + "/derep." + options.ITSx_subregion + ".sizefiltered.fasta", 
                     "-o", options.outDir + "/ITS.fasta", "--cluster", tmpDir + "/derep.json"])
     rc.run_cmd(cmd, logger, options.verbose)
@@ -155,14 +207,14 @@ def run(options):
 
 
     # Finally move and delete tmp
-    if options.remove:
+    if not options.retain:
         logger.info("Cleaning temporary directory")
         shutil.move(tmpDir + "/derep.summary.txt", options.outDir + "/ITSx_summary.txt")
         shutil.rmtree(tmpDir)
 
 
     logger.info(tc.OKBLUE + "PIPITS FUNITS ended successfully. \"" + "ITS.fasta" + "\" created in \"" + options.outDir + "\"" + tc.ENDC)
-    logger.info(tc.OKYELLOW + "Next Step: PIPITS PROCESS [ Suggestion: pipits process -i " + options.outDir + "/" + "ITS.fasta -o out_process ]" + tc.ENDC)
+    logger.info(tc.OKYELLOW + "Next Step: PIPITS PROCESS [ Suggestion: pipits_process -i " + options.outDir + "/" + "ITS.fasta -o pipits_process ]" + tc.ENDC)
     print("")
     summary_file.close()
 
