@@ -44,7 +44,7 @@ All we need to do is download, install and make them "visible" to PIPITS.
 We will install every dependencies in the following directory.
 
 
-BIOM-FORMAT v.1.3.x (<https://pypi.python.org/pypi/biom-format/1.3.1>)
+1. BIOM-FORMAT v.1.3.x (<https://pypi.python.org/pypi/biom-format/1.3.1>)
 
     $ cd $HOME/pipits
     $ wget https://pypi.python.org/packages/source/b/biom-format/biom-format-1.3.1.tar.gz
@@ -52,7 +52,7 @@ BIOM-FORMAT v.1.3.x (<https://pypi.python.org/pypi/biom-format/1.3.1>)
     $ cd biom-format-1.3.1
     $ python setup.py install --prefix=$HOME/pipits
 
-FAST-X tools (<http://hannonlab.cshl.edu/fastx_toolkit>)
+2. FAST-X tools (<http://hannonlab.cshl.edu/fastx_toolkit>)
 
     $ cd $HOME/pipits
     $ wget http://hannonlab.cshl.edu/fastx_toolkit/fastx_toolkit_0.0.13_binaries_Linux_2.6_amd64.tar.bz2
