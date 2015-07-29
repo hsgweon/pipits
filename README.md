@@ -151,7 +151,7 @@ source ~/.zshrc
 1.5 Re-HMMPressing
 ------------------
 
-Also once you downloaded and installed ITSx, we recommend re-HMMPRESSing the HMM profiles as the HMMPRESS'ed profiles may not be compatible with the version of the HMMER3 you installed:
+Once you downloaded and installed ITSx, we recommend re-HMMPRESSing the HMM profiles as the HMMPRESS'ed profiles may not be compatible with the version of the HMMER3 you installed:
 
 ```sh
 cd $HOME/pipits/ITSx_1.0.11/ITSx_db/HMMs
@@ -164,10 +164,13 @@ echo *.hmm | xargs -n1 hmmpress
 
 Lastly we need to re-train RDP Classifier with the downloaded "UNITE fungal ITS
 reference training dataset". PIPITS provides a script called
-"retrain_rdp" for this task. To run the command, you need to give (i,
-ii) the files from "UNITE fungal ITS reference training dataset"; (iii)
-output directory name; and (iv) the location of the RDP Classifier .jar
-file. Note that this step does not need to be repeated until a new set
+"retrain_rdp" for this task. To run the command, you need to give
+
+     (i, ii) the files from "UNITE fungal ITS reference training dataset"; 
+     (iii) output directory name; 
+     and (iv) the location of the RDP Classifier .jar file. 
+
+Note that this step does not need to be repeated until a new set
 of training data is available to retrain the classifier. For example:
 
 ```sh
