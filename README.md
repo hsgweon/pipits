@@ -119,18 +119,16 @@ There are two reference datasets which need to be downloaded:
 
 1. UNITE fungal ITS reference training dataset
 
-Download the most recent version of UNITE training data from their
-sourceforge webpage
-(<http://sourceforge.net/projects/rdp-classifier/files/RDP_Classifier_TrainingData>
-), save it to an appropriate directory (e.g. $HOME/pipits/refdb) and
-extract the file.
+   Download the most recent version of UNITE training data from their sourceforge webpage (<http://sourceforge.net/projects/rdp-classifier/files/RDP_Classifier_TrainingData>), save it to an appropriate directory (e.g. $HOME/pipits/refdb) and extract the file.
 
 For example:
-
+    
+    ```
     $ mkdir -p $HOME/pipits/refdb
     $ cd $HOME/pipits/refdb
     $ wget http://sourceforge.net/projects/rdp-classifier/files/RDP_Classifier_TrainingData/fungalits_UNITE_trainingdata_07042014.zip
     $ unzip fungalits_UNITE_trainingdata_07042014.zip
+    ```
 
 The extracted directory contains UNITE training files namely (a) FASTA
 file and (b) taxonomy file with lineage. We will use these files for
@@ -145,11 +143,12 @@ removal. Download it from UNITE repository
 
 For example:
 
+    ```
     $ mkdir -p $HOME/pipits/refdb
     $ cd $HOME/pipits/refdb
     $ wget https://unite.ut.ee/sh_files/uchime_reference_dataset_26.07.2014.zip
     $ unzip uchime_reference_dataset_26.07.2014.zip
-
+    ```
 
 1.4 Set PATH and ENVIRONMENT VARIABLE
 -------------------------------------
