@@ -154,9 +154,10 @@ There are two reference datasets to download:
 
 Make sure executables and modules are visible to the shell by existing in the search PATH. Also set some environment variables as shown below. Assuming UBUNTU is your system, this can be achieved by adding the following line at the end of "~/.zshrc" file:
 
-Open a text editor such as gedit:
+Open "~/.bashrc" or "~/.zshrc" (depending on which shell you are using) with a text editor such as gedit. You can check which shell your system is using by typing echo $SHELL
     
     gedit ~/.zshrc
+
 
 And then add the following lines at the end of the file:
 
