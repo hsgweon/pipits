@@ -125,14 +125,14 @@ There are two reference datasets to download:
 
    For example:
     
-    ```sh
-    mkdir -p $HOME/pipits/refdb
-    cd $HOME/pipits/refdb
-    wget http://sourceforge.net/projects/rdp-classifier/files/RDP_Classifier_TrainingData/fungalits_UNITE_trainingdata_07042014.zip
-    unzip fungalits_UNITE_trainingdata_07042014.zip
-    ```
+   ```sh
+   mkdir -p $HOME/pipits/refdb
+   cd $HOME/pipits/refdb
+   wget http://sourceforge.net/projects/rdp-classifier/files/RDP_Classifier_TrainingData/fungalits_UNITE_trainingdata_07042014.zip
+   unzip fungalits_UNITE_trainingdata_07042014.zip
+   ```
 
-    The extracted directory contains UNITE training files namely (a) FASTA file and (b) taxonomy file with lineage. We will use these files for retraining RDP Classifier a moment later.
+   The extracted directory contains UNITE training files namely (a) FASTA file and (b) taxonomy file with lineage. We will use these files for retraining RDP Classifier a moment later.
 
 
 2. UNITE UCHIME reference dataset
@@ -141,12 +141,12 @@ There are two reference datasets to download:
 
    For example:
 
-    ```sh
-    mkdir -p $HOME/pipits/refdb
-    cd $HOME/pipits/refdb
-    wget https://unite.ut.ee/sh_files/uchime_reference_dataset_26.07.2014.zip
-    unzip uchime_reference_dataset_26.07.2014.zip
-    ```
+   ```sh
+   mkdir -p $HOME/pipits/refdb
+   cd $HOME/pipits/refdb
+   wget https://unite.ut.ee/sh_files/uchime_reference_dataset_26.07.2014.zip
+   unzip uchime_reference_dataset_26.07.2014.zip
+   ```
 
 
 1.4 Set PATH and ENVIRONMENT VARIABLE
@@ -162,20 +162,20 @@ Make sure executables and modules are visible to the shell by existing in the se
 
 Then type (or alternatively close and re-open the terminal):
 
-    ```sh
-    source ~/.zshrc
-    ```
+```sh
+source ~/.zshrc
+```
 
 1.5 Re-HMMPressing
 ------------------
 
 Also once you downloaded and installed ITSx, we recommend re-HMMPRESSing the HMM profiles as the HMMPRESS'ed profiles may not be compatible with the version of the HMMER3 you installed:
 
-    ```sh
-    cd $HOME/pipits/ITSx_1.0.11/ITSx_db/HMMs
-    rm *.hmm.*
-    echo *.hmm | xargs -n1 hmmpress
-    ```
+```sh
+cd $HOME/pipits/ITSx_1.0.11/ITSx_db/HMMs
+rm *.hmm.*
+echo *.hmm | xargs -n1 hmmpress
+```
 
 1.6 Retrain RDP Classifier
 --------------------------
