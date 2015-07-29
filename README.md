@@ -152,15 +152,13 @@ There are two reference datasets which need to be downloaded:
 
 Make sure executables and modules are visible to the shell by existing in the search PATH. Also set some environment variables as shown below. Assuming UBUNTU is your system, this can be achieved by adding the following line in "~/.zshrc" file:
 
-    ```
     export PATH=$HOME/pipits/bin:$PATH
     export PYTHONPATH=$HOME/pipits/lib/python2.7/site-packages:$PYTHONPATH
     export PIPITS_UNITE_REFERENCE_DATA_CHIMERA=$HOME/pipits/refdb/final_release_version/uchime_sh_refs_dynamic_original_985_03.07.2014.fasta
     export PIPITS_UNITE_RETRAINED_DIR=$HOME/pipits/refdb/unite_retrained
     export PIPITS_RDP_CLASSIFIER_JAR=$HOME/pipits/classifier.jar
-    ```
 
-    Then type (or alternatively close and re-open the terminal):
+Then type (or alternatively close and re-open the terminal):
 
     ```
     $ source ~/.zshrc
