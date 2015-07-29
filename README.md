@@ -207,13 +207,13 @@ When you have successfully installed these, check if they are *indeed* successfu
 check to see if you have followed the instruction carefully.
 
 ```sh
-biom
-fastq_to_fasta -h
-vsearch
-ITSx -h
-pear
-ls $HOME/pipits/classifier.jar
-hmmpress -h
+$ biom
+$ fastq_to_fasta -h
+$ vsearch
+$ ITSx -h
+$ pear
+$ ls $HOME/pipits/classifier.jar
+$ hmmpress -h
 ```
 
 Ok, let's test if PIPITS is all setup. Open up the very first original PIPITS which you downloaded. 
