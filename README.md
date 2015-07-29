@@ -160,9 +160,7 @@ Make sure executables and modules are visible to the shell by existing in the se
 
 Then type (or alternatively close and re-open the terminal):
 
-    ```
     $ source ~/.zshrc
-    ```
 
 
 1.5 Re-HMMPressing
