@@ -290,9 +290,8 @@ directory:
 
 Once we have the list file, we can begin to process the sequences:
 
-    ```
     $ pipits_prep -i illumina_rawdata_directory -o out_prep -l readpairslist.txt
-    ```
+
 
 *Note*
 
@@ -318,9 +317,8 @@ The output from PIPITS PREP is taken as an input for this step. It is
 also mandatory to provide the script with which ITS subregion (i.e. ITS1
 or ITS2) is to be extracted:
 
-    ```
     $ pipits_funits -i pipits_prep/prepped.fasta -o out_funits -x ITS2
-    ```
+
 
 *Note*
 
@@ -349,9 +347,8 @@ or ITS2) is to be extracted:
 This is the final process involving clustering and assigning of taxonomy
 to OTUs:
 
-    ```
     $ pipits_process -i pipits_funits/ITS.fasta -o out_process
-    ```
+
 
 *Note*
 
@@ -385,9 +382,8 @@ PIPITS scripts come with a number of options for the users to alter
 parameters such as distance threshold. The options can be viewed by
 providing "-h" after the command, for example:
 
-    ```
     $ pipits_prep -h
-    ```
+
 
 
 5. Citation
