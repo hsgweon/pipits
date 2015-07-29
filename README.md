@@ -27,7 +27,7 @@ Then enter into the created directory and install the package with:
     $ python setup.py install --prefix=$HOME/pipits
 
 This creates a "pipits" directory in your $HOME and we will be installing pipits and all of its dependencies into this directory.
-Of course if you know what you are doing, you can choose to install using other methods, otherwise do follow the instruction.
+Of course if you are familiar with Linux, you are free to choose other ways to install.
 
 
 1.2 Dependencies
@@ -44,8 +44,7 @@ All we need to do is download, install and make them "visible" to PIPITS.
 We will install every dependencies in the following directory.
 
 
--   BIOM-FORMAT v.1.3.x
-    (<https://pypi.python.org/pypi/biom-format/1.3.1>)
+-   BIOM-FORMAT v.1.3.x (<https://pypi.python.org/pypi/biom-format/1.3.1>)
 
     $ cd $HOME/pipits
     $ wget https://pypi.python.org/packages/source/b/biom-format/biom-format-1.3.1.tar.gz
