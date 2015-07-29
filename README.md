@@ -12,8 +12,8 @@ so the commands from the paper are slightly different in the current version, so
 typing commands in the paper!
 
 
-1 PIPITS Setup
-==============
+1 Setting up PIPITS
+===================
 
 1.1 Download and install
 ------------------------
@@ -28,8 +28,8 @@ Then enter into the created directory and install the package with:
     $ cd pipits-master
     $ python setup.py install --prefix=$HOME/pipits
 
-This creates a "pipits" directory in your $HOME and we will be installing pipits and all of its dependencies into this directory.
-Of course if you are familiar with Linux, you are free to choose other ways to install.
+This creates a "pipits" directory in your $HOME and we will be installing pipits and some of its dependencies into this directory.
+Of course if you are familiar with Linux, you are free to choose whichever way to suit your skill and taste!
 
 
 1.2 Dependencies
