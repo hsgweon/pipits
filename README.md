@@ -48,13 +48,11 @@ We will install every dependencies in the following directory.
 
 1. BIOM-FORMAT v.1.3.x (<https://pypi.python.org/pypi/biom-format/1.3.1>)
 
-    ```
     $ cd $HOME/pipits
     $ wget https://pypi.python.org/packages/source/b/biom-format/biom-format-1.3.1.tar.gz
     $ tar xfz biom-format-1.3.1.tar.gz
     $ cd biom-format-1.3.1
     $ python setup.py install --prefix=$HOME/pipits
-    ```
 
 2. FAST-X tools (<http://hannonlab.cshl.edu/fastx_toolkit>)
 
@@ -117,7 +115,7 @@ We will install every dependencies in the following directory.
 1.3 Reference datasets
 ----------------------
 
-There are two reference datasets which need to be downloaded:
+There are two reference datasets to download:
 
 1. UNITE fungal ITS reference training dataset
 
