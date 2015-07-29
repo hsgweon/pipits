@@ -164,14 +164,14 @@ echo *.hmm | xargs -n1 hmmpress
 
 Lastly we need to re-train RDP Classifier with the downloaded "UNITE fungal ITS
 reference training dataset". PIPITS provides a script called
-"retrain_rdp" for this task. To run the command, you need to give
+"retrain_rdp" for this task. To run the command, you need to specify:
 
      (1, 2) the files from "UNITE fungal ITS reference training dataset"; 
      (3) output directory name; and
      (4) the location of the RDP Classifier .jar file. 
 
 Note that this step does not need to be repeated until a new set
-of training data is available to retrain the classifier. For example:
+of training data is available to retrain the classifier. Run:
 
 ```sh
 cd $HOME/pipits/refdb
