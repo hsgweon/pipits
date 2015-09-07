@@ -8,7 +8,7 @@ Although it's most likely that your sequencing certre provided you with demultip
 FASTQ files, if this isn't the case, we recommend deML (https://bioinf.eva.mpg.de/deml)
 to demultiplex the files before using PIPITS.
 
-Also, do note that PIPITS has gone through some substantial changes since its publication,
+- Also, do note that PIPITS has gone through some substantial changes since its publication,
 so the commands from the paper are slightly different in the current version, so please refer to this documentation rather than
 typing commands in the paper!
 
