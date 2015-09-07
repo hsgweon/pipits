@@ -274,7 +274,8 @@ if __name__ == '__main__':
     cmd = " ".join([BIOM, "convert",
                     "-i", options.outDir + "/phylotype_table.txt",
                     "-o", options.outDir + "/phylotype_table.biom",
-                    "--table-type=\"OTU table\" --process-obs-metadata=\"taxonomy\""])
+                    "--table-type=\"OTU table\" --process-obs-metadata=\"taxonomy\"",
+                    "--to-json"])
     rc.run_cmd(cmd, logger, options.verbose)
 
 

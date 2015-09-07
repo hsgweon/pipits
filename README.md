@@ -31,6 +31,7 @@ Then enter into the created directory and install the package with:
 
     $ unzip master.zip
     $ cd pipits-master
+    $ python setup.py clean --all
     $ python setup.py install --prefix=$HOME/pipits
 
 This creates a "pipits" directory in your $HOME and we will be installing pipits and some of its dependencies into this directory.
