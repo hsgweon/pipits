@@ -339,4 +339,4 @@ if __name__ == '__main__':
 
     # Done!
     logger.info(tc.OKBLUE + "PIPITS_PROCESS ended successfully." + tc.ENDC)
-    logger.info(tc.OKYELLOW + "Resulting files are in \"" + options.outDir + "\" directory" + tc.ENDC)
+    logger.info(tc.OKGREEN + "Resulting files are in \"" + options.outDir + "\" directory" + tc.ENDC)
