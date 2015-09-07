@@ -1,5 +1,10 @@
-Major update (29 July 2015)
----------------------------
+Update (7 Sep 2015)
+-------------------
+PIPITS 1.2.0 released. Now PIPITS supports BIOM 2.x
+
+
+Update (29 July 2015)
+---------------------
 
 Before start using PIPITS, it is important to note that PIPITS works on
 Illumina sequences which have already been demultiplexed (i.e. each sample is already divided into different files)

@@ -16,6 +16,7 @@ bin/pipits_uc2otutable
 dist/pipits-1.1.0.tar.gz
 dist/pipits-1.1.1.tar.gz
 dist/pipits-1.1.2.tar.gz
+dist/pipits-1.2.0.tar.gz
 pipits/__init__.py
 pipits/concatenate_fasta.py
 pipits/runcmd.py
