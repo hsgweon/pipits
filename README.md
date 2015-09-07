@@ -44,9 +44,9 @@ so we *strongly* recommend using Bio-Linux packages rather than installing depen
 See 1.8 below for the detailed instruction on how you do this.
 
 
-1. **BIOM-FORMAT** (<https://http://biom-format.org/>)
+1. **BIOM-FORMAT version 2.x** (<http://biom-format.org/>)
 
-   *Available as a Bio-Linux package*
+   *Available as a Bio-Linux package, if installing yourself, please use version >= 2.0*
 
 2. **FAST-X tools** (<http://hannonlab.cshl.edu/fastx_toolkit>)
 
@@ -131,7 +131,7 @@ Now we will make sure executables and modules are visible to the shell by existi
 
 Open "~/.bashrc" or "~/.zshrc" (depending on which shell you are using) with a text editor such as gedit.
     
-    gedit ~/.bashrc
+    gedit ~/.zshrc
 
 
 And then add the following lines at the end of the file:
@@ -155,7 +155,7 @@ Once you downloaded and installed ITSx, we recommend re-HMMPRESSing the HMM prof
 
 ```sh
 cd $HOME/pipits/ITSx_1.0.11/ITSx_db/HMMs
-rm *.hmm.*
+rm -f *.hmm.*
 echo *.hmm | xargs -n1 hmmpress
 ```
 
@@ -171,14 +171,14 @@ reference training dataset". PIPITS provides a script called
      (4) the location of the RDP Classifier .jar file. 
 
 Note that this step does not need to be repeated until a new set
-of training data is available to retrain the classifier. Run:
+of training data is available to retrain the classifier. This step can take from 3 minutes up to 10 minutes or more. Run:
 
 ```sh
 cd $HOME/pipits/refdb
 pipits_retrain_rdp -f fungalits_UNITE_trainingdata_07042014/UNITE.RDP_04.07.14.rmdup.fasta -t fungalits_UNITE_trainingdata_07042014/UNITE.RDP_04.07.14.tax -j $HOME/pipits/classifier.jar -o unite_retrained
 ```
 
-(To get this working, you may need to install JRE (Java Runtime Environment) especially true if you are running a freshly installed UBUNTU. If so, then install JRE by the following command:)
+(To get this working, you may need to install JRE (Java Runtime Environment) especially true if you are running a freshly installed UBUNTU (No need to do this for Bio-Linux). If so, then install JRE by the following command:)
 
 ```sh
 sudo apt-get install default-jre
@@ -204,9 +204,9 @@ $ hmmpress -h
 Ok, let's test if PIPITS is all setup. Open up the very first original PIPITS which you downloaded. 
 
 ```sh
-cd $HOME/pipits-master
-pipits_getreadpairslist -i test_data
-pipits_prep -i test_data
+cd $HOME/pipits-master/test_data
+pipits_getreadpairslist -i rawdata
+pipits_prep -i rawdata
 pipits_funits -i pipits_prep/prepped.fasta -x ITS2 
 pipits_process -i pipits_funits/ITS.fasta -l readpairslist.txt
 ```
@@ -357,7 +357,7 @@ This is the final process involving clustering and assigning of taxonomy
 to OTUs:
 
 ```sh
-pipits_process -i pipits_funits/ITS.fasta -o out_process
+pipits_process -i pipits_funits/ITS.fasta -o out_process -l readpairslist.txt
 ```
 
 *Note*

@@ -3,3 +3,5 @@ include MANUAL.txt
 include LICENSE
 recursive-include pipits *
 recursive-include test_data *
+recursive-include dist *
+
