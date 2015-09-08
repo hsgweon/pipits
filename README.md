@@ -1,3 +1,11 @@
+Introduction
+------------
+
+- PIPITS is an automated pipeline for analyses of fungal internal transcribed spacer (ITS) sequences from the Illumina sequencing platform. 
+- PIPITS is designed to work best on Bio-Linux (<http://environmentalomics.org/bio-linux/>) and Ubuntu. Unfortunately, it's NOT supported on Windows or a Mac
+- If you are using Bio-Linux, most of the dependencies are already on Bio-Linux. Otherwise, you will have to set up the dependencies yourself. If you are using Ubuntu, then instructions on how to set up dependencies are described below (1.8).
+- If you only have a Windows machine, we recommend installing VirtualBox (free) to run Bio-Linux (<http://environmentalomics.org/bio-linux/>), and then set up dependencies.
+
 Update (7 Sep 2015)
 -------------------
 - PIPITS 1.2.0 released. Now PIPITS supports BIOM 2.x
@@ -48,7 +56,7 @@ See 1.8 below for the detailed instruction on how you do this.
 
 1. **BIOM-FORMAT version 2.x** (<http://biom-format.org/>)
 
-   *Available as a Bio-Linux package, if installing yourself, please use version >= 2.0*
+   *Available as a Bio-Linux package, if installing yourself, please use version >= 2.0.*
 
 2. **FAST-X tools** (<http://hannonlab.cshl.edu/fastx_toolkit>)
 
