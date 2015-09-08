@@ -318,7 +318,7 @@ pipits_getreadpairslist -i illumina_rawdata -o readpairslist.txt
 Once we have the list file, we can begin to process the sequences:
 
 ```sh
-pipits_prep -i illumina_rawdata_directory -o out_prep -l readpairslist.txt
+pipits_prep -i illumina_rawdata_directory -o pipits_prep -l readpairslist.txt
 ```
 
 *Note*
@@ -346,7 +346,7 @@ also mandatory to provide the script with which ITS subregion (i.e. ITS1
 or ITS2) is to be extracted:
 
 ```sh
-pipits_funits -i pipits_prep/prepped.fasta -o out_funits -x ITS2
+pipits_funits -i pipits_prep/prepped.fasta -o pipits_funits -x ITS2
 ```
 
 *Note*
