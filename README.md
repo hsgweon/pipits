@@ -149,9 +149,10 @@ There are two reference datasets to download:
 Now we will make sure executables and modules are visible to the shell by existing in the search PATH. Also we will set some environment variables. Assuming UBUNTU is your system, this can be easily achieved by adding the following lines at the end of your profile file. The name of your profile file will depend on which shell your system is using. You can check which shell your system is using by typing *echo $SHELL* in your terminal. If it says /bin/bash, then your profile file is "~/.bashrc". N.B. UBUNTU's default shell is bash while Bio-Linux's default shell is zsh.
 
 Open "~/.bashrc" or "~/.zshrc" (depending on which shell you are using) with a text editor such as gedit.
-    
-    gedit ~/.zshrc
 
+```sh    
+gedit ~/.zshrc
+```
 
 And then add the following lines at the end of the file:
 
