@@ -34,9 +34,9 @@ Introduction
 
 Download the latest package:
 
-    ```sh
-    wget https://github.com/hsgweon/pipits/archive/master.zip
-    ```
+```sh
+wget https://github.com/hsgweon/pipits/archive/master.zip
+```
 
 Then enter into the created directory and install the package with:
 
