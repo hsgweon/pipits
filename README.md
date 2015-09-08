@@ -299,7 +299,7 @@ a tab-delimited text file for all read-pairs from the raw sequence
 directory:
 
 ```sh
-pipits_getreadpairslist -i illumina_rawdata/ -o readpairslist.txt
+pipits_getreadpairslist -i illumina_rawdata -o readpairslist.txt
 ```
 
 *Note*
