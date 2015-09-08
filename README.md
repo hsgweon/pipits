@@ -40,12 +40,12 @@ wget https://github.com/hsgweon/pipits/archive/master.zip
 
 Then enter into the created directory and install the package with:
 
-    ```sh
-    unzip master.zip
-    cd pipits-master
-    python setup.py clean --all
-    python setup.py install --prefix=$HOME/pipits
-    ```
+```sh
+unzip master.zip
+cd pipits-master
+python setup.py clean --all
+python setup.py install --prefix=$HOME/pipits
+```
 
 This creates a "pipits" directory in your $HOME and we will be installing pipits and some of its dependencies into this directory.
 Of course if you are familiar with Linux, you are free to choose whichever way to suit your skill and taste!
