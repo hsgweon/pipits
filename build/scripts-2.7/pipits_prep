@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/home/hyugwe/anaconda/bin/python
 
 import argparse, sys, os, argparse, shutil, subprocess, textwrap, logging, gzip, bz2
 from pipits import tcolours as tc
@@ -276,7 +276,7 @@ def clean(options):
         shutil.rmtree(tmpDir)
 
     logger.info(tc.OKBLUE + "PIPITS_PREP completed." + tc.ENDC)
-    logger.info(tc.OKYELLOW + "Next Step: PIPITS_PROCESS [ Example: pipits_funits -i " + options.outputdir + "/" + "ITS.fasta -o pipits_funits -x ITS2]" + tc.ENDC)
+    logger.info(tc.OKGREEN + "Next Step: PIPITS_PROCESS [ Example: pipits_funits -i " + options.outputdir + "/" + "prepped.fasta -o pipits_funits -x ITS2]" + tc.ENDC)
     summary_file.close()
 
 

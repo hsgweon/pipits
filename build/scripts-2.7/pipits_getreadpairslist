@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/home/hyugwe/anaconda/bin/python
 
 """ 
 Produces a list of filenames for each read pairs and their library names from demultiplxed illumina fastq.gz files

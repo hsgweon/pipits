@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/home/hyugwe/anaconda/bin/python
 
 import sys, os, argparse, subprocess, shutil, textwrap
 from pipits import runcmd as rc
@@ -13,11 +13,6 @@ __email__ = "hyugwe@ceh.ac.uk"
 
 VSEARCH = "vsearch"
 BIOM = "biom"
-
-
-
-
-
 
 if __name__ == '__main__':
 
@@ -213,7 +208,7 @@ if __name__ == '__main__':
     cmd = " ".join([BIOM, "convert", 
                     "-i", tmpDir + "/otu_table_prelim.txt", 
                     "-o", tmpDir + "/otu_table_prelim.biom", 
-                    "--table-type=\"OTU table\""])
+                    "--table-type=\"OTU table\" --to-json"])
     rc.run_cmd(cmd, logger, options.verbose)
 
 
@@ -248,7 +243,8 @@ if __name__ == '__main__':
                     "--observation-metadata-fp", options.outDir + "/assigned_taxonomy_reformatted_filtered.txt", 
                     "--observation-header", "OTUID,taxonomy,confidence", 
                     "--sc-separated", "taxonomy", 
-                    "--float-fields", "confidence"])
+                    "--float-fields", "confidence", 
+                    "--output-as-json"])
     rc.run_cmd(cmd, logger, options.verbose)
 
 
@@ -260,9 +256,9 @@ if __name__ == '__main__':
         pass
     cmd = " ".join([BIOM, "convert", 
                     "-i", options.outDir + "/otu_table.biom", 
-                    "-o", options.outDir + "/otu_table.txt", 
-                    "--header-key taxonomy",  
-                    "-b"])
+                    "-o", options.outDir + "/otu_table.txt",
+                    "--to-tsv",
+                    "--header-key taxonomy"])
     rc.run_cmd(cmd, logger, options.verbose)
 
 
@@ -278,7 +274,8 @@ if __name__ == '__main__':
     cmd = " ".join([BIOM, "convert",
                     "-i", options.outDir + "/phylotype_table.txt",
                     "-o", options.outDir + "/phylotype_table.biom",
-                    "--table-type=\"OTU table\" --process-obs-metadata=\"taxonomy\""])
+                    "--table-type=\"OTU table\" --process-obs-metadata=\"taxonomy\"",
+                    "--to-json"])
     rc.run_cmd(cmd, logger, options.verbose)
 
 
@@ -342,4 +339,4 @@ if __name__ == '__main__':
 
     # Done!
     logger.info(tc.OKBLUE + "PIPITS_PROCESS ended successfully." + tc.ENDC)
-    logger.info(tc.OKYELLOW + "Resulting files are in \"" + options.outDir + "\" directory" + tc.ENDC)
+    logger.info(tc.OKGREEN + "Resulting files are in \"" + options.outDir + "\" directory" + tc.ENDC)

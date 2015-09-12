@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/home/hyugwe/anaconda/bin/python
 
 from pipits import sgtk_SeqIO as SeqIO
 

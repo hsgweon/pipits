@@ -111,11 +111,11 @@ if __name__ == '__main__':
 
     # Check integrity of the input file
     logger.info("Checking input FASTA for illegal characters")
-    record = SeqIO.FastaParser(options.input)
-    for i in record.keys():
-        description = record[i].description
-        if description.find(" ") != -1:
-            logger.error("Error: \"  \" found in the headers. Please remove \" \" from headers in your FASTA file before proceeding to the next stage.")
+    with open(options.input) as f:
+        for l in f:
+            if l.startswith(">"):
+                if l.find(" ") != -1:
+                    logger.error("Error: \"  \" found in the headers. Please remove \" \" from headers in your FASTA file before proceeding to the next stage.")
 
 
     # For summary 1:
