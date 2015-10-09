@@ -1,4 +1,4 @@
-#!/home/hyugwe/anaconda/bin/python
+#!/usr/bin/python
 
 """ 
 Produces a list of filenames for each read pairs and their library names from demultiplxed illumina fastq.gz files
@@ -14,15 +14,40 @@ __license__ = "GPL"
 __maintainer__ = "Hyun Soon Gweon"
 __email__ = "hyugwe@ceh.ac.uk"
 
+HEADER = "\033[95m"
+BLUE = "\033[94m"
+GREEN = "\033[92m"
+YELLOW = "\033[93m"
+CYAN = "\033[96m"
+RED = "\033[91m"
+ENDC = "\033[0m"
+
 def make_read_pairs_list(options):
 
-    print("Generating a read-pair list file from the input directory...")
+    print(GREEN + "Generating a read-pair list file from the input directory..." + ENDC)
 
+    samples = []
     fastqs = []
     for file in os.listdir(options.inputdir):
         if file.endswith(".fastq.gz") or file.endswith(".fastq.bz2") or file.endswith(".fastq"):
+            samples.append(file.split("_")[0])
+            samples = list(set(samples))
             fastqs.append(file)
+    
+    # Check files
+    offendingSampleIDs = []
+    for sample in samples:
+        if len([s for s in fastqs if sample in s]) != 2:
+            offendingSampleIDs.append(sample)
 
+    if len(offendingSampleIDs) != 0:
+        print(RED + "There are missing pair(s) in the Illumina sequences. Check your files and labelling before continuing." + ENDC)
+        print(RED + "Offending sample ID(s): " + ", ".join(offendingSampleIDs) + ENDC)
+        print(RED + "Exiting..." + ENDC)
+        exit(0)
+
+    
+    # All passed
     if len(fastqs) % 2 != 0:
         logger.error("There are missing pair(s) in the Illumina sequences. Check your files and labelling")
         exit(1)

@@ -1,4 +1,4 @@
-#!/home/hyugwe/anaconda/bin/python
+#!/usr/bin/python
 
 import argparse, sys, os, argparse, shutil, subprocess, textwrap, logging, gzip, bz2
 from pipits import tcolours as tc

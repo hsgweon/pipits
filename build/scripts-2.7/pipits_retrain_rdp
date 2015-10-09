@@ -1,4 +1,4 @@
-#!/home/hyugwe/anaconda/bin/python
+#!/usr/bin/python
 
 import subprocess, textwrap, os
 import argparse
