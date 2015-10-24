@@ -169,14 +169,19 @@ if __name__ == '__main__':
     def renumberOTUS():
         handle_in = open(tmpDir + "/input_nr_otus_nonchimeras.fasta", "rU")
         handle_out = open(tmpDir + "/input_nr_otus_nonchimeras_relabelled.fasta", "w")
+
+        counter = 1
+        
         for line in handle_in:
             if line.startswith(">"):
                 newlabel = line[1:].split(";")[0]
-                handle_out.write(">" + newlabel + "\n")
+                handle_out.write(">OTU" + str(counter) + "\n")
+                counter += 1
             else:
                 handle_out.write(line.rstrip() + "\n")
         handle_in.close()
         handle_out.close()
+
     renumberOTUS()
 
 
