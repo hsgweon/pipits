@@ -31,14 +31,14 @@ def make_read_pairs_list(options):
     for file in os.listdir(options.inputdir):
         if file.endswith(".fastq.gz") or file.endswith(".fastq.bz2") or file.endswith(".fastq"):
             samples.append(file.split("_")[0])
-            samples = list(set(samples))
             fastqs.append(file)
-    
-    # Check files
+
+    samples_unique = list(set(samples))
+
     offendingSampleIDs = []
-    for sample in samples:
-        if len([s for s in fastqs if sample in s]) != 2:
-            offendingSampleIDs.append(sample)
+    for s in list(set(samples)):
+        if samples.count(s) != 2:
+            offendingSampleIDs.append(s)
 
     if len(offendingSampleIDs) != 0:
         print(RED + "There are missing pair(s) in the Illumina sequences. Check your files and labelling before continuing." + ENDC)
