@@ -6,6 +6,7 @@ bin/pipits_dereplicate_fasta
 bin/pipits_fasta_filter_by_length
 bin/pipits_funits
 bin/pipits_getreadpairslist
+bin/pipits_getsamplelistfromfasta.py
 bin/pipits_inflate_fasta
 bin/pipits_phylotype_biom
 bin/pipits_prep
@@ -22,6 +23,7 @@ pipits/concatenate_fasta.py
 pipits/runcmd.py
 pipits/sgtk_SeqIO.py
 pipits/tcolours.py
+test_data/.gitkeep
 test_data/rawdata/A01B_S88_L001_R1_001.fastq
 test_data/rawdata/A01B_S88_L001_R2_001.fastq
 test_data/rawdata/A02B_S89_L001_R1_001.fastq
