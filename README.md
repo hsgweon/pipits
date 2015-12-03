@@ -35,13 +35,13 @@ Introduction
 Download the latest package:
 
 ```sh
-git clone https://github.com/hsgweon/pipits.git
+git clone https://github.com/hsgweon/pipits.git pipits_git
 ```
 
 Then enter into the created directory and install the package with:
 
 ```sh
-cd pipits
+cd pipits_git
 python setup.py clean --all
 python setup.py install --prefix=$HOME/pipits
 ```
