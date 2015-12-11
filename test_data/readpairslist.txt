@@ -1,5 +1,0 @@
-# Lines beginning with "#" is ignored. 
-# SampleID	Filename for forward reads	Filename for reverse reads
-A01B	A01B_S88_L001_R1_001.fastq	A01B_S88_L001_R2_001.fastq
-A02B	A02B_S89_L001_R1_001.fastq	A02B_S89_L001_R2_001.fastq
-A03B	A03B_S90_L001_R1_001.fastq	A03B_S90_L001_R2_001.fastq
