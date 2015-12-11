@@ -1,8 +1,9 @@
 Update (11 Dec 2015) - PIPITS 1.3.0
 -----------------------------------
 
-- MAJOR: Now we provide retrained UNITE fungal data formatted for PIPITS, so there is no need to retrain UNITE data which used to require a reasonably high RAM (around 14GB). As of 11 December, it is the most current data from UNITE (Version: 2015-08-01). We plan to update this data for new releases.
+- Major update: We now provide a retrained UNITE fungal dataset which has been formatted for PIPITS. This means there is no need to retrain UNITE data saving some time and resources. The dataset is the recent UNITE release (Version: 2015-08-01) as of 11 December 2015. We plan to update the dataset as and when needed.
 
+- For those wishing to update the older PIPITS, simply follow the suggested command-lines like you did the first time. 
 
 Update (7 Sep 2015) - PIPITS 1.2.0
 ----------------------------------
