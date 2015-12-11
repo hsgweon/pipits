@@ -3,7 +3,7 @@ Update (11 Dec 2015) - PIPITS 1.3.0
 
 - Major update: We now provide a retrained UNITE fungal dataset which has been formatted for PIPITS. This means there is no need to retrain UNITE data saving some time and resources. The dataset is the recent UNITE release (Version: 2015-08-01) as of 11 December 2015. We plan to update the dataset as and when needed.
 
-- For those wishing to update the older PIPITS, simply follow the suggested command-lines like you did the first time. 
+- If you are wishing to update an older PIPITS version, simply follow the suggested command-lines like you did the first time. We advise you delete $HOME/pipits folder and start from the beginning as if it's the first time. Shouldn't take too long!
 
 Update (7 Sep 2015) - PIPITS 1.2.0
 ----------------------------------
