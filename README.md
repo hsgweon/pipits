@@ -1,6 +1,12 @@
-Update (7 Sep 2015)
--------------------
-- PIPITS 1.2.0 released. Now PIPITS supports BIOM 2.x
+Update (11 Dec 2015) - PIPITS 1.3.0
+-----------------------------------
+
+- MAJOR: Now we provide retrained UNITE fungal data formatted for PIPITS, so there is no need to retrain UNITE data which used to require a reasonably high RAM (around 14GB). As of 11 December, it is the most current data from UNITE (Version: 2015-08-01). We plan to update this data for new releases.
+
+
+Update (7 Sep 2015) - PIPITS 1.2.0
+----------------------------------
+- PIPITS supports BIOM 2.x
 
 - Before start using PIPITS, it is important to note that PIPITS works on
 Illumina sequences which have already been demultiplexed (i.e. each sample is already divided into different files)
@@ -35,10 +41,11 @@ Introduction
 Download the latest package:
 
 ```sh
+cd ~
 git clone https://github.com/hsgweon/pipits.git pipits_git
 ```
 
-Then enter into the created directory and install the package with:
+Then enter into the created directory and install the package with (ignore errors/warnings):
 
 ```sh
 cd pipits_git
@@ -47,7 +54,7 @@ python setup.py install --prefix=$HOME/pipits
 ```
 
 This creates a "pipits" directory in your $HOME and we will be installing pipits and some of its dependencies into this directory.
-Of course if you are familiar with Linux, you are free to choose whichever way to suit your skill and taste!
+Of course if you are familiar with Linux, you are free to choose whichever method to suit your skill and taste!
 
 
 1.2 Dependencies
@@ -112,33 +119,31 @@ See 1.8 below for the detailed instruction on how you do this.
 
 There are two reference datasets to download:
 
-1. **UNITE fungal ITS reference training dataset**
+1. **UNITE fungal ITS reference trained dataset**
 
-   Download the most recent version of UNITE training data from their sourceforge webpage (<http://sourceforge.net/projects/rdp-classifier/files/RDP_Classifier_TrainingData>), save it to an appropriate directory (e.g. $HOME/pipits/refdb) and extract the file.
+   We now provide trained UNITE fungal data (processed and trained for PIPITS).
+   Please download this data (<http://sourceforge.net/projects/pipits/files/UNITE_retrained_01.08.2015.tar.gz>), save and extract it to an appropriate directory (e.g. $HOME/pipits/refdb).
 
-   For example:
+   Suggestion:
     
    ```sh
    mkdir -p $HOME/pipits/refdb
    cd $HOME/pipits/refdb
-   wget http://sourceforge.net/projects/rdp-classifier/files/RDP_Classifier_TrainingData/fungalits_UNITE_trainingdata_07042014.zip
-   unzip fungalits_UNITE_trainingdata_07042014.zip
+   wget http://sourceforge.net/projects/pipits/files/UNITE_retrained_01.08.2015.tar.gz
+   tar xvfz UNITE_retrained_01.08.2015.tar.gz
    ```
-
-   The extracted directory contains UNITE training files namely (a) FASTA file and (b) taxonomy file with lineage. We will use these files for retraining RDP Classifier a moment later.
-
 
 2. **UNITE UCHIME reference dataset**
 
    We also need to download UNITE UCHIME reference dataset for chimera removal. Download it from UNITE repository (<http://unite.ut.ee/repository.php>).
 
-   For example:
+   Suggestion:
 
    ```sh
    mkdir -p $HOME/pipits/refdb
    cd $HOME/pipits/refdb
-   wget https://unite.ut.ee/sh_files/uchime_reference_dataset_26.07.2014.zip
-   unzip uchime_reference_dataset_26.07.2014.zip
+   wget https://unite.ut.ee/sh_files/uchime_reference_dataset_11.03.2015.zip
+   unzip uchime_reference_dataset_11.03.2015.zip
    ```
 
 
@@ -149,16 +154,19 @@ Now we will make sure executables and modules are visible to the shell by existi
 
 Open "~/.bashrc" or "~/.zshrc" (depending on which shell you are using) with a text editor such as gedit.
 
+
+
 ```sh    
-gedit ~/.zshrc
+gedit ~/.zshrc 
+(or gedit ~/.bashrc)
 ```
 
 And then add the following lines at the end of the file:
 
     export PATH=$HOME/pipits/bin:$PATH
     export PYTHONPATH=$HOME/pipits/lib/python2.7/site-packages:$PYTHONPATH
-    export PIPITS_UNITE_REFERENCE_DATA_CHIMERA=$HOME/pipits/refdb/final_release_version/uchime_sh_refs_dynamic_original_985_03.07.2014.fasta
-    export PIPITS_UNITE_RETRAINED_DIR=$HOME/pipits/refdb/unite_retrained
+    export PIPITS_UNITE_REFERENCE_DATA_CHIMERA=$HOME/pipits/refdb/uchime_sh_refs_dynamic_original_985_11.03.2015.fasta
+    export PIPITS_UNITE_RETRAINED_DIR=$HOME/pipits/refdb/UNITE_retrained
     export PIPITS_RDP_CLASSIFIER_JAR=$HOME/pipits/classifier.jar
 
 Then type (or alternatively close and re-open the terminal):
@@ -178,33 +186,7 @@ rm -f *.hmm.*
 echo *.hmm | xargs -n1 hmmpress
 ```
 
-1.6 Retrain RDP Classifier
---------------------------
-
-Lastly we need to re-train RDP Classifier with the downloaded "UNITE fungal ITS
-reference training dataset". PIPITS provides a script called
-"retrain_rdp" for this task. To run the command, you need to specify:
-
-     (1, 2) the files from "UNITE fungal ITS reference training dataset"; 
-     (3) output directory name; and
-     (4) the location of the RDP Classifier .jar file. 
-
-Note that this step does not need to be repeated until a new set
-of training data is available to retrain the classifier. This step can take from 3 minutes up to 10 minutes or more. Run:
-
-```sh
-cd $HOME/pipits/refdb
-pipits_retrain_rdp -f fungalits_UNITE_trainingdata_07042014/UNITE.RDP_04.07.14.rmdup.fasta -t fungalits_UNITE_trainingdata_07042014/UNITE.RDP_04.07.14.tax -j $HOME/pipits/classifier.jar -o unite_retrained
-```
-
-(To get this working, you may need to install JRE (Java Runtime Environment) especially true if you are running a freshly installed UBUNTU (No need to do this for Bio-Linux). If so, then install JRE by the following command:)
-
-```sh
-sudo apt-get install default-jre
-```
-
-
-1.7 Test Dependencies and PIPITS
+1.6 Test Dependencies and PIPITS
 --------------------------------
 
 When you have successfully installed these, check if they are *indeed* successfully installed by running each applications. If you get an error,
@@ -223,7 +205,7 @@ $ hmmpress -h
 Ok, let's test if PIPITS is all setup. Open up the very first original PIPITS which you downloaded. 
 
 ```sh
-cd $HOME/pipits-master/test_data
+cd $HOME/pipits_git/test_data
 pipits_getreadpairslist -i rawdata
 pipits_prep -i rawdata
 pipits_funits -i pipits_prep/prepped.fasta -x ITS2 
