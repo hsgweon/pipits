@@ -107,9 +107,9 @@ See 1.8 below for the detailed instruction on how you do this.
    
     ```sh 
     cd $HOME/pipits
-    wget http://sourceforge.net/projects/rdp-classifier/files/rdp-classifier/rdp_classifier_2.10.2.zip
-    unzip rdp_classifier_2.10.2.zip
-    ln -s rdp_classifier_2.10.2/dist/classifier.jar ./classifier.jar
+    wget http://sourceforge.net/projects/rdp-classifier/files/rdp-classifier/rdp_classifier_2.11.zip
+    unzip rdp_classifier_2.11.zip
+    ln -s rdp_classifier_2.11/dist/classifier.jar ./classifier.jar
     ```
 
 7. **HMMER3** (<http://hmmer.janelia.org/download.html>)
