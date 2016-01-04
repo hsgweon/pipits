@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 
 ############################################################
 # Argument Options
@@ -68,6 +68,9 @@ for line in handle_input:
         else:
             break
 
+    if len(taxonomy_conf_filtered) == 0:
+        taxonomy_filtered.append("Unassignable")
+        taxonomy_conf_filtered.append(1.0)
 
     # print(";".join(taxonomy_filtered))
     # print(";".join(map(str, taxonomy_conf_filtered)))
