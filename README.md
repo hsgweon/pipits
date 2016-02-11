@@ -1,28 +1,3 @@
-Update (11 Dec 2015) - PIPITS 1.3.0
------------------------------------
-
-- Major update: We now provide a retrained UNITE fungal dataset which has been formatted for PIPITS. This means there is no need to retrain UNITE data saving some time and resources. The dataset is the recent UNITE release (Version: 2015-08-01) as of 11 December 2015. We plan to update the dataset as and when needed.
-
-- If you wish to update the older version of PIPITS, simply follow the suggested command-lines like you did the first time. We advise you delete $HOME/pipits folder and start from the beginning as if it's the first time. Shouldn't take too long!
-
-
-Update (7 Sep 2015) - PIPITS 1.2.0
-----------------------------------
-
-- PIPITS supports BIOM 2.x
-
-- Before start using PIPITS, it is important to note that PIPITS works on
-Illumina sequences which have already been demultiplexed (i.e. each sample is already divided into different files)
-Although it's most likely that your sequencing certre provided you with demultiplxed
-FASTQ files, if this isn't the case, we recommend deML (https://bioinf.eva.mpg.de/deml)
-to demultiplex the files before using PIPITS.
-
-- Also, do note that PIPITS has gone through some substantial changes since its publication,
-so the commands from the paper are slightly different in the current version, so please refer to this documentation rather than
-typing commands in the paper!
-
-
-
 Introduction
 ============
 
