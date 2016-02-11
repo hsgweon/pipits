@@ -55,7 +55,12 @@ if __name__ == '__main__':
         metavar = "<TXT>",
         help = "[REQUIRED] Sample list file. Generated with PIPITS_GETREADPAIRSLIST prior to PIPITS_PREP",
         required = True)
-
+    parser.add_argument(
+        "--includeuniqueseqs",
+        action = "store_true",
+        dest = "includeuniqueseqs",
+        help = "[REQUIRED] PIPITS by default removes unique sequences before clustering. This means you wouldn't have any singletons. If you want singletons, then choose this option. It can take much longer to process.",
+        required = False)
     # Generic
     parser.add_argument(
         "-r",
@@ -144,9 +149,12 @@ if __name__ == '__main__':
         
     # Derep
     logger.info("Dereplicating and removing unique sequences prior to picking OTUs")
+    minuniquesize = 2
+    if options.includeuniqueseqs:
+        minuniquesize = 1
     cmd = " ".join([VSEARCH, "--derep_fulllength", options.input, 
                     "--output", tmpDir + "/input_nr.fasta", 
-                    "--minuniquesize 2", 
+                    "--minuniquesize", str(minuniquesize), 
                     "--sizeout",
                     "--threads", options.threads])
     rc.run_cmd_VSEARCH(cmd, logger, options.verbose)
