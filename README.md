@@ -16,17 +16,18 @@ Introduction
 1.1 Download and install
 ------------------------
 
-Download the latest package:
+Download the latest package from github release (<https://github.com/hsgweon/pipits/releases>) or simply copy and paste the following:
 
 ```sh
 cd ~
-git clone https://github.com/hsgweon/pipits.git pipits_git
+wget https://github.com/hsgweon/pipits/releases/download/v1.3.1/pipits-1.3.1.tar.gz
+tar xvfz pipits-1.3.1.tar.gz
 ```
 
 Then enter into the created directory and install the package with (ignore errors/warnings):
 
 ```sh
-cd pipits_git
+cd pipits-1.3.1.tar.gz
 python setup.py clean --all
 python setup.py install --prefix=$HOME/pipits
 ```
