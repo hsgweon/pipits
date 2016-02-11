@@ -20,7 +20,7 @@ Download the latest package from github release (<https://github.com/hsgweon/pip
 
 ```sh
 cd ~
-wget https://github.com/hsgweon/pipits/releases/download/v1.3.1/pipits-1.3.1.tar.gz
+wget https://github.com/hsgweon/pipits/releases/download/1.3.1/pipits-1.3.1.tar.gz
 tar xvfz pipits-1.3.1.tar.gz
 ```
 
@@ -181,10 +181,10 @@ $ ls $HOME/pipits/classifier.jar
 $ hmmpress -h
 ```
 
-Ok, let's test if PIPITS is all setup. Open up the very first original PIPITS which you downloaded. Please change vX.X.X to the version you downloaded.
+Ok, let's test if PIPITS is all setup. Open up the very first original PIPITS which you downloaded. Please change X.X.X in the command below to the version of PIPITS you downloaded.
 
 ```sh
-cd $HOME/pipits_vX.X.X/test_data
+cd $HOME/pipits_X.X.X/test_data
 pipits_getreadpairslist -i rawdata
 pipits_prep -i rawdata
 pipits_funits -i pipits_prep/prepped.fasta -x ITS2 
