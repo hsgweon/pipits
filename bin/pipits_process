@@ -86,6 +86,20 @@ if __name__ == '__main__':
         print("Error: Input file doesn't exist")
         exit(1)
 
+    if not os.path.exists(options.sortedlist):
+        print("Error: Sample list file doesn't exist")
+        exit(1)
+
+    # Perhaps before we do anything, check for duplicate entries in the Sample list file
+    sampleIDs = []
+    for line in open(options.sortedlist):
+        if line[0] != "#":
+            sampleIDs.append(line.split("\t")[0].rstrip())
+    duplicateIDs = list(set([x for x in sampleIDs if sampleIDs.count(x) > 1]))
+    if len(duplicateIDs) > 0:
+        print("Error: You have a duplicate id in your Sample list file. Offending id: " + ",".join(duplicateIDs))
+        exit(1)
+
 
     EXE_DIR = os.path.dirname(os.path.realpath(__file__))
     if not os.path.exists(options.outDir):
