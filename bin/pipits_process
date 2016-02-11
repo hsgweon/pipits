@@ -353,15 +353,15 @@ if __name__ == '__main__':
 
     outfile = open(options.outDir + "/summary_pipits_process.txt", "w")
 
-    outfile.write("No.of reads after singletons and chimera removal: " + str(int(otu_reads_count)) + "\n")
-    outfile.write("Number of OTUs:                                   " + str(otu_count) + "\n")
-    outfile.write("Number of phylotypes:                             " + str(phylo_count) + "\n")
-    outfile.write("Number of samples:                                " + str(otu_sample_count) + "\n")
+    outfile.write("No.of reads used to generate OTU table: " + str(int(otu_reads_count)) + "\n")
+    outfile.write("Number of OTUs:                         " + str(otu_count) + "\n")
+    outfile.write("Number of phylotypes:                   " + str(phylo_count) + "\n")
+    outfile.write("Number of samples:                      " + str(otu_sample_count) + "\n")
 
-    logger.info(tc.RED + "\tNumber of reads after singletons and chimera removal: " + str(int(otu_reads_count)) + tc.ENDC)
-    logger.info(tc.RED + "\tNumber of OTUs:                                       " + str(otu_count) + tc.ENDC)
-    logger.info(tc.RED + "\tNumber of phylotypes:                                 " + str(phylo_count) + tc.ENDC)
-    logger.info(tc.RED + "\tNumber of samples:                                    " + str(otu_sample_count) + tc.ENDC)
+    logger.info(tc.RED + "\tNumber of reads used to generate OTU table: " + str(int(otu_reads_count)) + tc.ENDC)
+    logger.info(tc.RED + "\tNumber of OTUs:                             " + str(otu_count) + tc.ENDC)
+    logger.info(tc.RED + "\tNumber of phylotypes:                       " + str(phylo_count) + tc.ENDC)
+    logger.info(tc.RED + "\tNumber of samples:                          " + str(otu_sample_count) + tc.ENDC)
 
 
     # Done!
