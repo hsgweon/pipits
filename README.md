@@ -27,7 +27,7 @@ tar xvfz pipits-1.3.1.tar.gz
 Then enter into the created directory and install the package with (ignore errors/warnings):
 
 ```sh
-cd pipits-1.3.1.tar.gz
+cd pipits-1.3.1
 python setup.py clean --all
 python setup.py install --prefix=$HOME/pipits
 ```
