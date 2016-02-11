@@ -181,10 +181,10 @@ $ ls $HOME/pipits/classifier.jar
 $ hmmpress -h
 ```
 
-Ok, let's test if PIPITS is all setup. Open up the very first original PIPITS which you downloaded. 
+Ok, let's test if PIPITS is all setup. Open up the very first original PIPITS which you downloaded. Please change vX.X.X to the version you downloaded.
 
 ```sh
-cd $HOME/pipits_git/test_data
+cd $HOME/pipits_vX.X.X/test_data
 pipits_getreadpairslist -i rawdata
 pipits_prep -i rawdata
 pipits_funits -i pipits_prep/prepped.fasta -x ITS2 
