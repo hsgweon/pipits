@@ -266,7 +266,6 @@ if __name__ == '__main__':
                     "-t $PIPITS_UNITE_RETRAINED_DIR" + "/rRNAClassifier.properties", 
                     "-o", options.outDir + "/assigned_taxonomy.txt", 
                     tmpDir + "/input_nr_otus_nonchimeras_relabelled.fasta"])
-    print(cmd)
     rc.run_cmd(cmd, logger, options.verbose)
 
 
