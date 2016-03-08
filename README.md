@@ -20,14 +20,14 @@ Download the latest package from github release (<https://github.com/hsgweon/pip
 
 ```sh
 cd ~
-wget https://github.com/hsgweon/pipits/releases/download/1.3.1/pipits-1.3.1.tar.gz
-tar xvfz pipits-1.3.1.tar.gz
+wget https://github.com/hsgweon/pipits/releases/download/1.3.2/pipits-1.3.2.tar.gz
+tar xvfz pipits-1.3.2.tar.gz
 ```
 
 Then enter into the created directory and install the package with (ignore errors/warnings):
 
 ```sh
-cd pipits-1.3.1
+cd pipits-1.3.2
 python setup.py clean --all
 python setup.py install --prefix=$HOME/pipits
 ```
@@ -69,7 +69,6 @@ See 1.8 below for the detailed instruction on how you do this.
     ln -s $HOME/pipits/ITSx_1.0.11/ITSx bin/ITSx
     ln -s $HOME/pipits/ITSx_1.0.11/ITSx_db bin/ITSx_db
     ```
-
 5. **PEAR** (<http://sco.h-its.org/exelixis/web/software/pear>) - N.B. PEAR prohibits commercial use of the code. See its webpage for detail.
  
     ```sh

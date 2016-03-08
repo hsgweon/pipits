@@ -82,7 +82,20 @@ if __name__ == '__main__':
         help = "Number of Threads [default: 1]",
         default = "1",
         required = False)
-
+    parser.add_argument(
+        "--Xms",
+        action = "store",
+        dest = "Xms",
+        metavar = "<INT>",
+        help = "The minimum size, in bytes, of the memory allocation pool for JVM",
+        required = False)
+    parser.add_argument(
+        "--Xmx",
+        action = "store",
+        dest = "Xmx",
+        metavar = "<INT>",
+        help = "The maximum size, in bytes, of the memory allocation pool for JVM",
+        required = False)
     options = parser.parse_args()
 
 
@@ -241,11 +254,21 @@ if __name__ == '__main__':
 
     # Classifying OTUs
     # http://sourceforge.net/projects/rdp-classifier/files/RDP_Classifier_TrainingData/ 
+    JVM_memory_option = ""
+    if options.Xms:
+        JVM_memory_option = JVM_memory_option + "-Xms" + str(options.Xms) + " "
+
+    if options.Xmx:
+        JVM_memory_option = JVM_memory_option + "-Xmx" + str(options.Xmx) + " "
+    
+    print(JVM_memory_option)
+
     logger.info("Assigning taxonomy [RDP Classifier]")
-    cmd = " ".join(["java", "-jar $PIPITS_RDP_CLASSIFIER_JAR classify", 
+    cmd = " ".join(["java", JVM_memory_option, "-jar $PIPITS_RDP_CLASSIFIER_JAR classify", 
                     "-t $PIPITS_UNITE_RETRAINED_DIR" + "/rRNAClassifier.properties", 
                     "-o", options.outDir + "/assigned_taxonomy.txt", 
                     tmpDir + "/input_nr_otus_nonchimeras_relabelled.fasta"])
+    print(cmd)
     rc.run_cmd(cmd, logger, options.verbose)
 
 
@@ -353,15 +376,15 @@ if __name__ == '__main__':
 
     outfile = open(options.outDir + "/summary_pipits_process.txt", "w")
 
-    outfile.write("No.of reads after singletons and chimera removal: " + str(int(otu_reads_count)) + "\n")
-    outfile.write("Number of OTUs:                                   " + str(otu_count) + "\n")
-    outfile.write("Number of phylotypes:                             " + str(phylo_count) + "\n")
-    outfile.write("Number of samples:                                " + str(otu_sample_count) + "\n")
+    outfile.write("No.of reads used to generate OTU table: " + str(int(otu_reads_count)) + "\n")
+    outfile.write("Number of OTUs:                         " + str(otu_count) + "\n")
+    outfile.write("Number of phylotypes:                   " + str(phylo_count) + "\n")
+    outfile.write("Number of samples:                      " + str(otu_sample_count) + "\n")
 
-    logger.info(tc.RED + "\tNumber of reads after singletons and chimera removal: " + str(int(otu_reads_count)) + tc.ENDC)
-    logger.info(tc.RED + "\tNumber of OTUs:                                       " + str(otu_count) + tc.ENDC)
-    logger.info(tc.RED + "\tNumber of phylotypes:                                 " + str(phylo_count) + tc.ENDC)
-    logger.info(tc.RED + "\tNumber of samples:                                    " + str(otu_sample_count) + tc.ENDC)
+    logger.info(tc.RED + "\tNumber of reads used to generate OTU table: " + str(int(otu_reads_count)) + tc.ENDC)
+    logger.info(tc.RED + "\tNumber of OTUs:                             " + str(otu_count) + tc.ENDC)
+    logger.info(tc.RED + "\tNumber of phylotypes:                       " + str(phylo_count) + tc.ENDC)
+    logger.info(tc.RED + "\tNumber of samples:                          " + str(otu_sample_count) + tc.ENDC)
 
 
     # Done!

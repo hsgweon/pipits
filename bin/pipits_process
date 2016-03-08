@@ -82,7 +82,20 @@ if __name__ == '__main__':
         help = "Number of Threads [default: 1]",
         default = "1",
         required = False)
-
+    parser.add_argument(
+        "--Xms",
+        action = "store",
+        dest = "Xms",
+        metavar = "<INT>",
+        help = "The minimum size, in bytes, of the memory allocation pool for JVM",
+        required = False)
+    parser.add_argument(
+        "--Xmx",
+        action = "store",
+        dest = "Xmx",
+        metavar = "<INT>",
+        help = "The maximum size, in bytes, of the memory allocation pool for JVM",
+        required = False)
     options = parser.parse_args()
 
 
@@ -241,11 +254,19 @@ if __name__ == '__main__':
 
     # Classifying OTUs
     # http://sourceforge.net/projects/rdp-classifier/files/RDP_Classifier_TrainingData/ 
+    JVM_memory_option = ""
+    if options.Xms:
+        JVM_memory_option = JVM_memory_option + "-Xms" + str(options.Xms) + " "
+
+    if options.Xmx:
+        JVM_memory_option = JVM_memory_option + "-Xmx" + str(options.Xmx) + " "
+    
     logger.info("Assigning taxonomy [RDP Classifier]")
-    cmd = " ".join(["java", "-jar $PIPITS_RDP_CLASSIFIER_JAR classify", 
+    cmd = " ".join(["java", JVM_memory_option, "-jar $PIPITS_RDP_CLASSIFIER_JAR classify", 
                     "-t $PIPITS_UNITE_RETRAINED_DIR" + "/rRNAClassifier.properties", 
                     "-o", options.outDir + "/assigned_taxonomy.txt", 
                     tmpDir + "/input_nr_otus_nonchimeras_relabelled.fasta"])
+    print(cmd)
     rc.run_cmd(cmd, logger, options.verbose)
 
 
