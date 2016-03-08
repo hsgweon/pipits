@@ -13,6 +13,7 @@ bin/pipits_prep
 bin/pipits_process
 bin/pipits_reformatAssignedTaxonomy
 bin/pipits_uc2otutable
+dist/pipits-1.3.2.tar.gz
 pipits/__init__.py
 pipits/concatenate_fasta.py
 pipits/runcmd.py
