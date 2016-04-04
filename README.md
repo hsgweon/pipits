@@ -183,11 +183,11 @@ $ hmmpress -h
 Ok, let's test if PIPITS is all setup. Open up the very first original PIPITS which you downloaded. Please change X.X.X in the command below to the version of PIPITS you downloaded.
 
 ```sh
-cd $HOME/pipits_X.X.X/test_data
+cd $HOME/pipits-X.X.X/test_data
 pipits_getreadpairslist -i rawdata
 pipits_prep -i rawdata
 pipits_funits -i pipits_prep/prepped.fasta -x ITS2 
-pipits_process -i pipits_funits/ITS.fasta -l readpairslist.txt
+pipits_process -i pipits_funits/ITS.fasta
 ```
 
 Ensure everything works and you don't get an error message.
@@ -329,6 +329,7 @@ pipits_funits -i pipits_prep/prepped.fasta -o pipits_funits -x ITS2
     join them. For this reason the program supports only a single
     subregion extraction mode
 
+
 2.3 PIPITS PROCESS
 ------------------
 
@@ -336,7 +337,7 @@ This is the final process involving clustering and assigning of taxonomy
 to OTUs:
 
 ```sh
-pipits_process -i pipits_funits/ITS.fasta -o out_process -l readpairslist.txt
+pipits_process -i pipits_funits/ITS.fasta -o out_process
 ```
 
 *Note*
@@ -361,7 +362,6 @@ pipits_process -i pipits_funits/ITS.fasta -o out_process -l readpairslist.txt
         to species.
     2.  “phylotype abundance table”, an OTU is defined as a cluster of
         sequences binned into the same taxonomic assignments.
-
 
 
 4. Options
