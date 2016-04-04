@@ -1,7 +1,7 @@
 from distutils.core import setup
 import os
 
-__version__ = os.environ.get("VERSION", "1.3.2")
+__version__ = os.environ.get("VERSION", "1.3.3")
 
 setup(name = "pipits",
       version = __version__,
@@ -11,7 +11,7 @@ setup(name = "pipits",
       url = "http://sourceforge.net/projects/pipits",
       packages = ["pipits"],
       scripts = ["bin/pipits_getreadpairslist",
-                 "bin/pipits_getsamplelistfromfasta.py",
+                 "bin/pipits_getsamplelistfromfasta",
                  "bin/pipits_prep", 
                  "bin/pipits_funits", 
                  "bin/pipits_dereplicate_fasta", 

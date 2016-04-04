@@ -20,14 +20,14 @@ Download the latest package from github release (<https://github.com/hsgweon/pip
 
 ```sh
 cd ~
-wget https://github.com/hsgweon/pipits/releases/download/1.3.2/pipits-1.3.2.tar.gz
-tar xvfz pipits-1.3.2.tar.gz
+wget https://github.com/hsgweon/pipits/releases/download/1.3.3/pipits-1.3.3.tar.gz
+tar xvfz pipits-1.3.3.tar.gz
 ```
 
 Then enter into the created directory and install the package with (ignore errors/warnings):
 
 ```sh
-cd pipits-1.3.2
+cd pipits-1.3.3
 python setup.py clean --all
 python setup.py install --prefix=$HOME/pipits
 ```
@@ -100,15 +100,15 @@ There are two reference datasets to download:
 1. **UNITE fungal ITS reference trained dataset**
 
    We now provide trained UNITE fungal data (processed and trained for PIPITS).
-   Please download this data (<http://sourceforge.net/projects/pipits/files/UNITE_retrained_01.08.2015.tar.gz>), save and extract it to an appropriate directory (e.g. $HOME/pipits/refdb).
+   Please download this data (<http://sourceforge.net/projects/pipits/files/UNITE_retrained_31.01.2016.tar.gz>), save and extract it to an appropriate directory (e.g. $HOME/pipits/refdb).
 
    Suggestion:
     
    ```sh
    mkdir -p $HOME/pipits/refdb
    cd $HOME/pipits/refdb
-   wget http://sourceforge.net/projects/pipits/files/UNITE_retrained_01.08.2015.tar.gz
-   tar xvfz UNITE_retrained_01.08.2015.tar.gz
+   wget http://sourceforge.net/projects/pipits/files/UNITE_retrained_31.01.2016.tar.gz
+   tar xvfz UNITE_retrained_31.01.2016.tar.gz
    ```
 
 2. **UNITE UCHIME reference dataset**

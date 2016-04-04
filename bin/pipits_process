@@ -54,7 +54,7 @@ if __name__ == '__main__':
         dest = "sortedlist",
         metavar = "<TXT>",
         help = "[REQUIRED] Sample list file. Generated with PIPITS_GETREADPAIRSLIST prior to PIPITS_PREP",
-        required = True)
+        required = False)
     parser.add_argument(
         "--includeuniqueseqs",
         action = "store_true",
@@ -99,26 +99,6 @@ if __name__ == '__main__':
     options = parser.parse_args()
 
 
-    # Check file exists
-    if not os.path.exists(options.input):
-        print("Error: Input file doesn't exist")
-        exit(1)
-
-    if not os.path.exists(options.sortedlist):
-        print("Error: Sample list file doesn't exist")
-        exit(1)
-
-    # Perhaps before we do anything, check for duplicate entries in the Sample list file
-    sampleIDs = []
-    for line in open(options.sortedlist):
-        if line[0] != "#":
-            sampleIDs.append(line.split("\t")[0].rstrip())
-    duplicateIDs = list(set([x for x in sampleIDs if sampleIDs.count(x) > 1]))
-    if len(duplicateIDs) > 0:
-        print("Error: You have a duplicate id in your Sample list file. Offending id: " + ",".join(duplicateIDs))
-        exit(1)
-
-
     EXE_DIR = os.path.dirname(os.path.realpath(__file__))
     if not os.path.exists(options.outDir):
         os.mkdir(options.outDir)
@@ -155,10 +135,51 @@ if __name__ == '__main__':
     # Start
     logger.info(tc.OKBLUE + "PIPITS PROCESS started" + tc.ENDC)
 
-    # Check if the file is empty
+    # Check for input file
+    if not os.path.exists(options.input):
+        logger.error("Error: Input file doesn't exist")
+        exit(1)
+
     if os.stat(options.input).st_size == 0:
         logger.error("Input file is empty!")
         exit(0)
+
+
+    # Sample ids
+    if not options.sortedlist:
+
+        # Generating a sample list
+        logger.info("Generating a sample list from the input sequences")
+
+        try:
+            os.remove(tmpDir + "/sampleIDs.txt")
+        except OSError:
+            pass
+
+        cmd = " ".join(["python", EXE_DIR + "/pipits_getsamplelistfromfasta",
+                        "-i", options.input,
+                        "-o", options.outDir + "/sampleIDs.txt"])
+        rc.run_cmd(cmd, logger, options.verbose)
+        options.sortedlist = options.outDir + "/sampleIDs.txt"
+
+    print(options.sortedlist)
+
+    sampleIDs = []
+    if not os.path.exists(options.sortedlist):
+        print("Error: Sample list file does NOT exist")
+        exit(1)
+
+    for line in open(options.sortedlist):
+        if line[0] != "#":
+            sampleIDs.append(line.split("\t")[0].rstrip())
+
+    # Check for duplicate entries
+    duplicateIDs = list(set([x for x in sampleIDs if sampleIDs.count(x) > 1]))
+    if len(duplicateIDs) > 0:
+        print("Error: You have a duplicate id in your Sample list file. Offending id: " + ",".join(duplicateIDs))
+        exit(1)
+
+
         
     # Derep
     logger.info("Dereplicating and removing unique sequences prior to picking OTUs")

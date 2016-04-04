@@ -210,6 +210,6 @@ if __name__ == '__main__':
 
 
     logger.info(tc.OKBLUE + "PIPITS_FUNITS ended successfully. \"" + "ITS.fasta" + "\" created in \"" + options.outDir + "\"" + tc.ENDC)
-    logger.info(tc.OKGREEN + "Next Step: PIPITS_PROCESS [ Example: pipits_process -i " + options.outDir + "/" + "ITS.fasta -o pipits_process -l readpairslist.txt ]" + tc.ENDC)
+    logger.info(tc.OKGREEN + "Next Step: PIPITS_PROCESS [ Example: pipits_process -i " + options.outDir + "/" + "ITS.fasta -o pipits_process ]" + tc.ENDC)
     summary_file.close()
 
