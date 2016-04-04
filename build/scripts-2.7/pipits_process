@@ -162,7 +162,6 @@ if __name__ == '__main__':
         rc.run_cmd(cmd, logger, options.verbose)
         options.sortedlist = options.outDir + "/sampleIDs.txt"
 
-    print(options.sortedlist)
 
     sampleIDs = []
     if not os.path.exists(options.sortedlist):
