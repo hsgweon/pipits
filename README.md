@@ -109,7 +109,7 @@ See 1.8 below for the detailed instruction on how you do this.
    sudo apt install hmmer
    ```
 
-8. **JAVA**
+8. **Java compatible Runtime**
 
    *In case you don't have this on your system*
 
