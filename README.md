@@ -43,9 +43,7 @@ Of course if you are familiar with Linux, you are free to choose whichever metho
 
 PIPITS depends on a number of external dependencies which need to be downloaded and installed. 
 
-We advise you to use Ubuntu 16.04 (xenial) or above as all of the dependencies are now available as a Debian package! If you are, then just follow the instructions below.
-
-(If you are using Ubuntu 14.04, then we *strongly* recommend using Bio-Linux packages rather than installing dependencies yourself. See 1.8 below for the detailed instruction on how you do this.)
+We advise you to use Ubuntu 16.04 (xenial) or above as all of the dependencies are now available as a Debian package! If you are, then just follow the instructions below. (If you are using Ubuntu 14.04, then we *strongly* recommend using Bio-Linux packages rather than installing dependencies yourself. See 1.8 below for the detailed instruction on how you do this.)
 
 
 1. **BIOM-FORMAT version 2.x** (<http://biom-format.org/>)
