@@ -111,12 +111,19 @@ See 1.8 below for the detailed instruction on how you do this.
 
 8. **Java compatible Runtime**
 
-   *In case you don't have this on your system*
+   *In case you don't have this on your system.*
 
    ```
    sudo apt install default-jre
    ```
 
+9. **numpy**
+
+   *In case you don't hae this on your system.*
+
+   ```
+   sudo apt install python-numpy
+   ```
 
 1.3 Reference datasets
 ----------------------
