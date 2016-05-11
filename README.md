@@ -49,7 +49,7 @@ See 1.8 below for the detailed instruction on how you do this.
 
 1. **BIOM-FORMAT version 2.x** (<http://biom-format.org/>)
 
-   *Available as a Debian package.
+   *Available as a Debian package.*
 
    ```
    sudo apt install biom-format-tools
@@ -57,7 +57,7 @@ See 1.8 below for the detailed instruction on how you do this.
 
 2. **FAST-X tools** (<http://hannonlab.cshl.edu/fastx_toolkit>)
 
-   *Available as a Debian package.
+   *Available as a Debian package.*
 
    ```
    sudo apt install fastx-toolkit
@@ -103,7 +103,7 @@ See 1.8 below for the detailed instruction on how you do this.
 
 7. **HMMER3** (<http://hmmer.janelia.org/download.html>)
 
-   *Available as a Debian package.
+   *Available as a Debian package.*
 
    ```
    sudo apt install hmmer
@@ -111,7 +111,7 @@ See 1.8 below for the detailed instruction on how you do this.
 
 8. **JAVA**
 
-   *In case you don't have this on your system
+   *In case you don't have this on your system*
 
    ```
    sudo apt install default-jre
