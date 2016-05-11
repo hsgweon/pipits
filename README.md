@@ -222,16 +222,13 @@ pipits_process -i pipits_funits/ITS.fasta --Xmx 2G
 Ensure everything works and you don't get an error message.
 
 
-1.8 (Misc) For Ubuntu users, installing dependencies using Bio-Linux packages
+1.8 (Misc) For Ubuntu 14.04 users, installing dependencies using Bio-Linux packages
 ------------------------------------------------------------------------------------
 
-Some of the dependencies are available as a Bio-Linux package so
-Bio-Linux and Ubuntu LTS users are encouraged to make use of the
-Bio-Linux repository for these. To install Bio-Linux packages follow the
-instruction below.
+Some of the dependencies are available as a Bio-Linux package so Bio-Linux and Ubuntu LTS users are encouraged to make use of the
+Bio-Linux repository for these. To install Bio-Linux packages follow the instruction below.
 
-You first need to add Bio-Linux repositories to your system. Add the
-following lines to a file "/etc/apt/sources.list" file:
+You first need to add Bio-Linux repositories to your system. Add the following lines to a file "/etc/apt/sources.list" file:
 
 ```sh
 deb http://nebc.nerc.ac.uk/bio-linux/ unstable bio-linux
@@ -366,7 +363,7 @@ This is the final process involving clustering and assigning of taxonomy
 to OTUs:
 
 ```sh
-pipits_process -i pipits_funits/ITS.fasta -o out_process
+pipits_process -i pipits_funits/ITS.fasta -o out_process --Xmx 2G 
 ```
 
 *Note*
@@ -391,6 +388,7 @@ pipits_process -i pipits_funits/ITS.fasta -o out_process
         to species.
     2.  “phylotype abundance table”, an OTU is defined as a cluster of
         sequences binned into the same taxonomic assignments.
+8.  If you have memory issues, try increasing the maximum memory with "--Xmx". For example, "--Xmx 4G".
 
 
 4. Options
