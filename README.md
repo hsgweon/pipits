@@ -41,24 +41,38 @@ Of course if you are familiar with Linux, you are free to choose whichever metho
 
 *Download and install dependencies*
 
-PIPITS depends on a number of external dependencies which need to be
-downloaded and installed. 
-It is not a trivial task to install dependencies especially if you are not too familiar with Linux,
-so we *strongly* recommend using Bio-Linux packages rather than installing dependencies yourself. 
+PIPITS depends on a number of external dependencies which need to be downloaded and installed. However if you using Ubuntu LTS (16.04 or above), all of the dependencies are available. So just follow the commands below.
+
+If you are using Ubuntu 14.04, then we *strongly* recommend using Bio-Linux packages rather than installing dependencies yourself. 
 See 1.8 below for the detailed instruction on how you do this.
 
 
 1. **BIOM-FORMAT version 2.x** (<http://biom-format.org/>)
 
-   *Available as a Bio-Linux package, if installing yourself, please use version >= 2.0.*
+   *Available as a Debian package.
+
+   ```
+   sudo apt install biom-format-tools
+   ```
 
 2. **FAST-X tools** (<http://hannonlab.cshl.edu/fastx_toolkit>)
 
-   *Available as a Bio-Linux package*
+   *Available as a Debian package.
+
+   ```
+   sudo apt install fastx-toolkit
+   ```
 
 3. **VSEARCH** (<https://github.com/torognes/vsearch>)
 
-   *Available as a Bio-Linux package*
+   Download a recent version of vsearch (check by visiting their GITHUB page and change the version name below accordingly. v1.10.2 should be stable for PIPITS.)
+
+   ```
+   cd $HOME/pipits
+   wget https://github.com/torognes/vsearch/releases/download/v1.10.2/vsearch-1.10.2-linux-x86_64.tar.gz
+   tar xvfz vsearch-1.10.2-linux-x86_64.tar.gz
+   ln -s $HOME/pipits/vsearch-1.10.2-linux-x86_64/bin/vsearch bin/vsearch
+   ```
 
 4. **ITSx** (<http://microbiology.se/software/itsx>) N.B. ITSx requires HMMER3
 
@@ -89,7 +103,19 @@ See 1.8 below for the detailed instruction on how you do this.
 
 7. **HMMER3** (<http://hmmer.janelia.org/download.html>)
 
-   *Available as a Bio-Linux package*
+   *Available as a Debian package.
+
+   ```
+   sudo apt install hmmer
+   ```
+
+8. **JAVA**
+
+   *In case you don't have this on your system
+
+   ```
+   sudo apt install default-jre
+   ```
 
 
 1.3 Reference datasets
@@ -180,14 +206,14 @@ $ ls $HOME/pipits/classifier.jar
 $ hmmpress -h
 ```
 
-Ok, let's test if PIPITS is all setup. Open up the very first original PIPITS which you downloaded. Please change X.X.X in the command below to the version of PIPITS you downloaded.
+Ok, let's test if PIPITS is all setup. Open up the very first original PIPITS which you downloaded. Please change X.X.X in the command below to the version of PIPITS you downloaded. Note that if you encounter memory issues with JAVA, try increasing the memory with "--Xmx" option.
 
 ```sh
 cd $HOME/pipits-X.X.X/test_data
 pipits_getreadpairslist -i rawdata
 pipits_prep -i rawdata
 pipits_funits -i pipits_prep/prepped.fasta -x ITS2 
-pipits_process -i pipits_funits/ITS.fasta
+pipits_process -i pipits_funits/ITS.fasta --Xmx 2G
 ```
 
 Ensure everything works and you don't get an error message.
@@ -224,7 +250,7 @@ our repository.
 Then install the packages, for example:
 
 ```sh
-sudo apt-get install python-biom-format vsearch fastx-toolkit hmmer
+sudo apt-get install vsearch fastx-toolkit hmmer
 ```
 
 
