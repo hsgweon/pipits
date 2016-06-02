@@ -64,7 +64,7 @@ We advise you to use Ubuntu 16.04 (xenial) or above as all of the dependencies a
 
 3. **VSEARCH** (<https://github.com/torognes/vsearch>)
 
-   Download a recent version of vsearch (check by visiting their GITHUB page and change the version name below accordingly. v1.10.2 should be stable for PIPITS.)
+   Download a recent version of vsearch (check by visiting their GITHUB page and change the version name below accordingly. v1.10.2 should be stable for PIPITS.) Debian package is a little out of date.
 
    ```
    cd $HOME/pipits
@@ -148,8 +148,8 @@ There are two reference datasets to download:
    ```sh
    mkdir -p $HOME/pipits/refdb
    cd $HOME/pipits/refdb
-   wget https://unite.ut.ee/sh_files/uchime_reference_dataset_11.03.2015.zip
-   unzip uchime_reference_dataset_11.03.2015.zip
+   wget https://unite.ut.ee/sh_files/uchime_reference_dataset_01.01.2016.zip
+   unzip uchime_reference_dataset_01.01.2016.zip
    ```
 
 
@@ -171,7 +171,7 @@ And then add the following lines at the end of the file:
 
     export PATH=$HOME/pipits/bin:$PATH
     export PYTHONPATH=$HOME/pipits/lib/python2.7/site-packages:$PYTHONPATH
-    export PIPITS_UNITE_REFERENCE_DATA_CHIMERA=$HOME/pipits/refdb/uchime_sh_refs_dynamic_original_985_11.03.2015.fasta
+    export PIPITS_UNITE_REFERENCE_DATA_CHIMERA=$HOME/pipits/refdb/uchime_reference_dataset_01.01.2016/uchime_reference_dataset_01.01.2016.fasta
     export PIPITS_UNITE_RETRAINED_DIR=$HOME/pipits/refdb/UNITE_retrained
     export PIPITS_RDP_CLASSIFIER_JAR=$HOME/pipits/classifier.jar
 
@@ -242,14 +242,12 @@ sudo apt-get update
 sudo apt-get install bio-linux-keyring
 ```
 
-Your system will then download the Bio-Linux Software Package List from
-our server. After the download you may install any of the packages from
-our repository.
+Your system will then download the Bio-Linux Software Package List from the Bio-Linux server. After this you may install any of the packages available in Bio-Linux repository.
 
-Then install the packages, for example:
+So, let's start installing the dependencies:
 
 ```sh
-sudo apt-get install vsearch fastx-toolkit hmmer
+sudo apt-get install python-biom-format vsearch fastx-toolkit hmmer
 ```
 
 
