@@ -96,6 +96,15 @@ if __name__ == '__main__':
         metavar = "<INT>",
         help = "The maximum size, in bytes, of the memory allocation pool for JVM",
         required = False)
+
+    parser.add_argument(
+        "--warcup",
+        action = "store_true",
+        dest = "warcup",
+        help = "Also classify using Warcup database. Make sure you have downloaded the database as described in the instruction and set the environmental variable.",
+        default = False,
+        required = False)
+
     options = parser.parse_args()
 
 
@@ -281,7 +290,15 @@ if __name__ == '__main__':
     if options.Xmx:
         JVM_memory_option = JVM_memory_option + "-Xmx" + str(options.Xmx) + " "
     
+
     logger.info("Assigning taxonomy [RDP Classifier]")
+
+
+
+    ################
+    # RDP on UNITE #
+    ################
+
     cmd = " ".join(["java", JVM_memory_option, "-jar $PIPITS_RDP_CLASSIFIER_JAR classify", 
                     "-t $PIPITS_UNITE_RETRAINED_DIR" + "/rRNAClassifier.properties", 
                     "-o", options.outDir + "/assigned_taxonomy.txt", 
@@ -328,8 +345,7 @@ if __name__ == '__main__':
                     "--header-key taxonomy"])
     rc.run_cmd(cmd, logger, options.verbose)
 
-
-    # Make phylotyp table
+    # Phylotype
     logger.info("Phylotyping OTU table")
     cmd = " ".join(["python", EXE_DIR + "/pipits_phylotype_biom", "-i", options.outDir + "/otu_table.biom", "-o", options.outDir + "/phylotype_table.txt"])
     rc.run_cmd(cmd, logger, options.verbose)
@@ -344,6 +360,80 @@ if __name__ == '__main__':
                     "--table-type=\"OTU table\" --process-obs-metadata=\"taxonomy\"",
                     "--to-json"])
     rc.run_cmd(cmd, logger, options.verbose)
+
+
+
+    ##########
+    # Warcup #
+    ##########
+
+    if options.warcup:
+
+        # Classify
+        cmd = " ".join(["java", JVM_memory_option, "-jar $PIPITS_RDP_CLASSIFIER_JAR classify",
+                        "-t $PIPITS_WARCUP_RETRAINED_DIR" + "/rRNAClassifier.properties",
+                        "-o", options.outDir + "/assigned_taxonomy_warcup.txt",
+                        tmpDir + "/input_nr_otus_nonchimeras_relabelled.fasta"])
+
+        rc.run_cmd(cmd, logger, options.verbose)
+
+
+        # Reformatting RDP_CLASSIFIER output for biom for Warcup
+        cmd = " ".join(["python", EXE_DIR + "/pipits_reformatAssignedTaxonomy",
+                        "-i", options.outDir + "/assigned_taxonomy_warcup.txt" ,
+                        "-o", options.outDir + "/assigned_taxonomy_reformatted_filtered_warcup.txt",
+                        "-c", options.RDP_assignment_threshold])
+        rc.run_cmd(cmd, logger, options.verbose)
+
+
+        # Adding RDP_CLASSIFIER output to OTU table
+        logger.info("Adding assignment to OTU table [BIOM]")
+        try:
+            os.remove(options.outDir + "/otu_table_warcup.biom")
+        except OSError:
+            pass
+        cmd = " ".join([BIOM, "add-metadata",
+                        "-i", tmpDir + "/otu_table_prelim.biom",
+                        "-o", options.outDir + "/otu_table_warcup.biom",
+                        "--observation-metadata-fp", options.outDir + "/assigned_taxonomy_reformatted_filtered_warcup.txt",
+                        "--observation-header", "OTUID,taxonomy,confidence",
+                        "--sc-separated", "taxonomy",
+                        "--float-fields", "confidence",
+                        "--output-as-json"])
+        rc.run_cmd(cmd, logger, options.verbose)
+
+
+        # Convert BIOM to TABLE
+        logger.info("Converting OTU table with taxa assignment into a BIOM format [BIOM]")
+        try:
+            os.remove(options.outDir + "/otu_table_warcup.txt")
+        except OSError:
+            pass
+        cmd = " ".join([BIOM, "convert",
+                        "-i", options.outDir + "/otu_table_warcup.biom",
+                        "-o", options.outDir + "/otu_table_warcup.txt",
+                        "--to-tsv",
+                        "--header-key taxonomy"])
+        rc.run_cmd(cmd, logger, options.verbose)
+
+
+        # Make phylotyp table #
+        logger.info("Phylotyping OTU table")
+        cmd = " ".join(["python", EXE_DIR + "/pipits_phylotype_biom", "-i", options.outDir + "/otu_table_warcup.biom", "-o", options.outDir + "/phylotype_table_warcup.txt"])
+        rc.run_cmd(cmd, logger, options.verbose)
+
+        try:
+            os.remove(options.outDir + "/phylotype_table_warcup.biom")
+        except OSError:
+            pass
+        cmd = " ".join([BIOM, "convert",
+                        "-i", options.outDir + "/phylotype_table_warcup.txt",
+                        "-o", options.outDir + "/phylotype_table_warcup.biom",
+                        "--table-type=\"OTU table\" --process-obs-metadata=\"taxonomy\"",
+                        "--to-json"])
+        rc.run_cmd(cmd, logger, options.verbose)
+
+
 
 
     # Move representative sequence file to outDir

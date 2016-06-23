@@ -1,7 +1,7 @@
 from distutils.core import setup
 import os
 
-__version__ = os.environ.get("VERSION", "1.3.3")
+__version__ = os.environ.get("VERSION", "1.3.4")
 
 setup(name = "pipits",
       version = __version__,
