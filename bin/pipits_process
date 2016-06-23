@@ -291,14 +291,11 @@ if __name__ == '__main__':
         JVM_memory_option = JVM_memory_option + "-Xmx" + str(options.Xmx) + " "
     
 
-    logger.info("Assigning taxonomy [RDP Classifier]")
-
-
-
     ################
     # RDP on UNITE #
     ################
 
+    logger.info("Assigning taxonomy [RDP Classifier]")
     cmd = " ".join(["java", JVM_memory_option, "-jar $PIPITS_RDP_CLASSIFIER_JAR classify", 
                     "-t $PIPITS_UNITE_RETRAINED_DIR" + "/rRNAClassifier.properties", 
                     "-o", options.outDir + "/assigned_taxonomy.txt", 
@@ -370,6 +367,7 @@ if __name__ == '__main__':
     if options.warcup:
 
         # Classify
+        logger.info("Assigning taxonomy [RDP Classifier] - Warcup]")
         cmd = " ".join(["java", JVM_memory_option, "-jar $PIPITS_RDP_CLASSIFIER_JAR classify",
                         "-t $PIPITS_WARCUP_RETRAINED_DIR" + "/rRNAClassifier.properties",
                         "-o", options.outDir + "/assigned_taxonomy_warcup.txt",
@@ -387,7 +385,7 @@ if __name__ == '__main__':
 
 
         # Adding RDP_CLASSIFIER output to OTU table
-        logger.info("Adding assignment to OTU table [BIOM]")
+        logger.info("Adding assignment to OTU table [BIOM] - Warcup")
         try:
             os.remove(options.outDir + "/otu_table_warcup.biom")
         except OSError:
@@ -404,7 +402,7 @@ if __name__ == '__main__':
 
 
         # Convert BIOM to TABLE
-        logger.info("Converting OTU table with taxa assignment into a BIOM format [BIOM]")
+        logger.info("Converting OTU table with taxa assignment into a BIOM format [BIOM] - Warcup")
         try:
             os.remove(options.outDir + "/otu_table_warcup.txt")
         except OSError:
@@ -418,7 +416,7 @@ if __name__ == '__main__':
 
 
         # Make phylotyp table #
-        logger.info("Phylotyping OTU table")
+        logger.info("Phylotyping OTU table - Warcup")
         cmd = " ".join(["python", EXE_DIR + "/pipits_phylotype_biom", "-i", options.outDir + "/otu_table_warcup.biom", "-o", options.outDir + "/phylotype_table_warcup.txt"])
         rc.run_cmd(cmd, logger, options.verbose)
 

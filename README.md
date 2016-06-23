@@ -68,9 +68,9 @@ We advise you to use Ubuntu 16.04 (xenial) or above as all of the dependencies a
 
    ```
    cd $HOME/pipits
-   wget https://github.com/torognes/vsearch/releases/download/v1.10.2/vsearch-1.10.2-linux-x86_64.tar.gz
-   tar xvfz vsearch-1.10.2-linux-x86_64.tar.gz
-   ln -s $HOME/pipits/vsearch-1.10.2-linux-x86_64/bin/vsearch bin/vsearch
+   wget https://github.com/torognes/vsearch/releases/download/v1.11.2/vsearch-1.11.2-linux-x86_64.tar.gz
+   tar xvfz vsearch-1.11.2-linux-x86_64.tar.gz
+   ln -s $HOME/pipits/vsearch-1.11.2-linux-x86_64/bin/vsearch bin/vsearch
    ```
 
 4. **ITSx** (<http://microbiology.se/software/itsx>) N.B. ITSx requires HMMER3
@@ -120,6 +120,7 @@ We advise you to use Ubuntu 16.04 (xenial) or above as all of the dependencies a
    sudo apt install python-numpy
    ```
 
+
 1.3 Reference datasets
 ----------------------
 
@@ -162,7 +163,8 @@ There are two reference datasets to download:
    mkdir -p $HOME/pipits/refdb
    cd $HOME/pipits/refdb
    wget http://sourceforge.net/projects/pipits/files/warcup_retrained_08.07.2014.tar.gz
-   unzip warcup_retrained_08.07.2014.tar.gz
+   tar xvfz warcup_retrained_08.07.2014.tar.gz
+   ```
 
 
 1.4 Set PATH and ENVIRONMENT VARIABLE
@@ -230,6 +232,8 @@ pipits_getreadpairslist -i rawdata
 pipits_prep -i rawdata
 pipits_funits -i pipits_prep/prepped.fasta -x ITS2 
 pipits_process -i pipits_funits/ITS.fasta --Xmx 2G
+
+(pipits_process -i pipits_funits/ITS.fasta --Xmx 2G -o pipits_process_with_warcup --warcup) If you want additional OTU table with Warcup classification.
 ```
 
 Ensure everything works and you don't get an error message.
