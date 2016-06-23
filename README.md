@@ -131,8 +131,6 @@ There are two reference datasets to download:
    We now provide trained UNITE fungal data (processed and trained for PIPITS).
    Please download this data (<http://sourceforge.net/projects/pipits/files/UNITE_retrained_31.01.2016.tar.gz>), save and extract it to an appropriate directory (e.g. $HOME/pipits/refdb).
 
-   Suggestion:
-    
    ```sh
    mkdir -p $HOME/pipits/refdb
    cd $HOME/pipits/refdb
@@ -144,8 +142,6 @@ There are two reference datasets to download:
 
    We also need to download UNITE UCHIME reference dataset for chimera removal. Download it from UNITE repository (<http://unite.ut.ee/repository.php>).
 
-   Suggestion:
-
    ```sh
    mkdir -p $HOME/pipits/refdb
    cd $HOME/pipits/refdb
@@ -156,8 +152,6 @@ There are two reference datasets to download:
 3. **(OPTIONAL) Warcup ITS reference trained dataset**
 
    PIPITS supports Warcup ITS reference training dataset. By specifying "--warcup" when running pipits_process, PIPITS will also create a Warcup classified OTU table.
-
-   Suggestion:
 
    ```sh
    mkdir -p $HOME/pipits/refdb
