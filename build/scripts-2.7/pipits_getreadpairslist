@@ -81,7 +81,9 @@ def make_read_pairs_list(options):
     count = 1
     for i in range(len(fastqs_f)):
         label = ""
-        if options.label_add_c:
+        if options.label_add_c_front:
+            label = options.label_add_c + fastqs_l[i]
+        if options.label_add_c_end:
             label = fastqs_l[i] + options.label_add_c
         elif options.label_add_reindex_c:
             label = options.label_add_reindex_c + str(count).zfill(3)
@@ -113,11 +115,18 @@ if __name__ == '__main__':
         help = "Name of output list file.",
         required = False)
     parser.add_argument(
-        "--label-add-c",
+        "--label-add-c-end",
         action = "store",
-        dest = "label_add_c",
+        dest = "label_add_c_end",
         metavar = "<TXT>",
-        help = "Add a label to each sample ids in the output file. N.B. \"_\" is not allowed",
+        help = "Add a label to the END of each sample ids in the output file. N.B. \"_\" is not allowed",
+        required = False)
+    parser.add_argument(
+        "--label-add-c-front",
+        action = "store",
+        dest = "label_add_c_front",
+        metavar = "<TXT>",
+        help = "Add a label to the FRONT of each sample ids in the output file. N.B. \"_\" is not allowed",
         required = False)
     parser.add_argument(
         "--label-reindex-c",
