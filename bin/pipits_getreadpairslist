@@ -82,9 +82,9 @@ def make_read_pairs_list(options):
     for i in range(len(fastqs_f)):
         label = ""
         if options.label_add_c_front:
-            label = options.label_add_c + fastqs_l[i]
-        if options.label_add_c_end:
-            label = fastqs_l[i] + options.label_add_c
+            label = options.label_add_c_front + fastqs_l[i]
+        elif options.label_add_c_end:
+            label = fastqs_l[i] + options.label_add_c_end
         elif options.label_add_reindex_c:
             label = options.label_add_reindex_c + str(count).zfill(3)
         else:
@@ -137,8 +137,13 @@ if __name__ == '__main__':
         required = False)
     options = parser.parse_args()
 
-    if options.label_add_c:
-        if options.label_add_c.find("_") != -1:
+    if options.label_add_c_front:
+        if options.label_add_c_front.find("_") != -1:
+            print("Error: \"_\" is not allowed in the sample id")
+            exit(1)
+
+    if options.label_add_c_end:
+        if options.label_add_c_end.find("_") != -1:
             print("Error: \"_\" is not allowed in the sample id")
             exit(1)
     
