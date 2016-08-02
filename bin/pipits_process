@@ -367,7 +367,7 @@ if __name__ == '__main__':
     if options.warcup:
 
         # Classify
-        logger.info("Assigning taxonomy [RDP Classifier] - Warcup]")
+        logger.info("Assigning taxonomy [RDP Classifier] - Warcup")
         cmd = " ".join(["java", JVM_memory_option, "-jar $PIPITS_RDP_CLASSIFIER_JAR classify",
                         "-t $PIPITS_WARCUP_RETRAINED_DIR" + "/rRNAClassifier.properties",
                         "-o", options.outDir + "/assigned_taxonomy_warcup.txt",

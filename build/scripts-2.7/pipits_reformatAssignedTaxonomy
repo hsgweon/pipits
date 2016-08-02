@@ -34,10 +34,45 @@ THRESHOLD = float(options.confidence)
 handle_input = open(options.input, "rU")
 handle_output = open(options.output, "w")
 
+
 for line in handle_input:
 
     e = line.rstrip().split("\t")
-    
+    taxonomy = []
+    taxonomy_conf = []
+
+    for i in range(5, len(e), 3):
+
+        tax_level = e[i+1]
+        tax_nomenclature = e[i].split("|")[-1].replace(" ", "_")
+        tax_confidence = float(e[i+2])
+
+        if tax_level == "domain" or tax_level == "kingdom":
+            tax_nomenclature = "k__" + tax_nomenclature
+        elif tax_level == "phylum":
+            tax_nomenclature = "p__" + tax_nomenclature
+        elif tax_level == "subphylum":
+            tax_nomenclature = "subp__" + tax_nomenclature
+        elif tax_level == "class":
+            tax_nomenclature = "c__" + tax_nomenclature
+        elif tax_level == "subclass":
+            tax_nomenclature = "subc__" + tax_nomenclature
+        elif tax_level == "order":
+            tax_nomenclature = "o__" + tax_nomenclature
+        elif tax_level == "family":
+            tax_nomenclature = "f__" + tax_nomenclature
+        elif tax_level == "genus":
+            tax_nomenclature = "g__" + tax_nomenclature
+        elif tax_level == "species":
+            tax_nomenclature = "s__" + tax_nomenclature
+        else:
+            print(tax_level, "Error in RDP Classifier produced output: not a valid taxonomic level.")
+            exit(1)
+
+        taxonomy.append(tax_nomenclature)
+        taxonomy_conf.append(tax_confidence)
+
+    '''
     Kingdom = "k__" + e[5]
     Kingdom_conf = float(e[7])
     Phylum = "p__" + e[8].split("|")[-1]
@@ -52,16 +87,12 @@ for line in handle_input:
     Genus_conf = float(e[22])
     Species = "s__" + e[23].split("|")[-1]
     Species_conf = float(e[25])
-    
-    # print(Kingdom, Kingdom_conf, Phylum, Phylum_conf, Class, Class_conf, Order, Order_conf, Family, Family_conf, Genus, Genus_conf, Species, Species_conf)
-
-    taxonomy      =  [Kingdom, Phylum, Class, Order, Family, Genus, Species]
-    taxonomy_conf = [Kingdom_conf, Phylum_conf, Class_conf, Order_conf, Family_conf, Genus_conf, Species_conf]
+    '''
 
     taxonomy_filtered = []
     taxonomy_conf_filtered = []
 
-    for i in range(0, 7):
+    for i in range(len(taxonomy)):
         if taxonomy_conf[i] >= THRESHOLD:
             taxonomy_filtered.append(taxonomy[i])
             taxonomy_conf_filtered.append(taxonomy_conf[i])
