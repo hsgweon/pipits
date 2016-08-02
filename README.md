@@ -156,8 +156,8 @@ There are two reference datasets to download:
    ```sh
    mkdir -p $HOME/pipits/refdb
    cd $HOME/pipits/refdb
-   wget http://sourceforge.net/projects/pipits/files/warcup_retrained_08.07.2014.tar.gz
-   tar xvfz warcup_retrained_08.07.2014.tar.gz
+   wget https://sourceforge.net/projects/pipits/files/warcup_retrained_V2.tar.gz
+   tar xvfz warcup_retrained_V2.tar.gz
    ```
 
 
@@ -181,7 +181,7 @@ And then add the following lines at the end of the file:
     export PYTHONPATH=$HOME/pipits/lib/python2.7/site-packages:$PYTHONPATH
     export PIPITS_UNITE_REFERENCE_DATA_CHIMERA=$HOME/pipits/refdb/uchime_reference_dataset_01.01.2016/uchime_reference_dataset_01.01.2016.fasta
     export PIPITS_UNITE_RETRAINED_DIR=$HOME/pipits/refdb/UNITE_retrained
-    export PIPITS_WARCUP_RETRAINED_DIR=$HOME/pipits/refdb/warcup_retrained_08.07.2014
+    export PIPITS_WARCUP_RETRAINED_DIR=$HOME/pipits/refdb/warcup_retrained_V2
     export PIPITS_RDP_CLASSIFIER_JAR=$HOME/pipits/classifier.jar
 
 Then type (or alternatively close and re-open the terminal):
