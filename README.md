@@ -20,14 +20,14 @@ Download the latest package from github release (<https://github.com/hsgweon/pip
 
 ```sh
 cd ~
-wget https://github.com/hsgweon/pipits/releases/download/1.3.4/pipits-1.3.4.tar.gz
-tar xvfz pipits-1.3.4.tar.gz
+wget https://github.com/hsgweon/pipits/releases/download/1.3.6/pipits-1.3.6.tar.gz
+tar xvfz pipits-1.3.6.tar.gz
 ```
 
 Then enter into the created directory and install the package with (ignore errors/warnings):
 
 ```sh
-cd pipits-1.3.4
+cd pipits-1.3.6
 python setup.py clean --all
 python setup.py install --prefix=$HOME/pipits
 ```
