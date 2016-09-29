@@ -345,11 +345,12 @@ if __name__ == '__main__':
         default = "PEAR",
         choices = ["PEAR", "FASTQJOIN"])
     parser.add_argument(
-        "--PEAR_options",
+        "--PEAR_options=",
+        type = str,
+        metavar = "<STR>",
         action = "store",
         dest = "PEAR_options",
-        metavar = "",
-        help = "User customisable parameter: You can add/change PEAR parameters. Please use quotes to wrap the parameter(s). E.g. --PEAR_options \"--min-overlap 8 -t 2\". Note that if you put two same parameters such as -v 10 -v 15, PEAR will accept the later.",
+        help = "User customisable parameter: You can add/change PEAR parameters. Please use \"--PEAR_options=\" followed by custom parameters wrapped around them. E.g. --PEAR_options=\"-v 8 -t 2\". Note that if you put two same parameters such as \"-v 8 -v 15\", PEAR will use the later.",
         required = False,
         default = "")
     parser.add_argument(
