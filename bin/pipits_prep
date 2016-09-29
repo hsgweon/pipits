@@ -132,7 +132,8 @@ def join(options):
                             "-j", options.threads,
                             "-b", options.base_phred_quality_score,
                             "-q 30",
-                            "-p 0.0001"])
+                            "-p 0.0001",
+                            options.PEAR_options])
             run_cmd(cmd, logger, options.verbose)
 
             cmd = " ".join(["mv -f", 
@@ -343,7 +344,14 @@ if __name__ == '__main__':
         required = False,
         default = "PEAR",
         choices = ["PEAR", "FASTQJOIN"])
-
+    parser.add_argument(
+        "--PEAR_options",
+        action = "store",
+        dest = "PEAR_options",
+        metavar = "",
+        help = "User customisable parameter: You can add/change PEAR parameters. Please use quotes to wrap the parameter(s). E.g. --PEAR_options \"--min-overlap 8 -t 2\". Note that if you put two same parameters such as -v 10 -v 15, PEAR will accept the later.",
+        required = False,
+        default = "")
     parser.add_argument(
         "-r",
         action = "store_true",
