@@ -406,7 +406,7 @@ if __name__ == '__main__':
         "--forwardreadsonly",
         action = "store_true",
         dest = "forwardreadsonly",
-        help = "forwardreadsonly",
+        help = "Do NOT join paired-end sequences, but just use the forward reads.",
         required = False)
     options = parser.parse_args()
 
