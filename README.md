@@ -20,7 +20,7 @@ SYNOPSIS
 - If you only have a Windows machine, we recommend installing VirtualBox (free) and run Ubuntu or Bio-Linux (<http://environmentalomics.org/bio-linux/>).
 
 
-1 Setting up PIPITS
+1. Setting up PIPITS
 ===================
 
 1.1 Download and install
@@ -410,7 +410,7 @@ pipits_process -i pipits_funits/ITS.fasta -o out_process --Xmx 2G
 8.  If you have memory issues, try increasing the maximum memory with "--Xmx". For example, "--Xmx 4G".
 
 
-4. Options
+3. Options
 ==========
 
 PIPITS scripts come with a number of options for the users to alter
@@ -422,7 +422,7 @@ pipits_prep -h
 ```
 
 
-5. Citation
+4. Citation
 ===========
 
 Hyun S. Gweon, Anna Oliver, Joanne Taylor, Tim Booth, Melanie Gibbs, Daniel S. Read, Robert I. Griffiths and Karsten Schonrogge, PIPITS: an automated pipeline for analyses of fungal internal transcribed spacer sequences from the Illumina sequencing platform, Methods in Ecology and Evolution, DOI: 10.1111/2041-210X.12399
