@@ -1,13 +1,23 @@
-Introduction
-============
+New Features (PIPITS 1.3.8)
+===========================
+
+- Now you can run pipits_funguild.py on the resulting OTU table to have a reformatted version for FUNGuild analysis. Use the reformmated table on FUNGuild page (<http://www.stbates.org/guilds/app.php>).
+
+```sh
+pipits_funguild.py -i pipits_process/otu_table.txt -o pipits_process/otu_table_funguild.txt
+```
+
+
+SYNOPSIS
+========
 
 - PIPITS is an automated pipeline for analyses of fungal internal transcribed spacer (ITS) sequences from the Illumina sequencing platform.
 
 - PIPITS is designed to work best on Bio-Linux (<http://environmentalomics.org/bio-linux/>) and Ubuntu. Unfortunately, it's NOT supported on Windows or a Mac
 
-- If you are using Bio-Linux, most of the dependencies are already on Bio-Linux. Otherwise, you will have to set up the dependencies yourself. If you are using Ubuntu, then instructions on how to set up dependencies are described below (1.8).
+- If you are using Bio-Linux, most of the dependencies are already on Bio-Linux. Otherwise, you will have to set up the dependencies yourself. If you are using Ubuntu, then instructions on how to set up dependencies are described below (See Section 1.8).
 
-- If you only have a Windows machine, we recommend installing VirtualBox (free) to run Bio-Linux (<http://environmentalomics.org/bio-linux/>).
+- If you only have a Windows machine, we recommend installing VirtualBox (free) and run Ubuntu or Bio-Linux (<http://environmentalomics.org/bio-linux/>).
 
 
 1 Setting up PIPITS
