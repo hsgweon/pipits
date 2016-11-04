@@ -1,4 +1,9 @@
-New Features (PIPITS 1.3.8)
+New features (PIPITS 1.4.0)
+===========================
+
+
+
+New Features (PIPITS 1.3.9)
 ===========================
 
 - Now you can run pipits_funguild.py on the resulting OTU table to have a reformatted version for FUNGuild analysis. Use the reformmated table on FUNGuild page (<http://www.stbates.org/guilds/app.php>).
@@ -30,14 +35,14 @@ Download the latest package from github release (<https://github.com/hsgweon/pip
 
 ```sh
 cd ~
-wget https://github.com/hsgweon/pipits/releases/download/1.3.8/pipits-1.3.8.tar.gz
-tar xvfz pipits-1.3.8.tar.gz
+wget https://github.com/hsgweon/pipits/releases/download/1.4.0/pipits-1.4.0.tar.gz
+tar xvfz pipits-1.4.0.tar.gz
 ```
 
 Then enter into the created directory and install the package with (ignore errors/warnings):
 
 ```sh
-cd pipits-1.3.8
+cd pipits-1.4.0
 python setup.py clean --all
 python setup.py install --prefix=$HOME/pipits
 ```
@@ -231,7 +236,7 @@ $ hmmpress -h
 Ok, let's test if PIPITS is all setup. Open up the very first original PIPITS which you downloaded. Please change X.X.X in the command below to the version of PIPITS you downloaded. Note that if you encounter memory issues with JAVA, try increasing the memory with "--Xmx" option.
 
 ```sh
-cd $HOME/pipits-X.X.X/test_data
+cd $HOME/pipits-1.4.0/test_data
 pipits_getreadpairslist -i rawdata
 pipits_prep -i rawdata
 pipits_funits -i pipits_prep/prepped.fasta -x ITS2 

@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 from pipits_prep_lib import *
 
@@ -11,7 +11,7 @@ __email__      = "hyugwe@ceh.ac.uk"
 
 if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser(description = "PIPITS_PREP: reindex, join, quality filter, convert and merge!")
+    parser = argparse.ArgumentParser(description = "PIPITS_PREP_SINGLE: reindex, quality filter, convert and merge!")
     parser.add_argument(
         "-i",
         action = "store",
@@ -65,23 +65,6 @@ if __name__ == '__main__':
         default = "33",
         required = False)
     parser.add_argument(
-        "--joiner_method",
-        action = "store",
-        dest = "joiner_method",
-        help = "Joiner method: \"PEAR\" and \"FASTQJOIN\" [default: PEAR]",
-        required = False,
-        default = "PEAR",
-        choices = ["PEAR", "FASTQJOIN"])
-    parser.add_argument(
-        "--PEAR_options=",
-        type = str,
-        metavar = "<STR>",
-        action = "store",
-        dest = "PEAR_options",
-        help = "User customisable parameter: You can add/change PEAR parameters. Please use \"--PEAR_options=\" followed by custom parameters wrapped around them. E.g. --PEAR_options=\"-v 8 -t 2\". Note that if you put two same parameters such as \"-v 8 -v 15\", PEAR will use the later.",
-        required = False,
-        default = "")
-    parser.add_argument(
         "-r",
         action = "store_true",
         dest = "retain",
@@ -118,7 +101,8 @@ if __name__ == '__main__':
     if not os.path.exists(tmpDir):
         os.mkdir(tmpDir)
 
-    # Log files                                                                                                                                                                                                                              
+
+    # Log files
     logging_file = open(options.outputdir + "/output.log", "w")
     summary_file = open(options.outputdir + "/summary.log", "w")
 
@@ -133,13 +117,11 @@ if __name__ == '__main__':
         exit(1)
 
     sampleids = []
-    fastqs_f = []
-    fastqs_r = []
-
+    fastqs = []
 
     # Load sampleids and filenames
     if options.listfile:
-        logger_info("Processing the listfile", logging_file)
+        logger_info("Processing user-provided listfile", logging_file)
         try:
             listfile = open(options.listfile, "r")
         except IOError:
@@ -154,61 +136,31 @@ if __name__ == '__main__':
                     exit(1)
 
                 sampleids.append(line_split[0])
-                fastqs_f.append(line_split[1])
-                fastqs_r.append(line_split[2])
-
+                fastqs.append(line_split[1])
         listfile.close()
     else:
-        logger_error("Please run pipits_getreadpairslist or pipits_getreadsingleslist to generate a list file", logging_file)
-        exit(1)
+        logger.error("Please run pipits_getreadsingleslist to generate a list file.")
 
-    # Check if both files have the same number of sequences
-    if len(fastqs_f) != len(fastqs_r):
-        logger_error("Different number of forward FASTQs and reverse FASTQs", logging_file)
-        exit(1)
 
     # Count
-    count_sequences(input_dir = options.dataDir,
-                    filenames_list = fastqs_f,
-                    logging_file = logging_file,
-                    summary_file = summary_file,
+    count_sequences(input_dir = options.dataDir, 
+                    filenames_list = fastqs, 
+                    logging_file = logging_file, 
+                    summary_file = summary_file, 
                     verbose = options.verbose)
-
-    # Forward reads
-    logger_info("Reindexing forward reads", logging_file)
+ 
+    # Reindex
+    logger_info("Reindexing reads", logging_file)
     reindex_fastq(input_dir = options.dataDir,
                   output_dir = options.outputdir + "/tmp/reindex_fastq_F",
                   sampleids_list = sampleids,
-                  filenames_list = fastqs_f,
+                  filenames_list = fastqs,
                   logging_file = logging_file,
                   summary_file = summary_file,
                   verbose = options.verbose)
-
-    # Reverse reads
-    logger_info("Reindexing reverse reads", logging_file)
-    reindex_fastq(input_dir = options.dataDir,
-                  output_dir = options.outputdir + "/tmp/reindex_fastq_R",
-                  sampleids_list = sampleids,
-                  filenames_list = fastqs_r,
-                  logging_file = logging_file,
-                  summary_file = summary_file,
-                  verbose = options.verbose)
-
-    # Join
-    join(input_dir_f = options.outputdir + "/tmp/reindex_fastq_F",
-         input_dir_r = options.outputdir + "/tmp/reindex_fastq_R",
-         output_dir = options.outputdir + "/tmp/joined",
-         sampleids_list = sampleids,
-         base_phred_quality_score = options.base_phred_quality_score,
-         joiner_method = options.joiner_method,
-         threads = options.threads,
-         PEAR_parameters = options.PEAR_options,
-         logging_file = logging_file,
-         summary_file = summary_file,
-         verbose = options.verbose)
 
     # Quality filter
-    qualityfilter(input_dir = options.outputdir + "/tmp/joined",
+    qualityfilter(input_dir = options.outputdir + "/tmp/reindex_fastq_F",
                   output_dir = options.outputdir + "/tmp/qualityfiltered",
                   sampleids_list = sampleids,
                   base_phred_quality_score = options.base_phred_quality_score,
@@ -227,13 +179,14 @@ if __name__ == '__main__':
             logging_file = logging_file,
             summary_file = summary_file,
             verbose = options.verbose)
-    
+
     # Merge
     merge(input_dir = options.outputdir + "/tmp/fastqtofasta",
           output_dir = options.outputdir,
           sampleids_list = sampleids,
           logging_file = logging_file,
           verbose = options.verbose)
+
 
     # Clean up tmp_directory
     if not options.retain:
@@ -249,3 +202,4 @@ if __name__ == '__main__':
     summary_file.close()
 
     exit(0)
+
