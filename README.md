@@ -403,14 +403,17 @@ pipits_process -i pipits_funits/ITS.fasta -o out_process --Xmx 2G
 2.4 OTHER FEATURES
 ------------------
 
-2.4.1 FUNGuild analysis
+**2.4.1 FUNGuild analysis**
+
 Now you can run PIPITS_FUNGUILD.PY on the resulting OTU table to have a reformatted version for FUNGuild analysis. Use the reformmated table on FUNGuild page (http://www.stbates.org/guilds/app.php).
 
 ```sh
 pipits_funguild.py -i pipits_process/otu_table.txt -o pipits_process/otu_table_funguild.txt
 ```
 
-2.4.2 Non-paired-end reads (single reads)
+
+**2.4.2 Non-paired-end reads (single reads)**
+
 In some rare cases, you may have just single reads (as opposed to the "usual" paired-end reads).
 For this, you can run PIPITS_GETREADSINGLESLIST and PIPITS_PREP_SINGLE. So instead of running PIPITS_GETREADPAIRSLIST followed by PIPITS_PREP, run:
 
@@ -421,7 +424,8 @@ pipits_prep_single -i rawdata_single -o pipits_prep -l readsingleslist.txt
 
 Use the example file supplied with PIPITS (test_data/rawdata_single).
 
-2.4.3 PEAR optional parameters
+
+**2.4.3 PEAR optional parameters**
 
 You can add a user-customisable parameter for PEAR. To invoke, use --PEAR_options= followed by PEAR options in quotation marks, for example:
 
