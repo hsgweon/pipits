@@ -422,7 +422,7 @@ pipits_getreadsingleslist -i rawdata_single -o readsingleslist.txt
 pipits_prep_single -i rawdata_single -o pipits_prep -l readsingleslist.txt
 ```
 
-Use the example file supplied with PIPITS (test_data/rawdata_single).
+Use the example file supplied with PIPITS (test_data/rawdata_single) to test the feature.
 
 
 **2.4.3 PEAR optional parameters**
