@@ -64,13 +64,13 @@ We advise you to use Ubuntu 16.04 (xenial) or above as all of the dependencies a
 
 3. **VSEARCH** (<https://github.com/torognes/vsearch>)
 
-   Download a recent version of vsearch (check by visiting their GITHUB page and change the version name below accordingly. v1.10.2 should be stable for PIPITS.) Debian package is a little out of date.
+   Download a recent version of vsearch. I find version 2.1.2 to be stable for a standard Ubuntu.
 
    ```
    cd $HOME/pipits
-   wget https://github.com/torognes/vsearch/releases/download/v1.11.2/vsearch-1.11.2-linux-x86_64.tar.gz
-   tar xvfz vsearch-1.11.2-linux-x86_64.tar.gz
-   ln -s $HOME/pipits/vsearch-1.11.2-linux-x86_64/bin/vsearch bin/vsearch
+   wget https://github.com/torognes/vsearch/releases/download/v2.1.2/vsearch-2.1.2-linux-x86_64.tar.gz
+   tar xvfz vsearch-2.1.2-linux-x86_64.tar.gz
+   ln -s $HOME/pipits/vsearch-2.1.2-linux-x86_64/bin/vsearch bin/vsearch
    ```
 
 4. **ITSx** (<http://microbiology.se/software/itsx>) N.B. ITSx requires HMMER3
@@ -86,18 +86,18 @@ We advise you to use Ubuntu 16.04 (xenial) or above as all of the dependencies a
  
     ```sh
     cd $HOME/pipits
-    wget http://sco.h-its.org/exelixis/web/software/pear/files/pear-0.9.6-bin-64.tar.gz
-    tar xvfz pear-0.9.6-bin-64.tar.gz
-    ln -s $HOME/pipits/pear-0.9.6-bin-64/pear-0.9.6-bin-64 bin/pear
+    wget http://sco.h-its.org/exelixis/web/software/pear/files/pear-0.9.10-bin-64.tar.gz
+    tar xvfz pear-0.9.10-bin-64.tar.gz
+    ln -s $HOME/pipits/pear-0.9.10-bin-64/pear-0.9.10-bin-64 bin/pear
     ```
 
 6. **RDP Classifier 2.9 or above** (<http://sourceforge.net/projects/rdp-classifier>) - N.B. RDP Classifier comes with a jar file.
    
     ```sh 
     cd $HOME/pipits
-    wget http://sourceforge.net/projects/rdp-classifier/files/rdp-classifier/rdp_classifier_2.11.zip
-    unzip rdp_classifier_2.11.zip
-    ln -s rdp_classifier_2.11/dist/classifier.jar ./classifier.jar
+    wget https://sourceforge.net/projects/rdp-classifier/files/rdp-classifier/rdp_classifier_2.12.zip
+    unzip rdp_classifier_2.12.zip
+    ln -s rdp_classifier_2.12/dist/classifier.jar ./classifier.jar
     ```
 
 7. **HMMER3** (<http://hmmer.janelia.org/download.html>)
@@ -126,16 +126,16 @@ We advise you to use Ubuntu 16.04 (xenial) or above as all of the dependencies a
 
 There are two reference datasets to download:
 
-1. **UNITE fungal ITS reference trained dataset**
+1. **UNITE fungal ITS reference trained dataset. UNITE 7.1 (2016-08-22) **
 
-   We now provide trained UNITE fungal data (processed and trained for PIPITS).
+   We now provide trained UNITE fungal data (processed and trained for PIPITS). For older versions, go to PIPITS sourceforge (<https://sourceforge.net/projects/pipits/files>).
    Please download this data (<http://sourceforge.net/projects/pipits/files/UNITE_retrained_31.01.2016.tar.gz>), save and extract it to an appropriate directory (e.g. $HOME/pipits/refdb).
 
    ```sh
    mkdir -p $HOME/pipits/refdb
    cd $HOME/pipits/refdb
-   wget http://sourceforge.net/projects/pipits/files/UNITE_retrained_31.01.2016.tar.gz
-   tar xvfz UNITE_retrained_31.01.2016.tar.gz
+   wget http://sourceforge.net/projects/pipits/files/UNITE_retrained_22.08.2016.tar.gz
+   tar xvfz UNITE_retrained_22.08.2016.tar.gz
    ```
 
 2. **UNITE UCHIME reference dataset**
@@ -218,16 +218,16 @@ $ ls $HOME/pipits/classifier.jar
 $ hmmpress -h
 ```
 
-Ok, let's test if PIPITS is all setup. Open up the very first original PIPITS which you downloaded. Please change X.X.X in the command below to the version of PIPITS you downloaded. Note that if you encounter memory issues with JAVA, try increasing the memory with "--Xmx" option.
+Ok, let's test if PIPITS is all setup. Open up the very first original PIPITS which you downloaded. Please change X.X.X in the command below to the version of PIPITS you downloaded. Note that if you encounter memory issues with JAVA, try increasing the memory with "--Xmx" option. PIPITS_PROCESS can take awhile.
 
 ```sh
 cd $HOME/pipits-1.4.0/test_data
 pipits_getreadpairslist -i rawdata -o readpairslist.txt
 pipits_prep -i rawdata -o pipits_prep -l readpairslist.txt
 pipits_funits -i pipits_prep/prepped.fasta -o pipits_funits -x ITS2 
-pipits_process -i pipits_funits/ITS.fasta -o pipits_process --Xmx 2G
+pipits_process -i pipits_funits/ITS.fasta -o pipits_process --Xmx 3G
 
-(pipits_process -i pipits_funits/ITS.fasta --Xmx 2G -o pipits_process_with_warcup --warcup) If you want an additional OTU table with Warcup classification.
+(pipits_process -i pipits_funits/ITS.fasta --Xmx 3G -o pipits_process_with_warcup --warcup) If you want an additional OTU table with Warcup classification.
 ```
 
 Ensure everything works and you don't get an error message.
@@ -372,7 +372,7 @@ This is the final process involving clustering and assigning of taxonomy
 to OTUs:
 
 ```sh
-pipits_process -i pipits_funits/ITS.fasta -o out_process --Xmx 2G 
+pipits_process -i pipits_funits/ITS.fasta -o out_process --Xmx 3G 
 ```
 
 *Note*
