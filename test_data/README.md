@@ -1,3 +1,13 @@
+New Features (PIPITS 1.3.8)
+===========================
+
+- Now you can run pipits_funguild.py on the resulting OTU table to have a reformatted version for FUNGuild analysis. Use the reformmated table on FUNGuild page (<http://www.stbates.org/guilds/app.php>).
+
+```sh
+pipits_funguild.py -i pipits_process/otu_table.txt -o pipits_process/otu_table_funguild.txt
+```
+
+
 SYNOPSIS
 ========
 
@@ -11,7 +21,7 @@ SYNOPSIS
 
 
 1. Setting up PIPITS
-====================
+===================
 
 1.1 Download and install
 ------------------------
@@ -20,14 +30,14 @@ Download the latest package from github release (<https://github.com/hsgweon/pip
 
 ```sh
 cd ~
-wget https://github.com/hsgweon/pipits/releases/download/1.4.0/pipits-1.4.0.tar.gz
-tar xvfz pipits-1.4.0.tar.gz
+wget https://github.com/hsgweon/pipits/releases/download/1.3.8/pipits-1.3.8.tar.gz
+tar xvfz pipits-1.3.8.tar.gz
 ```
 
 Then enter into the created directory and install the package with (ignore errors/warnings):
 
 ```sh
-cd pipits-1.4.0
+cd pipits-1.3.8
 python setup.py clean --all
 python setup.py install --prefix=$HOME/pipits
 ```
@@ -221,13 +231,13 @@ $ hmmpress -h
 Ok, let's test if PIPITS is all setup. Open up the very first original PIPITS which you downloaded. Please change X.X.X in the command below to the version of PIPITS you downloaded. Note that if you encounter memory issues with JAVA, try increasing the memory with "--Xmx" option.
 
 ```sh
-cd $HOME/pipits-1.4.0/test_data
-pipits_getreadpairslist -i rawdata -o readpairslist.txt
-pipits_prep -i rawdata -o pipits_prep -l readpairslist.txt
-pipits_funits -i pipits_prep/prepped.fasta -o pipits_funits -x ITS2 
-pipits_process -i pipits_funits/ITS.fasta -o pipits_process --Xmx 2G
+cd $HOME/pipits-X.X.X/test_data
+pipits_getreadpairslist -i rawdata
+pipits_prep -i rawdata
+pipits_funits -i pipits_prep/prepped.fasta -x ITS2 
+pipits_process -i pipits_funits/ITS.fasta --Xmx 2G
 
-(pipits_process -i pipits_funits/ITS.fasta --Xmx 2G -o pipits_process_with_warcup --warcup) If you want an additional OTU table with Warcup classification.
+(pipits_process -i pipits_funits/ITS.fasta --Xmx 2G -o pipits_process_with_warcup --warcup) If you want additional OTU table with Warcup classification.
 ```
 
 Ensure everything works and you don't get an error message.
@@ -272,25 +282,25 @@ You can uninstall PIPITS simply by deleting $HOME/pipits directory.
 2. Getting started
 ==================
 
-The PIPITS pipeline is divided into four parts:
+The PIPITS pipeline is divided into three parts:
 
-1.  PIPITS_GETREADPAIRSLIST & PIPITS_PREP: prepares raw reads from Illumina MiSeq sequencers for
+1.  PIPITS_PREP: prepares raw reads from Illumina MiSeq sequencers for
     ITS extraction
 2.  PIPITS_FUNITS: extracts fungal ITS regions from the reads
 3.  PIPITS_PROCESS: analyses the reads to produce Operational Taxonomic
     Unit (OTU) abundance tables and the RDP taxonomic assignment table
     for downstream analysis
 
-
-2.1 PIPITS_GETREADPAIRSLIST & PIPITS_PREP
------------------------------------------
+2.1 PIPITS_PREP
+---------------
 
 Illumina reads are generally provided as demultiplexed FASTQ files where
 the Illumina machine software splits the reads into separate files, one
 for each barcode.
 
 PIPITS provides a script called PIPITS_GETREADPAIRSLIST which generates
-a tab-delimited text file for all read-pairs from the directory containing your raw sequences
+a tab-delimited text file for all read-pairs from the raw sequence
+directory:
 
 ```sh
 pipits_getreadpairslist -i illumina_rawdata -o readpairslist.txt
@@ -309,7 +319,7 @@ pipits_getreadpairslist -i illumina_rawdata -o readpairslist.txt
     desired sample IDs for the pairs are listed in the resulting file
     ("readpairslist.txt")
 
-Once we have the list file, we can then begin to process the sequences:
+Once we have the list file, we can begin to process the sequences:
 
 ```sh
 pipits_prep -i illumina_rawdata_directory -o pipits_prep -l readpairslist.txt
@@ -398,36 +408,6 @@ pipits_process -i pipits_funits/ITS.fasta -o out_process --Xmx 2G
     2.  “phylotype abundance table”, an OTU is defined as a cluster of
         sequences binned into the same taxonomic assignments.
 8.  If you have memory issues, try increasing the maximum memory with "--Xmx". For example, "--Xmx 4G".
-
-
-2.4 OTHER FEATURES
-------------------
-
-2.4.1 FUNGuild analysis
-Now you can run PIPITS_FUNGUILD.PY on the resulting OTU table to have a reformatted version for FUNGuild analysis. Use the reformmated table on FUNGuild page (http://www.stbates.org/guilds/app.php).
-
-```sh
-pipits_funguild.py -i pipits_process/otu_table.txt -o pipits_process/otu_table_funguild.txt
-```
-
-2.4.2 Non-paired-end reads (single reads)
-In some rare cases, you may have just single reads (as opposed to the "usual" paired-end reads).
-For this, you can run PIPITS_GETREADSINGLESLIST and PIPITS_PREP_SINGLE. So instead of running PIPITS_GETREADPAIRSLIST followed by PIPITS_PREP, run:
-
-```sh
-pipits_getreadsingleslist -i rawdata_single -o readsingleslist.txt
-pipits_prep_single -i rawdata_single -o pipits_prep -l readsingleslist.txt
-```
-
-Use the example file supplied with PIPITS (test_data/rawdata_single).
-
-2.4.3 PEAR optional parameters
-
-You can add a user-customisable parameter for PEAR. To invoke, use --PEAR_options= followed by PEAR options in quotation marks, for example:
-
-```sh
-pipits_prep -i rawdata -o pipits_prep -l readpairslist.txt --PEAR_options="-v 8 -t 2"
-```
 
 
 3. Options
