@@ -243,7 +243,8 @@ if __name__ == '__main__':
 
     # Done
     logger_info(tc.OKBLUE + "PIPITS_PREP completed." + tc.ENDC, logging_file)
-    logger_info(tc.OKGREEN + "Next Step: PIPITS_PROCESS [ Example: pipits_funits -i " + options.outputdir + "/" + "prepped.fasta -o pipits_funits -x ITS2]" + tc.ENDC, logging_file)
+    logger_info(tc.OKGREEN + "Next Step: PIPITS_FUNITS [ Example: pipits_funits -i " + options.outputdir + "/" + "prepped.fasta -o pipits_funits -x ITS2]" + tc.ENDC, logging_file)
+    logger_info(tc.OKGREEN + "N.B. PIPITS_FUNITS can take a few days (or weeks!) depending on the diversity of the samples." + tc.ENDC, logging_file)
 
     logging_file.close()
     summary_file.close()
