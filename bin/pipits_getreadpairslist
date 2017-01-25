@@ -4,7 +4,7 @@
 Produces a list of filenames for each read pairs and their library names from demultiplxed illumina fastq.gz files
 """
 
-import sys, os, subprocess, ConfigParser, shutil
+import sys, os, subprocess, configparser, shutil
 from time import strftime
 
 __author__ = "Hyun Soon Gweon"

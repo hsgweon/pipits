@@ -41,7 +41,7 @@ with open(options.input, "r") as infile:
     header = None
     for h, group in groupby(infile, isheader):
         if h:
-            header = group.next().strip()[1:]
+            header = next(group).strip()[1:]
         else:
             seq = ''.join(line.strip() for line in group)
             if seq not in d:
