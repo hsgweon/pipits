@@ -52,7 +52,7 @@ with open(options.input, "r") as infile:
 d4json = {}
 with open(options.output, 'w') as outfile:
     
-    for key, value in d.iteritems():
+    for key, value in d.items():
         outfile.write(">" + value[0] + ";size=" + str(len(value)) + "\n" + key + "\n")
         d4json[value[0]] = [i for i in value[1:]]
 
