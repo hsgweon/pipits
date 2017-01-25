@@ -16,6 +16,26 @@ FASTX_FASTQ_QUALITY_FILTER = "fastq_quality_filter"
 FASTX_FASTQ_TO_FASTA       = "fastq_to_fasta"
 
 
+# Modified to be compatible with PYTHON3 - need to watch out though...
+def run_cmd(command, log_file, verbose):
+    logger_verbose(command, log_file, verbose)
+    FNULL = open(os.devnull, 'w')
+    p = subprocess.Popen(command, shell=True, stdout = subprocess.PIPE)
+
+    stdout = p.communicate()[0].decode('UTF-8')
+    log_file.write(stdout)
+
+    if verbose:
+        sys.stdout.write(stdout)
+
+    p.wait()
+    FNULL.close()
+
+    if p.returncode != 0:
+        logger_error("None zero returncode: " + command, log_file)
+        exit(1)
+
+'''
 def run_cmd(command, log_file, verbose):
     logger_verbose(command, log_file, verbose)
     FNULL = open(os.devnull, 'w')
@@ -31,7 +51,7 @@ def run_cmd(command, log_file, verbose):
     if p.returncode != 0:
         logger_error("None zero returncode: " + command, log_file)
         exit(1)
-
+'''
 
 def logger_info(string, log_file):
     import time

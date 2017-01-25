@@ -451,6 +451,7 @@ if __name__ == '__main__':
     #############################
 
     def biomstats(BIOMFILE):
+
         import json
         jsondata = open(BIOMFILE)
         biom = json.load(jsondata)
@@ -466,13 +467,16 @@ if __name__ == '__main__':
         for i in range(len(biom["columns"])):
             sampleids.append(biom["columns"][i]["id"])
 
-        import numpy as np
 
         # BIOM table into matrix
+        totalCount = sum([i[2] for i in biom["data"]])
+
+        '''
         matrix = np.zeros(shape=(otus, sampleSize))
         for i in biom["data"]:
             matrix[i[0], i[1]] = i[2]
         totalCount = matrix.sum()
+        '''
 
         return totalCount, otus, sampleSize
 
