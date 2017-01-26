@@ -79,7 +79,7 @@ if __name__ == '__main__':
     outfile.write("#OTU_ID\t" + "\t".join(sampleids) + "\n")
 
     # OTU table
-    for OTU, members in OTUs.iteritems():
+    for OTU, members in OTUs.items():
 
         # For each OTU
         outfile.write(OTU)
