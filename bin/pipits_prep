@@ -123,7 +123,7 @@ if __name__ == '__main__':
     summary_file = open(options.outputdir + "/summary.log", "w")
 
     # Start!
-    logger_info(tc.OKBLUE + "PIPITS_PREP_SINGLE started" + tc.ENDC, logging_file)
+    logger_info(tc.OKBLUE + "PIPITS_PREP started" + tc.ENDC, logging_file)
 
 
     # Check for the presence of rawdata directory

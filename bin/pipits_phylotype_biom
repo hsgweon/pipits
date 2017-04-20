@@ -47,13 +47,7 @@ sampleids = []
 for i in range(len(biom["columns"])):
 	sampleids.append(biom["columns"][i]["id"])
 
-import numpy as np
-
-# BIOM table into matrix
-matrix = np.zeros(shape=(otus, sampleSize))
-for i in biom["data"]:
-	matrix[i[0], i[1]] = i[2]
-totalCount = matrix.sum()
+totalCount = sum([i[2] for i in biom["data"]])
 
 phylotypes = {}
 for otu in range(otus):
