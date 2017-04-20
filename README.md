@@ -20,8 +20,8 @@ Download the latest package from github release (<https://github.com/hsgweon/pip
 
 ```sh
 cd ~
-wget https://github.com/hsgweon/pipits/releases/download/1.4.2/pipits-1.4.2.tar.gz
-tar xvfz pipits-1.4.2.tar.gz
+wget https://github.com/hsgweon/pipits/archive/1.4.2.tar.gz
+tar xvfz 1.4.2.tar.gz
 ```
 
 Then enter into the created directory and install the package with (ignore errors/warnings):
