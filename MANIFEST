@@ -18,7 +18,6 @@ bin/pipits_prep_single
 bin/pipits_process
 bin/pipits_reformatAssignedTaxonomy
 bin/pipits_uc2otutable
-dist/pipits-1.4.2.tar.gz
 dist/pipits-1.4.3.tar.gz
 pipits/__init__.py
 pipits/concatenate_fasta.py
