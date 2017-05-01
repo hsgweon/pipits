@@ -51,7 +51,7 @@ We advise you to use Ubuntu 16.04 (xenial) or above as all of the dependencies a
    *Available as a Debian package.*
 
    ```
-   sudo apt install biom-format-tools
+   sudo apt -y install biom-format-tools
    ```
 
 2. **FAST-X tools** (<http://hannonlab.cshl.edu/fastx_toolkit>)
@@ -59,7 +59,7 @@ We advise you to use Ubuntu 16.04 (xenial) or above as all of the dependencies a
    *Available as a Debian package.*
 
    ```
-   sudo apt install fastx-toolkit
+   sudo apt -y install fastx-toolkit
    ```
 
 3. **VSEARCH** (<https://github.com/torognes/vsearch>)
@@ -105,19 +105,18 @@ We advise you to use Ubuntu 16.04 (xenial) or above as all of the dependencies a
    *Available as a Debian package.*
 
    ```
-   sudo apt install hmmer
+   sudo apt -y install hmmer
    ```
 
 8. **Java compatible Runtime**
 
    ```
-   sudo apt install default-jre
+   sudo apt -y install default-jre
    ```
 
 9. **numpy**
-
    ```
-   sudo apt install python-numpy
+   sudo apt -y install python-numpy
    ```
 
 
@@ -450,3 +449,91 @@ pipits_prep -h
 ===========
 
 Hyun S. Gweon, Anna Oliver, Joanne Taylor, Tim Booth, Melanie Gibbs, Daniel S. Read, Robert I. Griffiths and Karsten Schonrogge, PIPITS: an automated pipeline for analyses of fungal internal transcribed spacer sequences from the Illumina sequencing platform, Methods in Ecology and Evolution, DOI: 10.1111/2041-210X.12399
+
+
+
+
+# 5. Cheat for installing PIPITS. Use this only if you have installed PIPITS before and you know what you are doing! 
+
+
+```
+cd ~
+wget https://github.com/hsgweon/pipits/archive/1.4.3.tar.gz
+tar xvfz 1.4.3.tar.gz
+
+cd pipits-1.4.3
+python setup.py clean --all
+python setup.py install --prefix=$HOME/pipits
+
+sudo apt -y install biom-format-tools
+sudo apt -y install fastx-toolkit
+sudo apt -y install hmmer
+sudo apt -y install default-jre
+
+cd $HOME/pipits
+wget https://github.com/torognes/vsearch/releases/download/v2.1.2/vsearch-2.1.2-linux-x86_64.tar.gz
+tar xvfz vsearch-2.1.2-linux-x86_64.tar.gz
+ln -s $HOME/pipits/vsearch-2.1.2-linux-x86_64/bin/vsearch bin/vsearch
+
+wget http://microbiology.se/sw/ITSx_1.0.11.tar.gz
+tar xvfz ITSx_1.0.11.tar.gz
+ln -s $HOME/pipits/ITSx_1.0.11/ITSx bin/ITSx
+ln -s $HOME/pipits/ITSx_1.0.11/ITSx_db bin/ITSx_db
+
+# Re-hmmpress
+cd $HOME/pipits/ITSx_1.0.11/ITSx_db/HMMs
+rm -f *.hmm.*
+echo *.hmm | xargs -n1 hmmpress
+
+wget http://sco.h-its.org/exelixis/web/software/pear/files/pear-0.9.10-bin-64.tar.gz
+tar xvfz pear-0.9.10-bin-64.tar.gz
+ln -s $HOME/pipits/pear-0.9.10-bin-64/pear-0.9.10-bin-64 bin/pear
+
+wget https://sourceforge.net/projects/rdp-classifier/files/rdp-classifier/rdp_classifier_2.12.zip
+unzip rdp_classifier_2.12.zip
+ln -s rdp_classifier_2.12/dist/classifier.jar ./classifier.jar
+
+mkdir -p $HOME/pipits/refdb
+cd $HOME/pipits/refdb
+wget http://sourceforge.net/projects/pipits/files/UNITE_retrained_22.08.2016.tar.gz
+tar xvfz UNITE_retrained_22.08.2016.tar.gz
+
+wget https://unite.ut.ee/sh_files/uchime_reference_dataset_01.01.2016.zip
+unzip uchime_reference_dataset_01.01.2016.zip
+
+wget https://sourceforge.net/projects/pipits/files/warcup_retrained_V2.tar.gz
+tar xvfz warcup_retrained_V2.tar.gz
+
+
+# Add PATH to ~/.bashrc
+cat <<EOT >> ~/.bashrc
+
+# Added by PIPITS
+export PATH=$HOME/pipits/bin:$PATH
+export PYTHONPATH=$HOME/pipits/lib/python2.7/site-packages:$PYTHONPATH
+export PIPITS_UNITE_REFERENCE_DATA_CHIMERA=$HOME/pipits/refdb/uchime_reference_dataset_01.01.2016/uchime_reference_dataset_01.01.2016.fasta
+export PIPITS_UNITE_RETRAINED_DIR=$HOME/pipits/refdb/UNITE_retrained
+export PIPITS_WARCUP_RETRAINED_DIR=$HOME/pipits/refdb/warcup_retrained_V2
+export PIPITS_RDP_CLASSIFIER_JAR=$HOME/pipits/classifier.jar
+
+EOT
+
+source ~/.bashrc
+
+# Testing dependencies
+biom
+fastq_to_fasta -h
+vsearch
+ITSx -h
+pear
+ls $HOME/pipits/classifier.jar
+hmmpress -h
+
+# Testing PIPITS
+cd $HOME/pipits-1.4.3/test_data
+pipits_getreadpairslist -i rawdata -o readpairslist.txt
+pipits_prep -i rawdata -o pipits_prep -l readpairslist.txt
+pipits_funits -i pipits_prep/prepped.fasta -o pipits_funits -x ITS2
+pipits_process -i pipits_funits/ITS.fasta -o pipits_process --Xmx 3G
+
+```
