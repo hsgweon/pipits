@@ -11,7 +11,7 @@ SYNOPSIS
 
 
 # 1. Setting up PIPITS
-====================
+
 
 1.1 Download and install
 ------------------------
@@ -269,7 +269,6 @@ You can uninstall PIPITS simply by deleting $HOME/pipits directory.
 
 
 # 2. Getting started
-==================
 
 The PIPITS pipeline is divided into four parts:
 
@@ -434,7 +433,6 @@ pipits_prep -i rawdata -o pipits_prep -l readpairslist.txt --PEAR_options="-v 8 
 
 
 # 3. Options
-==========
 
 PIPITS scripts come with a number of options for the users to alter
 parameters such as distance threshold. The options can be viewed by
@@ -446,14 +444,13 @@ pipits_prep -h
 
 
 # 4. Citation
-===========
 
 Hyun S. Gweon, Anna Oliver, Joanne Taylor, Tim Booth, Melanie Gibbs, Daniel S. Read, Robert I. Griffiths and Karsten Schonrogge, PIPITS: an automated pipeline for analyses of fungal internal transcribed spacer sequences from the Illumina sequencing platform, Methods in Ecology and Evolution, DOI: 10.1111/2041-210X.12399
 
 
 
 
-# 5. Cheat for installing PIPITS. Use this only if you have installed PIPITS before and you know what you are doing! 
+# 5. Cheatsheet for installing PIPITS. Use this only if you have installed PIPITS before and you know what you are doing! 
 
 
 ```
