@@ -10,7 +10,7 @@ SYNOPSIS
 - If you only have a Windows machine, we recommend installing VirtualBox (free) and run Ubuntu or Bio-Linux (<http://environmentalomics.org/bio-linux/>).
 
 
-1. Setting up PIPITS
+# 1. Setting up PIPITS
 ====================
 
 1.1 Download and install
@@ -20,14 +20,14 @@ Download the latest package from github release (<https://github.com/hsgweon/pip
 
 ```sh
 cd ~
-wget https://github.com/hsgweon/pipits/archive/1.4.2.tar.gz
-tar xvfz 1.4.2.tar.gz
+wget https://github.com/hsgweon/pipits/archive/1.4.3.tar.gz
+tar xvfz 1.4.3.tar.gz
 ```
 
 Then enter into the created directory and install the package with (ignore errors/warnings):
 
 ```sh
-cd pipits-1.4.2
+cd pipits-1.4.3
 python setup.py clean --all
 python setup.py install --prefix=$HOME/pipits
 ```
@@ -221,7 +221,7 @@ $ hmmpress -h
 Ok, let's test if PIPITS is all setup. Open up the very first original PIPITS which you downloaded. Please change X.X.X in the command below to the version of PIPITS you downloaded. Note that if you encounter memory issues with JAVA, try increasing the memory with "--Xmx" option. PIPITS_PROCESS can take awhile.
 
 ```sh
-cd $HOME/pipits-1.4.2/test_data
+cd $HOME/pipits-1.4.3/test_data
 pipits_getreadpairslist -i rawdata -o readpairslist.txt
 pipits_prep -i rawdata -o pipits_prep -l readpairslist.txt
 pipits_funits -i pipits_prep/prepped.fasta -o pipits_funits -x ITS2 
@@ -269,7 +269,7 @@ sudo apt-get install python-biom-format vsearch fastx-toolkit hmmer
 You can uninstall PIPITS simply by deleting $HOME/pipits directory.
 
 
-2. Getting started
+# 2. Getting started
 ==================
 
 The PIPITS pipeline is divided into four parts:
@@ -434,7 +434,7 @@ pipits_prep -i rawdata -o pipits_prep -l readpairslist.txt --PEAR_options="-v 8 
 ```
 
 
-3. Options
+# 3. Options
 ==========
 
 PIPITS scripts come with a number of options for the users to alter
@@ -446,7 +446,7 @@ pipits_prep -h
 ```
 
 
-4. Citation
+# 4. Citation
 ===========
 
 Hyun S. Gweon, Anna Oliver, Joanne Taylor, Tim Booth, Melanie Gibbs, Daniel S. Read, Robert I. Griffiths and Karsten Schonrogge, PIPITS: an automated pipeline for analyses of fungal internal transcribed spacer sequences from the Illumina sequencing platform, Methods in Ecology and Evolution, DOI: 10.1111/2041-210X.12399
