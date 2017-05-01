@@ -477,11 +477,6 @@ tar xvfz ITSx_1.0.11.tar.gz
 ln -s $HOME/pipits/ITSx_1.0.11/ITSx bin/ITSx
 ln -s $HOME/pipits/ITSx_1.0.11/ITSx_db bin/ITSx_db
 
-# Re-hmmpress
-cd $HOME/pipits/ITSx_1.0.11/ITSx_db/HMMs
-rm -f *.hmm.*
-echo *.hmm | xargs -n1 hmmpress
-
 wget http://sco.h-its.org/exelixis/web/software/pear/files/pear-0.9.10-bin-64.tar.gz
 tar xvfz pear-0.9.10-bin-64.tar.gz
 ln -s $HOME/pipits/pear-0.9.10-bin-64/pear-0.9.10-bin-64 bin/pear
@@ -501,8 +496,13 @@ unzip uchime_reference_dataset_01.01.2016.zip
 wget https://sourceforge.net/projects/pipits/files/warcup_retrained_V2.tar.gz
 tar xvfz warcup_retrained_V2.tar.gz
 
+# Re-hmmpress
+cd $HOME/pipits/ITSx_1.0.11/ITSx_db/HMMs
+rm -f *.hmm.*
+echo *.hmm | xargs -n1 hmmpress
 
 # Add PATH to ~/.bashrc
+cd
 cat <<EOT >> ~/.bashrc
 
 # Added by PIPITS
