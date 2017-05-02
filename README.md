@@ -5,11 +5,11 @@ SYNOPSIS
 
 - PIPITS is designed to work best on Ubuntu 16.04 and Bio-Linux (<http://environmentalomics.org/bio-linux/>). Unfortunately, it's NOT supported on Windows or a Mac.
 
-- PIPITS can be installed on UBUNTU 16.04 by following the instruction below, however if you are using Ubuntu 14.04, then follow from 1.1 but instead of following 1.2 see Section 1.8 to install dependencies.
+- PIPITS can be installed on UBUNTU 16.04 by following the instruction below, however if you are using Ubuntu 14.04, then follow from Section 1.1 but instead of following Section 1.2 see Section 1.8 to install dependencies.
 
 - If you only have a Windows machine, we recommend installing VirtualBox (free) and run Ubuntu 16.04.
 
-- If you have recently installed Anaconda or Miniconda, then you may have changed your default PYTHON to PYTHON3. In this case, please reinstall NUMPY by typing "pip install numpy"
+- If you have recently installed Anaconda or Miniconda, then you may have changed your default PYTHON to PYTHON3. If the test run fails, then please reinstall NUMPY by typing "pip install numpy"
 
 
 # 1. Setting up PIPITS
