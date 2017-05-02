@@ -3,11 +3,11 @@ SYNOPSIS
 
 - PIPITS is an automated pipeline for analyses of fungal internal transcribed spacer (ITS) sequences from the Illumina sequencing platform.
 
-- PIPITS is designed to work best on Bio-Linux (<http://environmentalomics.org/bio-linux/>) and Ubuntu. Unfortunately, it's NOT supported on Windows or a Mac.
+- PIPITS is designed to work best on Ubuntu 16.04 and Bio-Linux (<http://environmentalomics.org/bio-linux/>). Unfortunately, it's NOT supported on Windows or a Mac.
 
-- If you are using Bio-Linux, most of the dependencies are already on Bio-Linux. Otherwise, you will have to set up the dependencies yourself. If you are using Ubuntu, then instructions on how to set up dependencies are described below (See Section 1.8).
+- PIPITS can be installed on UBUNTU 16.04 by following the instruction below, however if you are using Ubuntu 14.04, then follow from 1.1 but instead of following 1.2 see Section 1.8 to install dependencies.
 
-- If you only have a Windows machine, we recommend installing VirtualBox (free) and run Ubuntu or Bio-Linux (<http://environmentalomics.org/bio-linux/>).
+- If you only have a Windows machine, we recommend installing VirtualBox (free) and run Ubuntu 16.04.
 
 - If you have recently installed Anaconda or Miniconda, then you may have changed your default PYTHON to PYTHON3. In this case, please reinstall NUMPY by typing "pip install numpy"
 
