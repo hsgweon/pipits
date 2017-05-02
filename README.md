@@ -117,8 +117,9 @@ We advise you to use Ubuntu 16.04 (xenial) or above as all of the dependencies a
    ```
 
 9. **numpy**
+
    ```
-   sudo apt install python-pip
+   sudo apt -y install python-pip
    pip install numpy
    ```
 
