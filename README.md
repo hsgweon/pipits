@@ -9,6 +9,8 @@ SYNOPSIS
 
 - If you only have a Windows machine, we recommend installing VirtualBox (free) and run Ubuntu or Bio-Linux (<http://environmentalomics.org/bio-linux/>).
 
+- If you have recently installed Anaconda or Miniconda, then you may have changed your default PYTHON to PYTHON3. In this case, please reinstall NUMPY by typing "pip install numpy"
+
 
 # 1. Setting up PIPITS
 
@@ -116,6 +118,7 @@ We advise you to use Ubuntu 16.04 (xenial) or above as all of the dependencies a
 
 9. **numpy**
    ```
+   sudo apt install python-pip
    pip install numpy
    ```
 
@@ -466,6 +469,7 @@ sudo apt -y install biom-format-tools
 sudo apt -y install fastx-toolkit
 sudo apt -y install hmmer
 sudo apt -y install default-jre
+sudo apt -y install python-pip
 pip install numpy
 
 cd $HOME/pipits
@@ -497,11 +501,6 @@ unzip uchime_reference_dataset_01.01.2016.zip
 wget https://sourceforge.net/projects/pipits/files/warcup_retrained_V2.tar.gz
 tar xvfz warcup_retrained_V2.tar.gz
 
-# Re-hmmpress
-cd $HOME/pipits/ITSx_1.0.11/ITSx_db/HMMs
-rm -f *.hmm.*
-echo *.hmm | xargs -n1 hmmpress
-
 # Add PATH to ~/.bashrc
 cd
 cat <<EOT >> ~/.bashrc
@@ -517,6 +516,13 @@ export PIPITS_RDP_CLASSIFIER_JAR=$HOME/pipits/classifier.jar
 EOT
 
 source ~/.bashrc
+
+
+# Re-hmmpress
+cd $HOME/pipits/ITSx_1.0.11/ITSx_db/HMMs
+rm -f *.hmm.*
+echo *.hmm | xargs -n1 hmmpress
+
 
 # Testing dependencies
 biom
