@@ -22,6 +22,7 @@ Download the latest package from github release (<https://github.com/hsgweon/pip
 
 ```sh
 cd ~
+rm -f 1.4.3.tar.gz
 wget https://github.com/hsgweon/pipits/archive/1.4.3.tar.gz
 tar xvfz 1.4.3.tar.gz
 ```
@@ -459,6 +460,7 @@ Hyun S. Gweon, Anna Oliver, Joanne Taylor, Tim Booth, Melanie Gibbs, Daniel S. R
 
 ```
 cd ~
+rm -f 1.4.3.tar.gz
 wget https://github.com/hsgweon/pipits/archive/1.4.3.tar.gz
 tar xvfz 1.4.3.tar.gz
 
