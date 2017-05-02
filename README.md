@@ -116,7 +116,7 @@ We advise you to use Ubuntu 16.04 (xenial) or above as all of the dependencies a
 
 9. **numpy**
    ```
-   sudo apt -y install python-numpy
+   pip install numpy
    ```
 
 
@@ -466,6 +466,7 @@ sudo apt -y install biom-format-tools
 sudo apt -y install fastx-toolkit
 sudo apt -y install hmmer
 sudo apt -y install default-jre
+pip install numpy
 
 cd $HOME/pipits
 wget https://github.com/torognes/vsearch/releases/download/v2.1.2/vsearch-2.1.2-linux-x86_64.tar.gz
