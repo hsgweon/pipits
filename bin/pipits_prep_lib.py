@@ -176,7 +176,7 @@ def justForwardReads(options):
 
         # Check for empty files
         if os.stat(tmpDir + "/001_reindexed/" + fastqs_l[i] + "_F.fastq").st_size == 0 or os.stat(tmpDir + "/001_reindexed/" + fastqs_l[i] + "_R.fastq").st_size == 0:
-            open(tmpDir + "/002_joined/" + fastqs_l[i] + ".joined.fastq", 'a').close()
+            open(tmpDir + "/002_joined/" + fastqs_l[i] + ".fastq", 'a').close()
             open(tmpDir + "/002_joined/" + fastqs_l[i] + ".discarded.fastq", 'a').close()
             open(tmpDir + "/002_joined/" + fastqs_l[i] + ".unassembled.forward.fastq", 'a').close()
             open(tmpDir + "/002_joined/" + fastqs_l[i] + ".unassembled.reverse.fastq", 'a').close()
@@ -185,7 +185,7 @@ def justForwardReads(options):
         # Simply copy the files
         cmd = " ".join(["cp",
                         tmpDir + "/001_reindexed/" + fastqs_l[i] + "_F.fastq",
-                        tmpDir + "/002_joined/" + fastqs_l[i] + ".joined.fastq"])
+                        tmpDir + "/002_joined/" + fastqs_l[i] + ".fastq"])
         run_cmd(cmd, logger, options.verbose)
 
 
@@ -214,7 +214,7 @@ def join(input_dir_f,
 
         # If empty, then create empty outputs
         if os.stat(input_dir_f + "/" + sampleids_list[i] + ".fastq").st_size == 0 or os.stat(input_dir_r + "/" + sampleids_list[i] + ".fastq").st_size == 0:
-            open(output_dir + "/" + sampleids_list[i] + ".joined.fastq", 'a').close()
+            open(output_dir + "/" + sampleids_list[i] + ".fastq", 'a').close()
             open(output_dir + "/" + sampleids_list[i] + ".discarded.fastq", 'a').close()
             open(output_dir + "/" + sampleids_list[i] + ".unassembled.forward.fastq", 'a').close()
             open(output_dir + "/" + sampleids_list[i] + ".unassembled.reverse.fastq", 'a').close()
