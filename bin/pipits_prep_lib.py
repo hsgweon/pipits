@@ -160,33 +160,60 @@ def reindex_fastq(input_dir,
         outfile.close()
 
 
-def justForwardReads(options):
+# Just forward reads
+def justForwardReads(input_dir_f,
+                     input_dir_r,
+                     output_dir,
+                     sampleids_list,
+                     base_phred_quality_score,
+                     joiner_method,
+                     threads,
+                     PEAR_parameters,
+                     logging_file,
+                     summary_file,
+                     verbose):
 
-    logger.info("Just using forward reads")
+    logger_info("!!! N.B. Just using forward reads !!!", logging_file)
 
-    if not os.path.exists(tmpDir + "/002_joined"):
-        os.mkdir(tmpDir + "/002_joined")
+    if not os.path.exists(output_dir):
+        os.mkdir(output_dir)
     else:
-        shutil.rmtree(tmpDir + "/002_joined")
-        os.mkdir(tmpDir + "/002_joined")
+        shutil.rmtree(output_dir)
+        os.mkdir(output_dir)
 
-    inputDir = options.dataDir
+    for i in range(len(sampleids_list)):
 
-    for i in range(len(fastqs_l)):
-
-        # Check for empty files
-        if os.stat(tmpDir + "/001_reindexed/" + fastqs_l[i] + "_F.fastq").st_size == 0 or os.stat(tmpDir + "/001_reindexed/" + fastqs_l[i] + "_R.fastq").st_size == 0:
-            open(tmpDir + "/002_joined/" + fastqs_l[i] + ".fastq", 'a').close()
-            open(tmpDir + "/002_joined/" + fastqs_l[i] + ".discarded.fastq", 'a').close()
-            open(tmpDir + "/002_joined/" + fastqs_l[i] + ".unassembled.forward.fastq", 'a').close()
-            open(tmpDir + "/002_joined/" + fastqs_l[i] + ".unassembled.reverse.fastq", 'a').close()
+        # If empty, then create empty outputs
+        if os.stat(input_dir_f + "/" + sampleids_list[i] + ".fastq").st_size == 0:
+            open(output_dir + "/" + sampleids_list[i] + ".fastq", 'a').close()
+            open(output_dir + "/" + sampleids_list[i] + ".discarded.fastq", 'a').close()
+            open(output_dir + "/" + sampleids_list[i] + ".unassembled.forward.fastq", 'a').close()
+            open(output_dir + "/" + sampleids_list[i] + ".unassembled.reverse.fastq", 'a').close()
             continue
-        
-        # Simply copy the files
+
+        # Simply copy the files                                                                                                                                                                                                                                                                                                                        
         cmd = " ".join(["cp",
-                        tmpDir + "/001_reindexed/" + fastqs_l[i] + "_F.fastq",
-                        tmpDir + "/002_joined/" + fastqs_l[i] + ".fastq"])
-        run_cmd(cmd, logger, options.verbose)
+                        input_dir_f + "/" + sampleids_list[i] + ".fastq",
+                        output_dir + "/" + sampleids_list[i] + ".fastq"])
+        run_cmd(cmd, logging_file, verbose)
+
+
+    # For summary:
+    numberofsequences = 0
+    for i in range(len(sampleids_list)):
+        
+        # Check for empty file
+        if os.stat(output_dir  + "/" + sampleids_list[i]+ ".fastq").st_size == 0:
+            continue
+
+        cmd = " ".join(["wc -l", output_dir  + "/" + sampleids_list[i]+ ".fastq", "| cut -f1 -d' '"])
+        logger_verbose(cmd, logging_file, verbose)
+        p = subprocess.Popen(cmd, shell = True, stdout = subprocess.PIPE)
+        numberofsequences += int(p.communicate()[0]) / 4
+        p.wait()
+
+    logger_info("  Number of forward reads: " + str(numberofsequences), logging_file)
+    summary_file.write("Number of forward reads: " + str(numberofsequences) + "\n")
 
 
 # Join paired-end reads

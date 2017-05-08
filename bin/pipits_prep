@@ -194,18 +194,32 @@ if __name__ == '__main__':
                   summary_file = summary_file,
                   verbose = options.verbose)
 
+
     # Join
-    join(input_dir_f = options.outputdir + "/tmp/reindex_fastq_F",
-         input_dir_r = options.outputdir + "/tmp/reindex_fastq_R",
-         output_dir = options.outputdir + "/tmp/joined",
-         sampleids_list = sampleids,
-         base_phred_quality_score = options.base_phred_quality_score,
-         joiner_method = options.joiner_method,
-         threads = options.threads,
-         PEAR_parameters = options.PEAR_options,
-         logging_file = logging_file,
-         summary_file = summary_file,
-         verbose = options.verbose)
+    if options.forwardreadsonly:
+        justForwardReads(input_dir_f = options.outputdir + "/tmp/reindex_fastq_F",
+                         input_dir_r = options.outputdir + "/tmp/reindex_fastq_R",
+                         output_dir = options.outputdir + "/tmp/joined",
+                         sampleids_list = sampleids,
+                         base_phred_quality_score = options.base_phred_quality_score,
+                         joiner_method = options.joiner_method,
+                         threads = options.threads,
+                         PEAR_parameters = options.PEAR_options,
+                         logging_file = logging_file,
+                         summary_file = summary_file,
+                         verbose = options.verbose)
+    else:
+        join(input_dir_f = options.outputdir + "/tmp/reindex_fastq_F",
+             input_dir_r = options.outputdir + "/tmp/reindex_fastq_R",
+             output_dir = options.outputdir + "/tmp/joined",
+             sampleids_list = sampleids,
+             base_phred_quality_score = options.base_phred_quality_score,
+             joiner_method = options.joiner_method,
+             threads = options.threads,
+             PEAR_parameters = options.PEAR_options,
+             logging_file = logging_file,
+             summary_file = summary_file,
+             verbose = options.verbose)
 
     # Quality filter
     qualityfilter(input_dir = options.outputdir + "/tmp/joined",
