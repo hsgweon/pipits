@@ -22,15 +22,15 @@ Download the latest package from github release (<https://github.com/hsgweon/pip
 
 ```sh
 cd ~
-rm -f 1.4.3.tar.gz
-wget https://github.com/hsgweon/pipits/archive/1.4.3.tar.gz
-tar xvfz 1.4.3.tar.gz
+rm -f 1.4.4.tar.gz
+wget https://github.com/hsgweon/pipits/archive/1.4.4.tar.gz -O 1.4.4.tar.gz
+tar xvfz 1.4.4.tar.gz
 ```
 
 Then enter into the created directory and install the package with (ignore errors/warnings):
 
 ```sh
-cd pipits-1.4.3
+cd pipits-1.4.4
 python setup.py clean --all
 python setup.py install --prefix=$HOME/pipits
 ```
@@ -225,7 +225,7 @@ $ hmmpress -h
 Ok, let's test if PIPITS is all setup. Open up the very first original PIPITS which you downloaded. Please change X.X.X in the command below to the version of PIPITS you downloaded. Note that if you encounter memory issues with JAVA, try increasing the memory with "--Xmx" option. PIPITS_PROCESS can take awhile.
 
 ```sh
-cd $HOME/pipits-1.4.3/test_data
+cd $HOME/pipits-1.4.4/test_data
 pipits_getreadpairslist -i rawdata -o readpairslist.txt
 pipits_prep -i rawdata -o pipits_prep -l readpairslist.txt
 pipits_funits -i pipits_prep/prepped.fasta -o pipits_funits -x ITS2 
@@ -460,11 +460,11 @@ Hyun S. Gweon, Anna Oliver, Joanne Taylor, Tim Booth, Melanie Gibbs, Daniel S. R
 
 ```
 cd ~
-rm -f 1.4.3.tar.gz
-wget https://github.com/hsgweon/pipits/archive/1.4.3.tar.gz
-tar xvfz 1.4.3.tar.gz
+rm -f 1.4.4.tar.gz
+wget https://github.com/hsgweon/pipits/archive/1.4.4.tar.gz
+tar xvfz 1.4.4.tar.gz
 
-cd pipits-1.4.3
+cd pipits-1.4.4
 python setup.py clean --all
 python setup.py install --prefix=$HOME/pipits
 
@@ -537,7 +537,7 @@ ls $HOME/pipits/classifier.jar
 hmmpress -h
 
 # Testing PIPITS
-cd $HOME/pipits-1.4.3/test_data
+cd $HOME/pipits-1.4.4/test_data
 pipits_getreadpairslist -i rawdata -o readpairslist.txt
 pipits_prep -i rawdata -o pipits_prep -l readpairslist.txt
 pipits_funits -i pipits_prep/prepped.fasta -o pipits_funits -x ITS2

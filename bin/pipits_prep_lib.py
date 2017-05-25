@@ -135,11 +135,11 @@ def reindex_fastq(input_dir,
     for i in range(len(filenames_list)):
         
         if extensionType == "gz":
-            f = gzip.open(input_dir + "/" + filenames_list[i], 'r')
+            f = gzip.open(input_dir + "/" + filenames_list[i], 'rt')
         elif extensionType == "bz2":
-            f = bz2.BZ2File(input_dir + "/" + filenames_list[i], 'r')
+            f = bz2.BZ2File(input_dir + "/" + filenames_list[i], 'rt')
         elif extensionType == "fastq":
-            f = open(input_dir + "/" + filenames_list[i], 'r')
+            f = open(input_dir + "/" + filenames_list[i], 'rt')
         else:
             logger_error("Unknown extension found.", loggint_file)
             exit(1)
