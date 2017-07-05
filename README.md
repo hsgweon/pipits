@@ -25,13 +25,14 @@ SYNOPSIS
 # 1. Setting up PIPITS
 
 
-1.0 Anaconda/Miniconda issue: PYTHON Version
---------------------------------------------
+1.0 Anaconda/Miniconda issue: PYTHON Version (Only if you are using Anaconda/Miniconda with PYTHON3)
+----------------------------------------------------------------------------------------------------
 
 If you have recently installed Anaconda or Miniconda, then you may have changed your default PYTHON2 to PYTHON3. If so, then you will need to create a new conda environment for PIPITS with PYTHON2, activate the environment and then carry on with the installation. And also run PIPITS within the conda PIPITS environment. Confused? just follow the instruction!
 
 (Only if your PYTHON version is 3. Check by entering: python -V)
 
+If you are on PYTHON3.x.x
 ```sh
 conda create -n pipits python=2.7
 ```
@@ -243,8 +244,8 @@ $ hmmpress -h
 
 Ok, let's test if PIPITS is all setup. Open up the very first original PIPITS which you downloaded. Please change X.X.X in the command below to the version of PIPITS you downloaded. Note that if you encounter memory issues with JAVA, try increasing the memory with "--Xmx" option. PIPITS_PROCESS can take awhile.
 
-(Only if you have PYTHON3 and created a conda environment as above (1.0))
 ```sh
+(Only if you have installed Anaconda/Miniconda with PYTHON3 and created a conda environment as directed above)
 source activate pipits
 ```
 
