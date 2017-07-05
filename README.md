@@ -1,3 +1,13 @@
+UPDATE (5 July 2017)
+====================
+
+- PEAR is NO LONGER the default joiner method: PEAR now requires an academic licence and you cannot directly download it from its new homepage any more. I am not a big fan of tools with a restricted licence so I have decided to move on from PEAR and instead use VSEARCH's relatively new joining protocol. VSEARCH developers have openly said that their protocol is based on the algorithm used by PEAR and indeed I have tested VSEARCH on a very large ITS datasets and it was shown to perform in a very similar or almost exactly the same way as PEAR (I am considering whether it would be worth publishing a paper on these different joining methods and the implications). If you still prefer to use PEAR and have managed to get PEAR downloaded, then you can always choose to use PEAR by specifying "--joiner_method PEAR" in pipits_prep. Otherwise, VSEARCH seems to be a perfect replacement - fast, reliable and free!
+
+- New UNITE dataset (2017-06-28) available.
+
+- PIPITS is purposefully designed to give a limited options compared to other tools, so you have more time to analyse the OTU Table than worry about tweaking with different dependencies and parameters. But if you have any suggestions, do let me know by commenting on Issues or email me, and I will try to get it implemented ASAP. Always happy to hear from fellow fungal ecologists!
+
+
 SYNOPSIS
 ========
 
@@ -22,15 +32,15 @@ Download the latest package from github release (<https://github.com/hsgweon/pip
 
 ```sh
 cd ~
-rm -f 1.4.5.tar.gz
-wget https://github.com/hsgweon/pipits/archive/1.4.5.tar.gz -O 1.4.5.tar.gz
-tar xvfz 1.4.5.tar.gz
+rm -f 1.5.0.tar.gz
+wget https://github.com/hsgweon/pipits/archive/1.5.0.tar.gz -O 1.5.0.tar.gz
+tar xvfz 1.5.0.tar.gz
 ```
 
 Then enter into the created directory and install the package with (ignore errors/warnings):
 
 ```sh
-cd pipits-1.4.5
+cd pipits-1.5.0
 python setup.py clean --all
 python setup.py install --prefix=$HOME/pipits
 ```
@@ -67,13 +77,13 @@ We advise you to use Ubuntu 16.04 (xenial) or above as all of the dependencies a
 
 3. **VSEARCH** (<https://github.com/torognes/vsearch>)
 
-   Download a recent version of vsearch. I find version 2.1.2 to be stable for a standard Ubuntu.
+   Download a recent version of vsearch. Anything above 2.4 will be fine.
 
    ```
    cd $HOME/pipits
-   wget https://github.com/torognes/vsearch/releases/download/v2.1.2/vsearch-2.1.2-linux-x86_64.tar.gz
-   tar xvfz vsearch-2.1.2-linux-x86_64.tar.gz
-   ln -s $HOME/pipits/vsearch-2.1.2-linux-x86_64/bin/vsearch bin/vsearch
+   wget https://github.com/torognes/vsearch/releases/download/v2.4.3/vsearch-2.4.3-linux-x86_64.tar.gz
+   tar xvfz vsearch-2.4.3-linux-x86_64.tar.gz
+   ln -s $HOME/pipits/vsearch-2.4.3-linux-x86_64/bin/vsearch bin/vsearch
    ```
 
 4. **ITSx** (<http://microbiology.se/software/itsx>) N.B. ITSx requires HMMER3
@@ -85,16 +95,8 @@ We advise you to use Ubuntu 16.04 (xenial) or above as all of the dependencies a
     ln -s $HOME/pipits/ITSx_1.0.11/ITSx bin/ITSx
     ln -s $HOME/pipits/ITSx_1.0.11/ITSx_db bin/ITSx_db
     ```
-5. **PEAR** (<http://sco.h-its.org/exelixis/web/software/pear>) - N.B. PEAR prohibits commercial use of the code. See its webpage for detail.
- 
-    ```sh
-    cd $HOME/pipits
-    wget http://sco.h-its.org/exelixis/web/software/pear/files/pear-0.9.10-bin-64.tar.gz
-    tar xvfz pear-0.9.10-bin-64.tar.gz
-    ln -s $HOME/pipits/pear-0.9.10-bin-64/pear-0.9.10-bin-64 bin/pear
-    ```
 
-6. **RDP Classifier 2.9 or above** (<http://sourceforge.net/projects/rdp-classifier>) - N.B. RDP Classifier comes with a jar file.
+5. **RDP Classifier 2.9 or above** (<http://sourceforge.net/projects/rdp-classifier>) - N.B. RDP Classifier comes with a jar file.
    
     ```sh 
     cd $HOME/pipits
@@ -103,7 +105,7 @@ We advise you to use Ubuntu 16.04 (xenial) or above as all of the dependencies a
     ln -s rdp_classifier_2.12/dist/classifier.jar ./classifier.jar
     ```
 
-7. **HMMER3** (<http://hmmer.janelia.org/download.html>)
+6. **HMMER3** (<http://hmmer.janelia.org/download.html>)
 
    *Available as a Debian package.*
 
@@ -111,13 +113,13 @@ We advise you to use Ubuntu 16.04 (xenial) or above as all of the dependencies a
    sudo apt -y install hmmer
    ```
 
-8. **Java compatible Runtime**
+7. **Java compatible Runtime**
 
    ```
    sudo apt -y install default-jre
    ```
 
-9. **numpy**
+8. **numpy**
 
    ```
    sudo apt -y install python-pip
@@ -128,7 +130,7 @@ We advise you to use Ubuntu 16.04 (xenial) or above as all of the dependencies a
 1.3 Reference datasets
 ----------------------
 
-There are two reference datasets to download:
+There are two (or three) reference datasets to download:
 
 1. **UNITE fungal ITS reference trained dataset. UNITE 7.1 (2016-08-22) **
 
@@ -138,8 +140,9 @@ There are two reference datasets to download:
    ```sh
    mkdir -p $HOME/pipits/refdb
    cd $HOME/pipits/refdb
-   wget http://sourceforge.net/projects/pipits/files/UNITE_retrained_22.08.2016.tar.gz
-   tar xvfz UNITE_retrained_22.08.2016.tar.gz
+   wget http://sourceforge.net/projects/pipits/files/UNITE_retrained_28.06.2017.tar.gz -O UNITE_retrained_28.06.2017.tar.gz
+   rm -rf UNITE_retrained
+   tar xvfz UNITE_retrained_28.06.2017.tar.gz
    ```
 
 2. **UNITE UCHIME reference dataset**
@@ -149,7 +152,7 @@ There are two reference datasets to download:
    ```sh
    mkdir -p $HOME/pipits/refdb
    cd $HOME/pipits/refdb
-   wget https://unite.ut.ee/sh_files/uchime_reference_dataset_01.01.2016.zip
+   wget https://unite.ut.ee/sh_files/uchime_reference_dataset_01.01.2016.zip -O uchime_reference_dataset_01.01.2016.zip
    unzip uchime_reference_dataset_01.01.2016.zip
    ```
 
@@ -170,8 +173,7 @@ There are two reference datasets to download:
 
 Now we will make sure executables and modules are visible to the shell by existing in the search PATH. Also we will set some environment variables. Assuming UBUNTU is your system, this can be easily achieved by adding the following lines at the end of your profile file. The name of your profile file will depend on which shell your system is using. You can check which shell your system is using by typing *echo $SHELL* in your terminal. If it says /bin/bash, then your profile file is "~/.bashrc". N.B. UBUNTU's default shell is bash while Bio-Linux's default shell is zsh.
 
-Open "~/.bashrc" or "~/.zshrc" (depending on which shell you are using) with a text editor such as gedit.
-
+Open "~/.bashrc" (For Ubuntu 16.04) or "~/.zshrc" (For Ubundu 12.04) with a text editor such as gedit.
 
 
 ```sh    
@@ -217,7 +219,6 @@ $ biom
 $ fastq_to_fasta -h
 $ vsearch
 $ ITSx -h
-$ pear
 $ ls $HOME/pipits/classifier.jar
 $ hmmpress -h
 ```
@@ -225,7 +226,7 @@ $ hmmpress -h
 Ok, let's test if PIPITS is all setup. Open up the very first original PIPITS which you downloaded. Please change X.X.X in the command below to the version of PIPITS you downloaded. Note that if you encounter memory issues with JAVA, try increasing the memory with "--Xmx" option. PIPITS_PROCESS can take awhile.
 
 ```sh
-cd $HOME/pipits-1.4.5/test_data
+cd $HOME/pipits-1.5.0/test_data
 pipits_getreadpairslist -i rawdata -o readpairslist.txt
 pipits_prep -i rawdata -o pipits_prep -l readpairslist.txt
 pipits_funits -i pipits_prep/prepped.fasta -o pipits_funits -x ITS2 
@@ -321,7 +322,7 @@ pipits_prep -i illumina_rawdata_directory -o pipits_prep -l readpairslist.txt
 *Note*
 
 1.  Read-pairs are joined by examining the overlapping regions of
-    sequences with PEAR
+    sequences
 2.  The resulting assembled reads are then quality filtered with
     FASTX_FASTQ_QUALITY_FILTER
 3.  The header of each read is then relabelled with an index number followed by 
@@ -460,11 +461,11 @@ Hyun S. Gweon, Anna Oliver, Joanne Taylor, Tim Booth, Melanie Gibbs, Daniel S. R
 
 ```
 cd ~
-rm -f 1.4.5.tar.gz
-wget https://github.com/hsgweon/pipits/archive/1.4.5.tar.gz
-tar xvfz 1.4.5.tar.gz
+rm -f 1.5.0.tar.gz
+wget https://github.com/hsgweon/pipits/archive/1.5.0.tar.gz
+tar xvfz 1.5.0.tar.gz
 
-cd pipits-1.4.5
+cd pipits-1.5.0
 python setup.py clean --all
 python setup.py install --prefix=$HOME/pipits
 
@@ -476,9 +477,9 @@ sudo apt -y install python-pip
 pip install numpy
 
 cd $HOME/pipits
-wget https://github.com/torognes/vsearch/releases/download/v2.1.2/vsearch-2.1.2-linux-x86_64.tar.gz
-tar xvfz vsearch-2.1.2-linux-x86_64.tar.gz
-ln -s $HOME/pipits/vsearch-2.1.2-linux-x86_64/bin/vsearch bin/vsearch
+wget https://github.com/torognes/vsearch/releases/download/v2.4.3/vsearch-2.4.3-linux-x86_64.tar.gz
+tar xvfz vsearch-2.4.3-linux-x86_64.tar.gz
+ln -s $HOME/pipits/vsearch-2.4.3-linux-x86_64/bin/vsearch bin/vsearch
 
 wget http://microbiology.se/sw/ITSx_1.0.11.tar.gz
 tar xvfz ITSx_1.0.11.tar.gz
@@ -537,7 +538,7 @@ ls $HOME/pipits/classifier.jar
 hmmpress -h
 
 # Testing PIPITS
-cd $HOME/pipits-1.4.5/test_data
+cd $HOME/pipits-1.5.0/test_data
 pipits_getreadpairslist -i rawdata -o readpairslist.txt
 pipits_prep -i rawdata -o pipits_prep -l readpairslist.txt
 pipits_funits -i pipits_prep/prepped.fasta -o pipits_funits -x ITS2

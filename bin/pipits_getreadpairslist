@@ -47,10 +47,11 @@ def make_read_pairs_list(options):
             offendingSampleIDs.append(s)
 
     if len(offendingSampleIDs) != 0:
-        print(RED + "There are missing pair(s) in the Illumina sequences. Check your files and labelling before continuing." + ENDC)
-        print(RED + "Offending sample ID(s): " + ", ".join(offendingSampleIDs) + ENDC)
-        print(RED + "Exiting..." + ENDC)
-        exit(0)
+        if not options.ignoreNameClash:
+            print(RED + "There are missing pair(s) in the Illumina sequences. Check your files and labelling before continuing. If this was intentional, use -f to write the file with duplicate names." + ENDC)
+            print(RED + "Offending sample ID(s): " + ", ".join(offendingSampleIDs) + ENDC)
+            print(RED + "Exiting..." + ENDC)
+            exit(0)
 
     
     # All passed
@@ -140,6 +141,13 @@ if __name__ == '__main__':
         dest = "label_add_reindex_c",
         metavar = "<TXT>",
         help = "Rename samples with the given label. It will automatically add 001, 002 etc. at the end of each name. N.B. \"_\" is not allowed",
+        required = False)
+    parser.add_argument(
+        "-f",
+        action = "store_true",
+        dest = "ignoreNameClash",
+        default = False,
+        help = "Ignore name clash and create a mapping file anyway.",
         required = False)
     options = parser.parse_args()
 

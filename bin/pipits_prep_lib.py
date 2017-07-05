@@ -11,6 +11,7 @@ __maintainer__ = "Hyun Soon Gweon"
 __email__      = "hyugwe@ceh.ac.uk"
 
 PEAR                       = "pear"
+VSEARCH                    = "vsearch"
 FASTQJOIN                  = "fastq-join"
 FASTX_FASTQ_QUALITY_FILTER = "fastq_quality_filter"
 FASTX_FASTQ_TO_FASTA       = "fastq_to_fasta"
@@ -20,13 +21,30 @@ FASTX_FASTQ_TO_FASTA       = "fastq_to_fasta"
 def run_cmd(command, log_file, verbose):
     logger_verbose(command, log_file, verbose)
     FNULL = open(os.devnull, 'w')
-    p = subprocess.Popen(command, shell=True, stdout = subprocess.PIPE)
+    p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
 
     stdout = p.communicate()[0].decode('UTF-8')
     log_file.write(stdout)
 
     if verbose:
         sys.stdout.write(stdout)
+
+    p.wait()
+    FNULL.close()
+
+    if p.returncode != 0:
+        logger_error("None zero returncode: " + command, log_file)
+        exit(1)
+
+
+# VSEARCH outputs copyright info and licence to STDOUT; and the running outputs to STDERRDATA
+def run_cmd_VSEARCH(command, log_file, verbose):
+    logger_verbose(command, log_file, verbose)
+    FNULL = open(os.devnull, 'w')
+    if verbose:
+        p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
+    else:
+        p = subprocess.Popen(command, shell=True, stdout=FNULL, stderr=FNULL)
 
     p.wait()
     FNULL.close()
@@ -266,7 +284,7 @@ def join(input_dir_f,
                             output_dir + "/" + sampleids_list[i] + ".fastq"])
             run_cmd(cmd, logging_file, verbose)
 
-        elif options.joiner_method == "FASTQJOIN":
+        elif joiner_method == "FASTQJOIN":
 
             cmd = " ".join([FASTQJOIN,
                             input_dir_f + "/" + sampleids_list[i] + ".fastq",
@@ -278,7 +296,28 @@ def join(input_dir_f,
             cmd = " ".join(["mv -f",
                             output_dir  + "/" + sampleids_list[i] + ".joined.fastqjoin",
                             output_dir  + "/" + sampleids_list[i]+ ".fastq"])
+
             run_cmd(cmd, logging_file, verbose)
+
+        elif joiner_method == "VSEARCH":
+
+            logger_verbose("Joining with VSEARCH.", logging_file, verbose)
+
+            cmd = " ".join([VSEARCH,
+                            "--fastq_mergepairs",
+                            input_dir_f + "/" + sampleids_list[i] + ".fastq",
+                            "--reverse",
+                            input_dir_r + "/" + sampleids_list[i] + ".fastq",
+                            "--fastqout",
+                            output_dir  + "/" + sampleids_list[i]+ ".fastq",
+                            "--threads", 
+                            threads,
+                            "--fastq_allowmergestagger",
+                            "--fastq_maxdiffs 500",
+                            "--fastq_minovlen 20",
+                            "--fastq_minmergelen 100"])
+
+            run_cmd_VSEARCH(cmd, logging_file, verbose)
 
 
     # For summary:

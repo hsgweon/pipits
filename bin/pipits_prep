@@ -68,10 +68,10 @@ if __name__ == '__main__':
         "--joiner_method",
         action = "store",
         dest = "joiner_method",
-        help = "Joiner method: \"PEAR\" and \"FASTQJOIN\" [default: PEAR]",
+        help = "Joiner method: \"PEAR\" and \"FASTQJOIN\" [default: VSEARCH]",
         required = False,
-        default = "PEAR",
-        choices = ["PEAR", "FASTQJOIN"])
+        default = "VSEARCH",
+        choices = ["VSEARCH", "PEAR", "FASTQJOIN"])
     parser.add_argument(
         "--PEAR_options=",
         type = str,
