@@ -19,7 +19,7 @@ SYNOPSIS
 
 - If you only have a Windows machine, we recommend installing VirtualBox (free) and run Ubuntu 16.04.
 
-- If you have recently installed Anaconda or Miniconda, then you may have changed your default PYTHON to PYTHON3. If the test run fails, then please reinstall NUMPY by typing "pip install numpy"
+- PIPITS runs on PYTHON2. If you recently installed Anaconda/Miniconda with PYTHON3, then you will need to create a conda environment with python2. See below.
 
 
 # 1. Setting up PIPITS
