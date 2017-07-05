@@ -486,18 +486,14 @@ tar xvfz ITSx_1.0.11.tar.gz
 ln -s $HOME/pipits/ITSx_1.0.11/ITSx bin/ITSx
 ln -s $HOME/pipits/ITSx_1.0.11/ITSx_db bin/ITSx_db
 
-wget http://sco.h-its.org/exelixis/web/software/pear/files/pear-0.9.10-bin-64.tar.gz
-tar xvfz pear-0.9.10-bin-64.tar.gz
-ln -s $HOME/pipits/pear-0.9.10-bin-64/pear-0.9.10-bin-64 bin/pear
-
 wget https://sourceforge.net/projects/rdp-classifier/files/rdp-classifier/rdp_classifier_2.12.zip
 unzip rdp_classifier_2.12.zip
 ln -s rdp_classifier_2.12/dist/classifier.jar ./classifier.jar
 
 mkdir -p $HOME/pipits/refdb
 cd $HOME/pipits/refdb
-wget http://sourceforge.net/projects/pipits/files/UNITE_retrained_22.08.2016.tar.gz
-tar xvfz UNITE_retrained_22.08.2016.tar.gz
+wget http://sourceforge.net/projects/pipits/files/UNITE_retrained_28.06.2017.tar.gz
+tar xvfz UNITE_retrained_28.06.2017.tar.gz
 
 wget https://unite.ut.ee/sh_files/uchime_reference_dataset_01.01.2016.zip
 unzip uchime_reference_dataset_01.01.2016.zip
@@ -533,7 +529,6 @@ biom
 fastq_to_fasta -h
 vsearch
 ITSx -h
-pear
 ls $HOME/pipits/classifier.jar
 hmmpress -h
 
