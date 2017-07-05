@@ -132,10 +132,10 @@ We advise you to use Ubuntu 16.04 (xenial) or above as all of the dependencies a
 
 There are two (or three) reference datasets to download:
 
-1. **UNITE fungal ITS reference trained dataset. UNITE 7.1 (2016-08-22) **
+1. **UNITE fungal ITS reference trained dataset. UNITE 7.2 (2017-06-28) **
 
    We now provide trained UNITE fungal data (processed and trained for PIPITS). For older versions, go to PIPITS sourceforge (<https://sourceforge.net/projects/pipits/files>).
-   Please download this data (<http://sourceforge.net/projects/pipits/files/UNITE_retrained_31.01.2016.tar.gz>), save and extract it to an appropriate directory (e.g. $HOME/pipits/refdb).
+   Please download this data, save and extract it to an appropriate directory (e.g. $HOME/pipits/refdb).
 
    ```sh
    mkdir -p $HOME/pipits/refdb
