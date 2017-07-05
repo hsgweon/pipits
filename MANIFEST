@@ -26,6 +26,7 @@ pipits/runcmd.py
 pipits/sgtk_SeqIO.py
 pipits/tcolours.py
 test_data/.gitkeep
+test_data/readpairslist.txt
 test_data/rawdata/A01B_S88_L001_R1_001.fastq
 test_data/rawdata/A01B_S88_L001_R2_001.fastq
 test_data/rawdata/A02B_S89_L001_R1_001.fastq
