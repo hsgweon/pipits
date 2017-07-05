@@ -37,12 +37,13 @@ If you are on PYTHON3.x.x
 conda create -n pipits python=2.7
 ```
 
-Then activate conda environment for installation and also when running PIPITS.
+Then activate conda environment for installation. (Also whenever you run PIPITS after installation, activate the conda environment.)
 ```sh
 source activate pipits
 ```
 
-When finished installation (and also finished running PIPITS, deactivate by entering: source deactivate)
+When finished installation (you can come out of the environment and back to PYTHON3 by entering: source deactivate)
+
 
 1.1 Download and install
 ------------------------
