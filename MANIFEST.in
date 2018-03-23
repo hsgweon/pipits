@@ -1,8 +1,0 @@
-include MANIFEST.in
-include MANUAL.txt
-include LICENSE
-include README.md
-recursive-include pipits *
-recursive-include test_data *
-recursive-include dist *
-

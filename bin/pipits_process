@@ -1,15 +1,17 @@
 #!/usr/bin/env python
 
-import sys, os, argparse, subprocess, shutil, textwrap
-from pipits import runcmd as rc
-from pipits import tcolours as tc
+import sys, os, argparse, subprocess, shutil
+from pispino.runcmd import *
+from pispino.logger import *
 
-__author__ = "Hyun Soon Gweon"
-__copyright__ = "Copyright 2015, The PIPITS Project"
-__credits__ = ["Hyun Soon Gweon", "Anna Oliver", "Joanne Taylor", "Tim Booth", "Melanie Gibbs", "Daniel S. Read", "Robert I. Griffiths", "Karsten Schonrogge"]
-__license__ = "GPL"
+__version__    = 2.0
+
+__author__     = "Hyun Soon Gweon"
+__copyright__  = "Copyright 2015, The PIPITS Project"
+__credits__    = ["Hyun Soon Gweon", "Anna Oliver", "Joanne Taylor", "Tim Booth", "Melanie Gibbs", "Daniel S. Read", "Robert I. Griffiths", "Karsten Schonrogge"]
+__license__    = "GPL"
 __maintainer__ = "Hyun Soon Gweon"
-__email__ = "hyugwe@ceh.ac.uk"
+__email__      = "h.s.gweon@reading.ac.uk"
 
 VSEARCH = "vsearch"
 BIOM = "biom"
@@ -86,6 +88,7 @@ if __name__ == '__main__':
         "--Xms",
         action = "store",
         dest = "Xms",
+        default = "4g",
         metavar = "<INT>",
         help = "The minimum size, in bytes, of the memory allocation pool for JVM",
         required = False)
@@ -93,10 +96,10 @@ if __name__ == '__main__':
         "--Xmx",
         action = "store",
         dest = "Xmx",
+        default = "4g",
         metavar = "<INT>",
         help = "The maximum size, in bytes, of the memory allocation pool for JVM",
         required = False)
-
     parser.add_argument(
         "--warcup",
         action = "store_true",
@@ -104,9 +107,12 @@ if __name__ == '__main__':
         help = "Also classify using Warcup database. Make sure you have downloaded the database as described in the instruction and set the environmental variable.",
         default = False,
         required = False)
-
     options = parser.parse_args()
 
+
+    ######################
+    # Create directories #
+    ######################
 
     EXE_DIR = os.path.dirname(os.path.realpath(__file__))
     if not os.path.exists(options.outDir):
@@ -119,46 +125,63 @@ if __name__ == '__main__':
         os.mkdir(tmpDir)
 
 
-    # Logging
-    import logging
-    logger = logging.getLogger("pipits_process")
-    logger.setLevel(logging.DEBUG)
+    #############
+    # Log files #
+    #############
 
-    streamLoggerFormatter = logging.Formatter("%(asctime)s %(levelname)s: %(message)s", tc.HEADER + "%Y-%m-%d %H:%M:%S" + tc.ENDC)
-
-    streamLogger = logging.StreamHandler()
-    if options.verbose:
-        streamLogger.setLevel(logging.DEBUG)
-    else:
-        streamLogger.setLevel(logging.INFO)
-    streamLogger.setFormatter(streamLoggerFormatter)
-    logger.addHandler(streamLogger)
-
-    fileLoggerFormatter = logging.Formatter("%(asctime)s %(levelname)s: %(message)s", tc.HEADER + "%Y-%m-%d %H:%M:%S" + tc.ENDC)
-    fileLogger = logging.FileHandler(options.outDir + "/log.txt", "w")
-    fileLogger.setLevel(logging.DEBUG)
-    fileLogger.setFormatter(fileLoggerFormatter)
-    logger.addHandler(fileLogger)
+    logging_file = open(options.outDir + "/output.log", "w")
+    summary_file = open(options.outDir + "/summary.log", "w")
+    version_file = open(options.outDir + "/versions.log", "w")
 
 
-    # Start
-    logger.info(tc.OKBLUE + "PIPITS PROCESS started" + tc.ENDC)
+    ##########
+    # Start! #
+    ##########
 
-    # Check for input file
-    if not os.path.exists(options.input):
-        logger.error("Error: Input file doesn't exist")
-        exit(1)
+    logger("pipits_process " + str(__version__) + ", the PIPITS Project", logging_file, display = True, timestamp = False)
+    logger("https://github.com/hsgweon/pipits", logging_file, display = True, timestamp = False)
+    logger("---------------------------------", logging_file, display = True, timestamp = False)
+    logger("", logging_file, display = True, timestamp = False)
 
-    if os.stat(options.input).st_size == 0:
-        logger.error("Input file is empty!")
+    # Log versions
+    cmd = " ".join(["conda list"])
+    run_cmd(cmd, version_file, False)
+
+    # Environment variable
+    EXIT = []
+    if os.environ.get("PIPITS_UNITE_REFERENCE_DATA_CHIMERA") is None:
+        EXIT.append("PIPITS_UNITE_REFERENCE_DATA_CHIMERA")
+    if os.environ.get("PIPITS_UNITE_RETRAINED_DIR") is None:
+        EXIT.append("PIPITS_UNITE_RETRAINED_DIR")
+    if os.environ.get("PIPITS_WARCUP_RETRAINED_DIR") is None:
+        EXIT.append("PIPITS_WARCUP_RETRAINED_DIR")
+
+    if len(EXIT) > 0:
+        logger("ERRO: environment variables (" + ", ".join(EXIT) + ") are not set. Please see PIPITS installation for an instruction on this.", logging_file, display = True)
         exit(0)
 
 
-    # Sample ids
+    # Start
+    logger(ENDC + "pipits_process started" + ENDC, logging_file, display = True)
+
+    # Check for input file
+    if not os.path.exists(options.input):
+        logger("ERROR: Input file doesn't exist", logging_file, display = True)
+        exit(1)
+
+    if os.stat(options.input).st_size == 0:
+        logger("Input file is empty!", logging_file, display = True)
+        exit(0)
+
+
+    ##############
+    # Sample ids #
+    ##############
+
     if not options.sortedlist:
 
         # Generating a sample list
-        logger.info("Generating a sample list from the input sequences")
+        logger(ENDC + "Generating a sample list from the input sequences" + ENDC, logging_file, display = True)
 
         try:
             os.remove(tmpDir + "/sampleIDs.txt")
@@ -168,13 +191,13 @@ if __name__ == '__main__':
         cmd = " ".join(["python", EXE_DIR + "/pipits_getsamplelistfromfasta",
                         "-i", options.input,
                         "-o", options.outDir + "/sampleIDs.txt"])
-        rc.run_cmd(cmd, logger, options.verbose)
+        run_cmd(cmd, logging_file, options.verbose)
         options.sortedlist = options.outDir + "/sampleIDs.txt"
 
 
     sampleIDs = []
     if not os.path.exists(options.sortedlist):
-        print("Error: Sample list file does NOT exist")
+        print("ERROR: Sample list file does NOT exist")
         exit(1)
 
     for line in open(options.sortedlist):
@@ -184,52 +207,67 @@ if __name__ == '__main__':
     # Check for duplicate entries
     duplicateIDs = list(set([x for x in sampleIDs if sampleIDs.count(x) > 1]))
     if len(duplicateIDs) > 0:
-        print("Error: You have a duplicate id in your Sample list file. Offending id: " + ",".join(duplicateIDs))
+        print("ERROR: You have a duplicate id in your Sample list file. Offending id: " + ",".join(duplicateIDs))
         exit(1)
 
 
-        
-    # Derep
-    logger.info("Dereplicating and removing unique sequences prior to picking OTUs")
-    minuniquesize = 2
+    #########        
+    # Derep #
+    #########        
+
+    minuniquesize = 2 # This removes singletons
     if options.includeuniqueseqs:
-        minuniquesize = 1
-    cmd = " ".join([VSEARCH, "--derep_fulllength", options.input, 
-                    "--output", tmpDir + "/input_nr.fasta", 
-                    "--minuniquesize", str(minuniquesize), 
-                    "--sizeout",
-                    "--threads", options.threads])
-    rc.run_cmd_VSEARCH(cmd, logger, options.verbose)
+        minuniquesize = 1 # Option to include singletons
+
+    logger(ENDC + "Dereplicating and removing unique sequences prior to picking OTUs" + ENDC, logging_file, display = True)
+    cmd = " ".join([
+        VSEARCH, 
+        "--derep_fulllength", options.input, 
+        "--output", tmpDir + "/input_nr.fasta", 
+        "--minuniquesize", str(minuniquesize), 
+        "--sizeout",
+        "--threads", options.threads])
+    run_cmd(cmd, logging_file, options.verbose)
 
     # Check if the file is empty
     if os.stat(tmpDir + "/input_nr.fasta").st_size == 0:
-        logger.info(tc.OKYELLOW + "After dereplicating and removing unique sequences, there aren't no sequences! Processing stopped." + tc.ENDC)
+        logger(RED + "ERROR: After dereplicating and removing unique sequences, there are no sequences! Processing stopped." + ENDC, logging_file, display = True)
         exit(0)
 
 
-    # OTU clustering
-    logger.info("Picking OTUs [VSEARCH]")
+    ##################
+    # OTU clustering #
+    ##################
+
+    logger(ENDC + "Picking OTUs [VSEARCH]" + ENDC, logging_file, display = True)
     cmd = " ".join([VSEARCH, 
                     "--cluster_fast", tmpDir + "/input_nr.fasta", 
                     "--id", options.VSEARCH_id,
                     "--centroids", tmpDir + "/input_nr_otus.fasta",
                     "--uc", tmpDir + "/input_nr_otus.uc",
                     "--threads", options.threads])
-    rc.run_cmd_VSEARCH(cmd, logger, options.verbose)
+    run_cmd(cmd, logging_file, options.verbose)
 
 
-    # Chimera removal
-    logger.info("Removing chimeras [VSEARCH]")
-    cmd = " ".join([VSEARCH, 
-                    "--uchime_ref", tmpDir + "/input_nr_otus.fasta", 
-                    "--db $PIPITS_UNITE_REFERENCE_DATA_CHIMERA",
-                    "--nonchimeras", tmpDir + "/input_nr_otus_nonchimeras.fasta",
-                    "--threads", options.threads])
-    rc.run_cmd_VSEARCH(cmd, logger, options.verbose)
+    ###################
+    # Chimera removal #
+    ###################
+
+    logger(ENDC + "Removing chimeras [VSEARCH]" + ENDC, logging_file, display = True)
+    cmd = " ".join([
+        VSEARCH, 
+        "--uchime_ref", tmpDir + "/input_nr_otus.fasta", 
+        "--db $PIPITS_UNITE_REFERENCE_DATA_CHIMERA",
+        "--nonchimeras", tmpDir + "/input_nr_otus_nonchimeras.fasta",
+        "--threads", options.threads])
+    run_cmd(cmd, logging_file, options.verbose)
 
 
-    # Rename OTUs
-    logger.info("Renaming OTUs")
+    ###############
+    # Rename OTUs #
+    ###############
+
+    logger(ENDC + "Renaming OTUs" + ENDC, logging_file, display = True)
     def renumberOTUS():
         handle_in = open(tmpDir + "/input_nr_otus_nonchimeras.fasta", "rU")
         handle_out = open(tmpDir + "/input_nr_otus_nonchimeras_relabelled.fasta", "w")
@@ -245,92 +283,104 @@ if __name__ == '__main__':
                 handle_out.write(line.rstrip() + "\n")
         handle_in.close()
         handle_out.close()
-
     renumberOTUS()
 
 
-    # Map reads to OTUs
-    logger.info("Mapping reads onto centroids [VSEARCH]")
+    #####################
+    # Map reads to OTUs #
+    #####################
+
+    logger(ENDC + "Mapping reads onto centroids [VSEARCH]" + ENDC, logging_file, display = True)
     cmd = " ".join([VSEARCH, 
                     "--usearch_global", options.input, 
                     "--db", tmpDir + "/input_nr_otus_nonchimeras_relabelled.fasta", 
                     "--id", options.VSEARCH_id, 
                     "--uc", tmpDir + "/otus.uc",
                     "--threads", options.threads])
-    rc.run_cmd_VSEARCH(cmd, logger, options.verbose)
+    run_cmd(cmd, logging_file, options.verbose)
 
 
-    # OTU construction
-    logger.info("Making OTU table")
+    ####################
+    # OTU construction #
+    ####################
+
+    logger(ENDC + "Making OTU table" + ENDC, logging_file, display = True)
     cmd = " ".join(["python", EXE_DIR + "/pipits_uc2otutable", 
                     "-i", tmpDir + "/otus.uc", 
                     "-o", tmpDir + "/otu_table_prelim.txt",
                     "-l", options.sortedlist])
-    rc.run_cmd_VSEARCH(cmd, logger, options.verbose)
+    run_cmd(cmd, logging_file, options.verbose)
 
-    # Convert to biom
-    logger.info("Converting classic tabular OTU into a BIOM format [BIOM]")
+
+    ###################
+    # Convert to biom #
+    ###################
+
+    logger(ENDC + "Converting classic tabular OTU into a BIOM format [BIOM]" + ENDC, logging_file, display = True)
     try:
         os.remove(tmpDir + "/otu_table_prelim.biom")
     except OSError:
         pass
-    cmd = " ".join([BIOM, "convert", 
-                    "-i", tmpDir + "/otu_table_prelim.txt", 
-                    "-o", tmpDir + "/otu_table_prelim.biom", 
-                    "--table-type=\"OTU table\" --to-json"])
-    rc.run_cmd(cmd, logger, options.verbose)
+    cmd = " ".join([
+        BIOM, "convert", 
+        "-i", tmpDir + "/otu_table_prelim.txt", 
+        "-o", tmpDir + "/otu_table_prelim.biom", 
+        "--table-type=\"OTU table\" --to-json"
+        ])
+    run_cmd(cmd, logging_file, options.verbose)
 
 
-    # Classifying OTUs
-    # http://sourceforge.net/projects/rdp-classifier/files/RDP_Classifier_TrainingData/ 
-    JVM_memory_option = ""
-    if options.Xms:
-        JVM_memory_option = JVM_memory_option + "-Xms" + str(options.Xms) + " "
+    #####################
+    # RDP against UNITE #
+    #####################
 
-    if options.Xmx:
-        JVM_memory_option = JVM_memory_option + "-Xmx" + str(options.Xmx) + " "
-    
-
-    ################
-    # RDP on UNITE #
-    ################
-
-    logger.info("Assigning taxonomy [RDP Classifier]")
-    cmd = " ".join(["java", JVM_memory_option, "-jar $PIPITS_RDP_CLASSIFIER_JAR classify", 
+    logger(ENDC + "Assigning taxonomy with UNITE [RDP Classifier]" + ENDC, logging_file, display = True)
+    cmd = " ".join(["classifier",
+                    "-Xms" + str(options.Xms),
+                    "-Xmx" + str(options.Xmx),
+                    "classify", 
                     "-t $PIPITS_UNITE_RETRAINED_DIR" + "/rRNAClassifier.properties", 
                     "-o", options.outDir + "/assigned_taxonomy.txt", 
                     tmpDir + "/input_nr_otus_nonchimeras_relabelled.fasta"])
-    rc.run_cmd(cmd, logger, options.verbose)
+    run_cmd(cmd, logging_file, options.verbose)
 
 
-    # Reformatting RDP_CLASSIFIER output for biom
-    logger.info("Reformatting RDP_Classifier output")
-    cmd = " ".join(["python", EXE_DIR + "/pipits_reformatAssignedTaxonomy", 
-                    "-i", options.outDir + "/assigned_taxonomy.txt" , 
-                    "-o", options.outDir + "/assigned_taxonomy_reformatted_filtered.txt",
-                    "-c", options.RDP_assignment_threshold])
-    rc.run_cmd(cmd, logger, options.verbose)
+    ###############################################
+    # Reformatting RDP_CLASSIFIER output for biom #
+    ###############################################
+
+    logger(ENDC + "Reformatting RDP_Classifier output" + ENDC, logging_file, display = True)
+    cmd = " ".join([
+        "python", EXE_DIR + "/pipits_reformatAssignedTaxonomy", 
+        "-i", options.outDir + "/assigned_taxonomy.txt" , 
+        "-o", options.outDir + "/assigned_taxonomy_reformatted_filtered.txt",
+        "-c", options.RDP_assignment_threshold])
+    run_cmd(cmd, logging_file, options.verbose)
 
 
-    # Adding RDP_CLASSIFIER output to OTU table
-    logger.info("Adding assignment to OTU table [BIOM]")
+    #############################################
+    # Adding RDP_CLASSIFIER output to OTU table #
+    #############################################
+
+    logger(ENDC + "Adding assignment to OTU table [BIOM]" + ENDC, logging_file, display = True)
     try:
         os.remove(options.outDir + "/otu_table.biom")
     except OSError:
         pass
-    cmd = " ".join([BIOM, "add-metadata", 
-                    "-i", tmpDir + "/otu_table_prelim.biom", 
-                    "-o", options.outDir + "/otu_table.biom", 
-                    "--observation-metadata-fp", options.outDir + "/assigned_taxonomy_reformatted_filtered.txt", 
-                    "--observation-header", "OTUID,taxonomy,confidence", 
-                    "--sc-separated", "taxonomy", 
-                    "--float-fields", "confidence", 
-                    "--output-as-json"])
-    rc.run_cmd(cmd, logger, options.verbose)
+    cmd = " ".join([
+        BIOM, "add-metadata", 
+        "-i", tmpDir + "/otu_table_prelim.biom", 
+        "-o", options.outDir + "/otu_table.biom", 
+        "--observation-metadata-fp", options.outDir + "/assigned_taxonomy_reformatted_filtered.txt", 
+        "--observation-header", "OTUID,taxonomy,confidence", 
+        "--sc-separated", "taxonomy", 
+        "--float-fields", "confidence", 
+        "--output-as-json"])
+    run_cmd(cmd, logging_file, options.verbose)
 
 
     # Convert BIOM to TABLE
-    logger.info("Converting OTU table with taxa assignment into a BIOM format [BIOM]")
+    logger(ENDC + "Converting OTU table with taxa assignment into a BIOM format [BIOM]" + ENDC, logging_file, display = True)
     try:
         os.remove(options.outDir + "/otu_table.txt")
     except OSError:
@@ -340,24 +390,27 @@ if __name__ == '__main__':
                     "-o", options.outDir + "/otu_table.txt",
                     "--to-tsv",
                     "--header-key taxonomy"])
-    rc.run_cmd(cmd, logger, options.verbose)
+    run_cmd(cmd, logging_file, options.verbose)
 
     # Phylotype
-    logger.info("Phylotyping OTU table")
-    cmd = " ".join(["python", EXE_DIR + "/pipits_phylotype_biom", "-i", options.outDir + "/otu_table.biom", "-o", options.outDir + "/phylotype_table.txt"])
-    rc.run_cmd(cmd, logger, options.verbose)
+    logger(ENDC + "Phylotyping OTU table" + ENDC, logging_file, display = True)
+    cmd = " ".join([
+        "python", EXE_DIR + "/pipits_phylotype_biom", 
+        "-i", options.outDir + "/otu_table.biom", 
+        "-o", options.outDir + "/phylotype_table.txt"])
+    run_cmd(cmd, logger, options.verbose)
 
     try:
         os.remove(options.outDir + "/phylotype_table.biom")
     except OSError:
         pass
-    cmd = " ".join([BIOM, "convert",
-                    "-i", options.outDir + "/phylotype_table.txt",
-                    "-o", options.outDir + "/phylotype_table.biom",
-                    "--table-type=\"OTU table\" --process-obs-metadata=\"taxonomy\"",
-                    "--to-json"])
-    rc.run_cmd(cmd, logger, options.verbose)
-
+    cmd = " ".join([
+        BIOM, "convert",
+        "-i", options.outDir + "/phylotype_table.txt",
+        "-o", options.outDir + "/phylotype_table.biom",
+        "--table-type=\"OTU table\" --process-obs-metadata=\"taxonomy\"",
+        "--to-json"])
+    run_cmd(cmd, logging_file, options.verbose)
 
 
     ##########
@@ -367,71 +420,75 @@ if __name__ == '__main__':
     if options.warcup:
 
         # Classify
-        logger.info("Assigning taxonomy [RDP Classifier] - Warcup")
-        cmd = " ".join(["java", JVM_memory_option, "-jar $PIPITS_RDP_CLASSIFIER_JAR classify",
-                        "-t $PIPITS_WARCUP_RETRAINED_DIR" + "/rRNAClassifier.properties",
-                        "-o", options.outDir + "/assigned_taxonomy_warcup.txt",
-                        tmpDir + "/input_nr_otus_nonchimeras_relabelled.fasta"])
-
-        rc.run_cmd(cmd, logger, options.verbose)
-
+        logger("Assigning taxonomy [RDP Classifier] - Warcup", logging_file, display = True)
+        cmd = " ".join([
+            "classifier",
+            "-Xms" + str(options.Xms),
+            "-Xmx" + str(options.Xmx),
+            "classify", 
+            "-t $PIPITS_WARCUP_RETRAINED_DIR" + "/rRNAClassifier.properties", 
+            "-o", options.outDir + "/assigned_taxonomy_warcup.txt", 
+            tmpDir + "/input_nr_otus_nonchimeras_relabelled.fasta"])
+        run_cmd(cmd, logging_file, options.verbose)
 
         # Reformatting RDP_CLASSIFIER output for biom for Warcup
-        cmd = " ".join(["python", EXE_DIR + "/pipits_reformatAssignedTaxonomy",
-                        "-i", options.outDir + "/assigned_taxonomy_warcup.txt" ,
-                        "-o", options.outDir + "/assigned_taxonomy_reformatted_filtered_warcup.txt",
-                        "-c", options.RDP_assignment_threshold])
-        rc.run_cmd(cmd, logger, options.verbose)
+        cmd = " ".join([
+            "python", EXE_DIR + "/pipits_reformatAssignedTaxonomy",
+            "-i", options.outDir + "/assigned_taxonomy_warcup.txt" ,
+            "-o", options.outDir + "/assigned_taxonomy_reformatted_filtered_warcup.txt",
+            "-c", options.RDP_assignment_threshold])
+        run_cmd(cmd, logging_file, options.verbose)
 
 
         # Adding RDP_CLASSIFIER output to OTU table
-        logger.info("Adding assignment to OTU table [BIOM] - Warcup")
+        logger("Adding assignment to OTU table [BIOM] - Warcup", logging_file, display = True)
         try:
             os.remove(options.outDir + "/otu_table_warcup.biom")
         except OSError:
             pass
-        cmd = " ".join([BIOM, "add-metadata",
-                        "-i", tmpDir + "/otu_table_prelim.biom",
-                        "-o", options.outDir + "/otu_table_warcup.biom",
-                        "--observation-metadata-fp", options.outDir + "/assigned_taxonomy_reformatted_filtered_warcup.txt",
-                        "--observation-header", "OTUID,taxonomy,confidence",
-                        "--sc-separated", "taxonomy",
-                        "--float-fields", "confidence",
-                        "--output-as-json"])
-        rc.run_cmd(cmd, logger, options.verbose)
+        cmd = " ".join([
+            BIOM, "add-metadata",
+            "-i", tmpDir + "/otu_table_prelim.biom",
+            "-o", options.outDir + "/otu_table_warcup.biom",
+            "--observation-metadata-fp", options.outDir + "/assigned_taxonomy_reformatted_filtered_warcup.txt",
+            "--observation-header", "OTUID,taxonomy,confidence",
+            "--sc-separated", "taxonomy",
+            "--float-fields", "confidence",
+            "--output-as-json"])
+        run_cmd(cmd, logging_file, options.verbose)
 
 
         # Convert BIOM to TABLE
-        logger.info("Converting OTU table with taxa assignment into a BIOM format [BIOM] - Warcup")
+        logger("Converting OTU table with taxa assignment into a BIOM format [BIOM] - Warcup", logging_file, display = True)
         try:
             os.remove(options.outDir + "/otu_table_warcup.txt")
         except OSError:
             pass
-        cmd = " ".join([BIOM, "convert",
-                        "-i", options.outDir + "/otu_table_warcup.biom",
-                        "-o", options.outDir + "/otu_table_warcup.txt",
-                        "--to-tsv",
-                        "--header-key taxonomy"])
-        rc.run_cmd(cmd, logger, options.verbose)
+        cmd = " ".join([
+            BIOM, "convert",
+            "-i", options.outDir + "/otu_table_warcup.biom",
+            "-o", options.outDir + "/otu_table_warcup.txt",
+            "--to-tsv",
+            "--header-key taxonomy"])
+        run_cmd(cmd, logging_file, options.verbose)
 
 
         # Make phylotyp table #
-        logger.info("Phylotyping OTU table - Warcup")
+        logger("Phylotyping OTU table - Warcup", logging_file, display = True)
         cmd = " ".join(["python", EXE_DIR + "/pipits_phylotype_biom", "-i", options.outDir + "/otu_table_warcup.biom", "-o", options.outDir + "/phylotype_table_warcup.txt"])
-        rc.run_cmd(cmd, logger, options.verbose)
+        run_cmd(cmd, logging_file, options.verbose)
 
         try:
             os.remove(options.outDir + "/phylotype_table_warcup.biom")
         except OSError:
             pass
-        cmd = " ".join([BIOM, "convert",
-                        "-i", options.outDir + "/phylotype_table_warcup.txt",
-                        "-o", options.outDir + "/phylotype_table_warcup.biom",
-                        "--table-type=\"OTU table\" --process-obs-metadata=\"taxonomy\"",
-                        "--to-json"])
-        rc.run_cmd(cmd, logger, options.verbose)
-
-
+        cmd = " ".join([
+            BIOM, "convert",
+            "-i", options.outDir + "/phylotype_table_warcup.txt",
+            "-o", options.outDir + "/phylotype_table_warcup.biom",
+            "--table-type=\"OTU table\" --process-obs-metadata=\"taxonomy\"",
+            "--to-json"])
+        run_cmd(cmd, logging_file, options.verbose)
 
 
     # Move representative sequence file to outDir
@@ -440,15 +497,13 @@ if __name__ == '__main__':
 
     # Remove tmp
     if not options.retain:
-        logger.info("Cleaning temporary directory")
+        logger(ENDC + "Cleaning temporary directory" + ENDC, logging_file, display = True)
         shutil.rmtree(tmpDir)
 
 
-    # Final stats
-
-    #############################
-    # Import json formatted OTU #
-    #############################
+    ####################################
+    # Stats: Import json formatted OTU #
+    ####################################
 
     def biomstats(BIOMFILE):
 
@@ -467,7 +522,6 @@ if __name__ == '__main__':
         for i in range(len(biom["columns"])):
             sampleids.append(biom["columns"][i]["id"])
 
-
         # BIOM table into matrix
         totalCount = sum([i[2] for i in biom["data"]])
 
@@ -483,19 +537,19 @@ if __name__ == '__main__':
     otu_reads_count, otu_count, otu_sample_count = biomstats(options.outDir + "/otu_table.biom")
     phylo_reads_count, phylo_count, phylo_sample_count = biomstats(options.outDir + "/phylotype_table.biom")
 
-    outfile = open(options.outDir + "/summary_pipits_process.txt", "w")
+    summary_file.write("No.of reads used to generate OTU table: " + str(int(otu_reads_count)) + "\n")
+    summary_file.write("Number of OTUs:                         " + str(otu_count) + "\n")
+    summary_file.write("Number of phylotypes:                   " + str(phylo_count) + "\n")
+    summary_file.write("Number of samples:                      " + str(otu_sample_count) + "\n")
 
-    outfile.write("No.of reads used to generate OTU table: " + str(int(otu_reads_count)) + "\n")
-    outfile.write("Number of OTUs:                         " + str(otu_count) + "\n")
-    outfile.write("Number of phylotypes:                   " + str(phylo_count) + "\n")
-    outfile.write("Number of samples:                      " + str(otu_sample_count) + "\n")
+    logger(BLUE + "\tNumber of reads used to generate OTU table: " + str(int(otu_reads_count)) + ENDC, logging_file, display = True)
+    logger(BLUE + "\tNumber of OTUs:                             " + str(otu_count) + ENDC, logging_file, display = True)
+    logger(BLUE + "\tNumber of phylotypes:                       " + str(phylo_count) + ENDC, logging_file, display = True)
+    logger(BLUE + "\tNumber of samples:                          " + str(otu_sample_count) + ENDC, logging_file, display = True)
 
-    logger.info(tc.RED + "\tNumber of reads used to generate OTU table: " + str(int(otu_reads_count)) + tc.ENDC)
-    logger.info(tc.RED + "\tNumber of OTUs:                             " + str(otu_count) + tc.ENDC)
-    logger.info(tc.RED + "\tNumber of phylotypes:                       " + str(phylo_count) + tc.ENDC)
-    logger.info(tc.RED + "\tNumber of samples:                          " + str(otu_sample_count) + tc.ENDC)
+    logger(ENDC + "Done - Resulting files are in \"" + options.outDir + "\" directory" + ENDC, logging_file, display = True)
+    logger(ENDC + "pipits_process ended successfully." + ENDC, logging_file, display = True)
 
-
-    # Done!
-    logger.info(tc.OKBLUE + "PIPITS_PROCESS ended successfully." + tc.ENDC)
-    logger.info(tc.OKGREEN + "Resulting files are in \"" + options.outDir + "\" directory" + tc.ENDC)
+    logging_file.close()
+    version_file.close()
+    summary_file.close()
