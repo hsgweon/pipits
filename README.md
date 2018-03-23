@@ -40,9 +40,9 @@
 > add the [Bioconda](https://bioconda.github.io/index.html) channel and others which [Bioconda](https://bioconda.github.io/index.html) depends on. It is important to add them in this order (this needs to be done only for the first time)
 
 ```shell
-$ conda config --add channels defaults
-$ conda config --add channels conda-forge
-$ conda config --add channels bioconda
+conda config --add channels defaults
+conda config --add channels conda-forge
+conda config --add channels bioconda
 ```
 
 ### A2. Install and create a Conda environment for PIPITS
@@ -52,7 +52,7 @@ It is recommended that you use a [Conda](https://conda.io/) environment for runn
 > install **PIPITS** and dependencies and create a Conda environment (here the environment is named "pipit_env" but you can choose any name you wish)
 
 ```shell
-$ conda create -n pipits_env pipits
+conda create -n pipits_env pipits
 ```
 
 ### A3. Reference datasets
@@ -81,7 +81,7 @@ tar xvfz UNITE_retrained_01.12.2017.tar.gz
 
 ```sh
 cd $HOME/pipits/refdb
-wget https://unite.ut.ee/sh_files/uchime_reference_dataset_28.06.2017.zip -O uchime_reference_dataset_28.06.2017.zip
+wget https://unite.ut.ee/sh_files/uchime_reference_dataset_28.06.2017.zip -O $ uchime_reference_dataset_28.06.2017.zip
 rm -rf uchime_reference_dataset_28.06.2017
 unzip uchime_reference_dataset_28.06.2017.zip
 ```
@@ -134,6 +134,12 @@ Test it with a very small test dataset to ensure everything is set up correcly.
 wget http://sourceforge.net/projects/pipits/files/PIPITS_TESTDATA/rawdata.tar.gz -O rawdata.tar.gz
 tar xvfz rawdata.tar.gz
 ```
+>Get into Conda environment you created above
+
+```sh
+source activate pipits_env
+```
+
 
 ### B1. Sequence Preparation
 
@@ -220,7 +226,10 @@ pipits_process -i out_funits/ITS.fasta -o out_process
     - “**phylotype abundance table**”, an OTU is defined as a cluster of
         sequences binned into the same taxonomic assignments.
 8.  If you have memory issues, try increasing the maximum memory with "--Xmx". For example, "--Xmx 4G".
-
+9.	Once all finished, you can leave Conda environment by typeing
+```
+source deactivate
+```
 <br>
 
 ## C. Misc
