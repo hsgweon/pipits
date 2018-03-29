@@ -2,6 +2,9 @@
 # PIPITS
 ### An automated pipeline for analyses of fungal internal transcribed spacer (ITS) sequences from the Illumina sequencing platform [(Gweon et al., 2015)](https://besjournals.onlinelibrary.wiley.com/doi/abs/10.1111/2041-210X.12399)
 
+###### UPDATE (29 March 2018)
+
+> - **PIPITS 2.0** is exclusively available for Python3. This shouldn't be a problem to most of us as we will all be using Conda environment (I hope!). See the instruction for more detail.
 
 ###### UPDATE (22 March 2018)
 
@@ -28,7 +31,7 @@
 
 - will need at least 4GB of RAM on your machine running 64bit Linux of mac OS, and it's been tested to be stable on Ubuntu 16.04, and macOS High Sierra
 
-- is compatible on both PYTHON2 and PYTHON3
+- is compatible on PYTHON3
 
 <br>
 
@@ -49,10 +52,10 @@ conda config --add channels bioconda
 
 It is recommended that you use a [Conda](https://conda.io/) environment for running **PIPITS** to ensure that its dependencies are contained in this "sandbox". Don't worry, it's easy - just type the following command
 
-> install **PIPITS** and dependencies and create a Conda environment (here the environment is named "pipit_env" but you can choose any name you wish)
+> install **PIPITS** and dependencies and create a Conda environment (here the environment is named "pipit_env" but you can choose any name you wish). PIPITS is exclusively compatible with Python3, so add "python=3.6" as below:
 
 ```shell
-conda create -n pipits_env pipits
+conda create -n pipits_env python=3.6 pipits
 ```
 
 ### A3. Reference datasets
