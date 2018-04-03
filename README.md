@@ -84,7 +84,7 @@ tar xvfz UNITE_retrained_01.12.2017.tar.gz
 
 ```sh
 cd $HOME/pipits/refdb
-wget https://unite.ut.ee/sh_files/uchime_reference_dataset_28.06.2017.zip -O $ uchime_reference_dataset_28.06.2017.zip
+wget https://unite.ut.ee/sh_files/uchime_reference_dataset_28.06.2017.zip -O uchime_reference_dataset_28.06.2017.zip
 rm -rf uchime_reference_dataset_28.06.2017
 unzip uchime_reference_dataset_28.06.2017.zip
 ```
