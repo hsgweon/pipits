@@ -2,6 +2,18 @@
 # PIPITS
 ### An automated pipeline for analyses of fungal internal transcribed spacer (ITS) sequences from the Illumina sequencing platform [(Gweon et al., 2015)](https://besjournals.onlinelibrary.wiley.com/doi/abs/10.1111/2041-210X.12399)
 
+###### UPDATE (13 June 2018)
+
+> - **There has been a major bug in PIPITS_FUNITS affecting PIPITS2** (PIPITS1 isn't affected by this bug). Due to this bug, sequences were not inflated properly after dereplication (for speed). If you have used PIPITS2, then you WILL need to update PIPITS with:
+> ```
+> conda update pipits
+> ```
+> Then check you have pipits 2.1 installed by:
+> ```
+> conda list pipits
+> ```
+
+
 ###### UPDATE (29 March 2018)
 
 > - **PIPITS 2.0** is exclusively available for Python3. This shouldn't be a problem to most of us as we will all be using Conda environment (I hope!). See the instruction for more detail.

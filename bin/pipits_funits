@@ -5,7 +5,7 @@ from pispino.seqtools import *
 from pispino.runcmd import *
 from pispino.logger import *
 
-__version__    = 2.0
+__version__    = 2.1
 
 __author__     = "Hyun Soon Gweon"
 __copyright__  = "Copyright 2015, The PIPITS Project"
@@ -73,6 +73,7 @@ if __name__ == '__main__':
     # Create directories #
     ######################
 
+    EXE_DIR = os.path.dirname(os.path.realpath(__file__))
     if not os.path.exists(options.outDir):
         os.mkdir(options.outDir)
     else:
@@ -140,17 +141,8 @@ if __name__ == '__main__':
     ###############
 
     logger(ENDC + "Dereplicating sequences for efficiency" + ENDC, logging_file, display = True)
-    cmd = " ".join([
-        VSEARCH,
-        "--derep_prefix",
-        options.input,
-        "--output", tmpDir + "/derep.fasta",
-        "--maxseqlength 1000000",
-        "--sizeout",
-        "--fasta_width 0"
-        ])
+    cmd = " ".join(["python", EXE_DIR + "/pipits_dereplicate_fasta", "-i", options.input, "-o", tmpDir + "/derep.fasta", "--cluster", tmpDir + "/derep.json"])
     run_cmd(cmd, logging_file, options.verbose)
-    logger(BLUE + "... done" + ENDC, logging_file, display = True)
 
 
     ###########
@@ -236,15 +228,12 @@ if __name__ == '__main__':
     ##############
 
     logger(ENDC + "Re-inflating sequences" + ENDC, logging_file, display = True)
-    cmd = " ".join([
-        VSEARCH,
-        "--rereplicate", tmpDir + "/derep." + options.ITSx_subregion + ".sizefiltered.fasta",
-        "--output", options.outDir + "/ITS.fasta",
-        "--maxseqlength 1000000",
-        "--fasta_width 0"
-        ])
+    cmd = " ".join(["python", EXE_DIR + "/pipits_inflate_fasta",
+                    "-i", tmpDir + "/derep." + options.ITSx_subregion + ".sizefiltered.fasta", 
+                    "-o", options.outDir + "/ITS.fasta", "--cluster", tmpDir + "/derep.json"])
     run_cmd(cmd, logging_file, options.verbose)
     logger(BLUE + "... done" + ENDC, logging_file, display = True)
+
 
 
     ###########
