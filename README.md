@@ -3,8 +3,7 @@
 ### An automated pipeline for analyses of fungal internal transcribed spacer (ITS) sequences from the Illumina sequencing platform [(Gweon et al., 2015)](https://besjournals.onlinelibrary.wiley.com/doi/abs/10.1111/2041-210X.12399)
 
 ###### UPDATE (13 June 2018)
-
-> - **There has been a major bug in PIPITS_FUNITS affecting PIPITS2** (PIPITS1 isn't affected by this bug). Due to this bug, sequences were not inflated properly after dereplication (for speed). If you have used PIPITS2, then you WILL need to update PIPITS with:
+> - Bug fix update released: PIPITS 2.1: **There has been a major bug in PIPITS_FUNITS affecting PIPITS2** (PIPITS1 isn't affected by this bug). Due to this bug, sequences were not inflated properly after dereplication (for speed). If you have used PIPITS2, then you WILL need to update PIPITS with:
 > ```
 > conda update pipits
 > ```
