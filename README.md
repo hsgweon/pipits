@@ -1,6 +1,24 @@
 [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-# PIPITS
+# PIPITS*
+
 ### An automated pipeline for analyses of fungal internal transcribed spacer (ITS) sequences from the Illumina sequencing platform [(Gweon et al., 2015)](https://besjournals.onlinelibrary.wiley.com/doi/abs/10.1111/2041-210X.12399)
+
+#### * Shown to perform better than QIIME2 and Galaxy! - [See this paper](https://peerj.com/preprints/27019/)
+
+
+## Updates
+
+###### UPDATE (31 July 2018)
+> - PIPITS 2.2 - Changes made with the way PIPITS_FUNITS dereplicates and rereplicates sequences. Now using VSEARCH to dereplicate and PIPITS\_REREPLICATE to rereplicate. This shouldn't affect the resulting OTU table.
+> - Update PIPITS with:
+> ```
+> conda update pipits
+> ```
+> then check you have version 2.2 installed by:
+> ```
+> conda list pipits
+> ```
+
 
 ###### UPDATE (13 June 2018)
 > - Bug fix update released: PIPITS 2.1: **There has been a major bug in PIPITS_FUNITS affecting PIPITS2** (PIPITS1 isn't affected by this bug). Due to this bug, sequences were not inflated properly after dereplication (for speed). If you have used PIPITS2, then you WILL need to update PIPITS with:

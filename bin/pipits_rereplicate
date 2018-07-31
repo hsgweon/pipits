@@ -1,0 +1,97 @@
+#!/usr/bin/env python
+
+############################################################
+# Argument Options
+# Header needs to have phylum -> species all separated by '_'
+
+import argparse
+parser = argparse.ArgumentParser("Re-replicate sequences.")
+parser.add_argument("-i",
+                    action = "store", 
+                    dest = "infile", 
+                    metavar = "infile",
+                    help = "[REQUIRED]", 
+                    required = True)
+parser.add_argument("-o",
+                    action = "store",
+                    dest = "outfile",
+                    metavar = "outfile",
+                    help = "[REQUIRED]",
+                    required = True)
+parser.add_argument("--uc",
+                    action = "store",
+                    dest = "uc",
+                    metavar = "uc",
+                    help = "[REQUIRED] uc file from VSEARCH",
+                    required = True)
+options = parser.parse_args()
+
+############################################################
+
+from pipits import pipits_SeqIO as SeqIO
+
+infile  = open(options.infile, "r")
+outfile = open(options.outfile, "w")
+ucfile  = open(options.uc, "r")
+
+def re_inflate(inputFASTA, outputFASTA, dictionary):
+
+    record = SeqIO.FastaParser(inputFASTA)
+    handle_output = open(outputFASTA, "w")
+
+    for i in record.keys():
+
+        key  = record[i].description.split(";size=")[0]
+        size = record[i].description.split(";size=")[1]
+        seq  = record[i].seq
+
+        if int(size) != len(dictionary[key]) + 1:
+
+            print("Error: Size values in headers added by USEARCH != number of sequences in .uc")
+            print(size, len(dictionary[key]) + 1)
+            exit(1)
+
+        handle_output.write(">" + key + "\n")
+        handle_output.write(seq + "\n")
+
+        for seqid in dictionary[key]:
+            handle_output.write(">" + seqid + "\n")
+            handle_output.write(seq + "\n")
+
+    handle_output.close()
+
+
+# Clusters of dereplicated sequences
+clusters = {}
+line_count = 0
+
+# Load UC file and bung the info into a dictionary
+while True:
+    
+    line = ucfile.readline().strip()
+    line_count += 1
+
+    # End of file
+    if len(line) == 0:
+        break
+
+    if line[0] == "#":
+        continue
+
+    elements = line.split("\t")
+
+    # Sanity check
+    if len(elements) < 10:
+        print >> sys.stderr, "line %d in .uc file has < 10 columns" % line_count
+        exit(1)
+
+    # Into dictionary
+    if elements[0] == "S":
+        clusters[elements[8]] = []
+        continue
+    
+    elif elements[0] == "H":
+        clusters[elements[9]].append(elements[8])
+        continue
+
+re_inflate(options.infile, options.outfile, clusters)
