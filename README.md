@@ -138,9 +138,9 @@ We need to set some environmental variables to let **PIPITS** know where these r
 
 > Open the profile file with a text editor, and add:
 
-    export PIPITS_UNITE_RETRAINED_DIR=$HOME/pipits/refdb/UNITE_retrained
-    export PIPITS_UNITE_REFERENCE_DATA_CHIMERA=$HOME/pipits/refdb/uchime_reference_dataset_28.06.2017/uchime_reference_dataset_28.06.2017.fasta
-    export PIPITS_WARCUP_RETRAINED_DIR=$HOME/pipits/refdb/warcup_retrained_V2
+    export PIPITS_UNITE_RETRAINED_DIR="$HOME/pipits/refdb/UNITE_retrained"
+    export PIPITS_UNITE_REFERENCE_DATA_CHIMERA="$HOME/pipits/refdb/uchime_reference_dataset_28.06.2017/uchime_reference_dataset_28.06.2017.fasta"
+    export PIPITS_WARCUP_RETRAINED_DIR="$HOME/pipits/refdb/warcup_retrained_V2"
 
 > Close and re-open the terminal, alternatively you can:
 
