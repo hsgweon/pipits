@@ -12,7 +12,7 @@
 > - PIPITS 2.2 - Changes made with the way PIPITS_FUNITS dereplicates and rereplicates sequences. Now using VSEARCH to dereplicate and PIPITS\_REREPLICATE to rereplicate. This shouldn't affect the resulting OTU table.
 > - Update PIPITS with:
 > ```
-> conda update pipits
+> conda update -с bioconda -c conda-forge -c defaults pipits
 > ```
 > then check you have version 2.2 installed by:
 > ```
@@ -23,7 +23,7 @@
 ###### UPDATE (13 June 2018)
 > - Bug fix update released: PIPITS 2.1: **There has been a major bug in PIPITS_FUNITS affecting PIPITS2** (PIPITS1 isn't affected by this bug). Due to this bug, sequences were not inflated properly after dereplication (for speed). If you have used PIPITS2, then you WILL need to update PIPITS with:
 > ```
-> conda update pipits
+> conda update -с bioconda -c conda-forge -c defaults pipits
 > ```
 > Then check you have pipits 2.1 installed by:
 > ```
@@ -67,27 +67,17 @@
 ## A. Setting up PIPITS
 
 
-### A1. Prerequisite: set up conda channels (only for the first time)
-
-> add the [Bioconda](https://bioconda.github.io/index.html) channel and others which [Bioconda](https://bioconda.github.io/index.html) depends on. It is important to add them in this order (this needs to be done only for the first time)
-
-```shell
-conda config --add channels defaults
-conda config --add channels conda-forge
-conda config --add channels bioconda
-```
-
-### A2. Install and create a Conda environment for PIPITS
+### A1. Install and create a Conda environment for PIPITS
 
 It is recommended that you use a [Conda](https://conda.io/) environment for running **PIPITS** to ensure that its dependencies are contained in this "sandbox". Don't worry, it's easy - just type the following command
 
 > install **PIPITS** and dependencies and create a Conda environment (here the environment is named "pipit_env" but you can choose any name you wish). PIPITS is exclusively compatible with Python3, so add "python=3.6" as below:
 
 ```shell
-conda create -n pipits_env python=3.6 pipits
+conda create -n pipits_env -с bioconda -c conda-forge -c defaults python=3.6 pipits
 ```
 
-### A3. Reference datasets
+### A2. Reference datasets
 
 There are three reference datasets to download:
 
@@ -130,7 +120,7 @@ tar xvfz warcup_retrained_V2.tar.gz
 ```
 
 
-### A4. Set environment variables
+### A3. Set environment variables
 
 
 We need to set some environmental variables to let **PIPITS** know where these reference datasets are. Add the following lines in your system's profile file. Ubuntu's default profile file is "$HOME/.bashrc", and on mac OS, it is "$HOME/.bash_profile"
