@@ -4,7 +4,7 @@ import sys, os, argparse, subprocess, shutil
 from pispino.runcmd import *
 from pispino.logger import *
 
-__version__    = 2.2
+__version__    = 2.3
 
 __author__     = "Hyun Soon Gweon"
 __copyright__  = "Copyright 2015, The PIPITS Project"
@@ -104,8 +104,16 @@ if __name__ == '__main__':
         "--warcup",
         action = "store_true",
         dest = "warcup",
-        help = "Also classify using Warcup database. Make sure you have downloaded the database as described in the instruction and set the environmental variable.",
+        help = "Also classify using Warcup database. The most recent warcup db will be downloaded automatically.",
         default = False,
+        required = False)
+    parser.add_argument(
+        "--unite",
+        action = "store",
+        dest = "unite",
+        help = "UNITE db version to be used - PIPITS will download db automaticlly. Leaving this option out will default to the most recent version of UNITE available to PIPITS. Currently 02_02_2019.",
+        choices = ["02.02.2019", "01.12.2017", "28.06.2017"],
+        default = "02.02.2019",
         required = False)
     options = parser.parse_args()
 
@@ -147,19 +155,20 @@ if __name__ == '__main__':
     cmd = " ".join(["conda list"])
     run_cmd(cmd, version_file, False)
 
-    # Environment variable
-    EXIT = []
-    if os.environ.get("PIPITS_UNITE_REFERENCE_DATA_CHIMERA") is None:
-        EXIT.append("PIPITS_UNITE_REFERENCE_DATA_CHIMERA")
-    if os.environ.get("PIPITS_UNITE_RETRAINED_DIR") is None:
-        EXIT.append("PIPITS_UNITE_RETRAINED_DIR")
-    if os.environ.get("PIPITS_WARCUP_RETRAINED_DIR") is None:
-        EXIT.append("PIPITS_WARCUP_RETRAINED_DIR")
-
-    if len(EXIT) > 0:
-        logger("ERRO: environment variables (" + ", ".join(EXIT) + ") are not set. Please see PIPITS installation for an instruction on this.", logging_file, display = True)
-        exit(0)
-
+    # Environment variable - discontinued.
+    # 
+    # EXIT = []
+    # if os.environ.get("PIPITS_UNITE_REFERENCE_DATA_CHIMERA") is None:
+    #     EXIT.append("PIPITS_UNITE_REFERENCE_DATA_CHIMERA")
+    # if os.environ.get("PIPITS_UNITE_RETRAINED_DIR") is None:
+    #     EXIT.append("PIPITS_UNITE_RETRAINED_DIR")
+    # if os.environ.get("PIPITS_WARCUP_RETRAINED_DIR") is None:
+    #     EXIT.append("PIPITS_WARCUP_RETRAINED_DIR")
+    # 
+    # if len(EXIT) > 0:
+    #     logger("ERRO: environment variables (" + ", ".join(EXIT) + ") are not set. Please see PIPITS installation for an instruction on this.", logging_file, display = True)
+    #     exit(0)
+    # 
 
     # Start
     logger(ENDC + "pipits_process started" + ENDC, logging_file, display = True)
@@ -211,6 +220,164 @@ if __name__ == '__main__':
         exit(1)
 
 
+    #################
+    # Download data #
+    #################
+
+    def get_md5(filename):
+    
+        import hashlib
+
+        hash_md5 = hashlib.md5()
+        with open(filename, "rb") as f:
+            for chunk in iter(lambda: f.read(4096), b""):
+                hash_md5.update(chunk)
+        return hash_md5.hexdigest()
+
+    def downloadDB(
+        url,
+        md5,
+        output_dir,
+        logging_file, 
+        summary_file, 
+        verbose):
+
+        import progressbar
+        import requests
+        import tarfile
+        from pathlib import Path
+
+        if not os.path.exists(output_dir):
+            os.mkdir(output_dir)
+        # else:
+        #     shutil.rmtree(output_dir)
+        #     os.mkdir(output_dir)
+
+        filename     = url.split("/")[-1]
+
+        # Check if unpacked file exists
+        DOWNLOADDB = True
+        
+        if os.path.isfile(output_dir + "/" + filename):
+
+            if get_md5(output_dir + "/" + filename) != md5:
+                logger("... DB directory and files exits, but seems to be different/corrupt -> re-downloading...", logging_file, display = True)
+                DOWNLOADDB = True
+            else:
+                logger("... DB directory and files exits, and all looking good. No need to download.", logging_file, display = True)
+                DOWNLOADDB = False
+
+        if DOWNLOADDB:
+
+            request = requests.get(url, stream=True)
+
+            file         = open(output_dir + "/" + filename, 'wb')
+            file_size    = int(request.headers['Content-Length'])
+            file_size_mb = round(file_size / 1024 / 1024,2)
+
+            chunk_sz = 512
+
+            widgets = [progressbar.Bar(marker="#",left="[",right="]"),
+                       progressbar.Percentage()," | ",
+                       progressbar.FileTransferSpeed()," | ",
+                       progressbar.SimpleProgress()," | ",
+                       progressbar.ETA()]
+
+            bar = progressbar.ProgressBar(widgets=widgets, maxval=file_size).start()
+
+            i = 0
+
+            for chunk in request.iter_content(chunk_size=chunk_sz):
+                file.write(chunk)
+                i += len(chunk)
+                bar.update(i)
+
+            bar.finish()
+            print('File size: {0} MB'.format(file_size_mb))
+
+            file.close()
+
+            if get_md5(output_dir + "/" + filename) != md5:
+                print("Downloaded data is corrupt. Get in touch with PIPITS team!. Exiting...")
+                exit(1)
+
+        # Unpack
+        logger("... Unpacking", logging_file, display = True)
+
+        dirname = output_dir + "/" + filename.split(".tar.gz")[0]
+        if not os.path.exists(dirname):
+            os.mkdir(dirname)
+
+        tar = tarfile.open(output_dir + "/" + filename)
+        tar.extractall(path=dirname)
+        tar.close()
+
+
+    #########
+    # UNITE #
+    #########
+
+    logger("Downloading UNITE trained database, version: " + options.unite, logging_file, display = True)
+
+    if options.unite == "02.02.2019":
+        url = "https://sourceforge.net/projects/pipits/files/PIPITS_DB/UNITE_retrained_" + options.unite + ".tar.gz"
+        md5 = "8fd3b74a510bb20b67933a2ecc620f89"
+    elif options.unite == "01.12.2017":
+        url = "https://sourceforge.net/projects/pipits/files/PIPITS_DB/UNITE_retrained_" + options.unite + ".tar.gz"
+        md5 = "3c5be9c60fecf70076739379e7c9ead5"
+    elif options.unite == "28.06.2017":
+        url = "https://sourceforge.net/projects/pipits/files/PIPITS_DB/UNITE_retrained_" + options.unite + ".tar.gz"
+        md5 = "33fa78987751a494c586676ff3a0da65"
+
+    downloadDB(
+        url = url,
+        md5 = md5,
+        output_dir = "pipits_db",
+        logging_file = logging_file,
+        summary_file = summary_file,
+        verbose = options.verbose)
+    logger(BLUE + "... done" + ENDC, logging_file, display = True)
+
+
+    ##########
+    # WARCUP #
+    ##########
+
+    logger("Downloading WARCUP trained database: ", logging_file, display = True)
+
+    url = "https://sourceforge.net/projects/pipits/files/PIPITS_DB/warcup_retrained_V2.tar.gz"
+    md5 = "e84733f23121f00de03b2a9b5398d6fb"
+
+    downloadDB(
+        url = url,
+        md5 = md5,
+        output_dir = "pipits_db",
+        logging_file = logging_file,
+        summary_file = summary_file,
+        verbose = options.verbose)
+    logger(BLUE + "... done" + ENDC, logging_file, display = True)
+
+
+    ##########
+    # UCHIME #
+    ##########
+
+    logger("Downloading UCHIME database for chimera filtering: ", logging_file, display = True)
+
+    url = "https://sourceforge.net/projects/pipits/files/PIPITS_DB/uchime_reference_dataset_28.06.2017.tar.gz"
+    md5 = "583f7b5665b8ef13114ffdcff62c1022"
+
+    downloadDB(
+        url = url,
+        md5 = md5,
+        output_dir = "pipits_db",
+        logging_file = logging_file,
+        summary_file = summary_file,
+        verbose = options.verbose)
+    logger(BLUE + "... done" + ENDC, logging_file, display = True)
+
+
+
     #########        
     # Derep #
     #########        
@@ -254,10 +421,11 @@ if __name__ == '__main__':
     ###################
 
     logger(ENDC + "Removing chimeras [VSEARCH]" + ENDC, logging_file, display = True)
+    PIPITS_UNITE_REFERENCE_DATA_CHIMERA = "pipits_db/uchime_reference_dataset_28.06.2017/uchime_reference_dataset_28.06.2017/uchime_reference_dataset_28.06.2017.fasta"
     cmd = " ".join([
         VSEARCH, 
         "--uchime_ref", tmpDir + "/input_nr_otus.fasta", 
-        "--db $PIPITS_UNITE_REFERENCE_DATA_CHIMERA",
+        "--db " + PIPITS_UNITE_REFERENCE_DATA_CHIMERA,
         "--nonchimeras", tmpDir + "/input_nr_otus_nonchimeras.fasta",
         "--threads", options.threads])
     run_cmd(cmd, logging_file, options.verbose)
@@ -335,11 +503,12 @@ if __name__ == '__main__':
     #####################
 
     logger(ENDC + "Assigning taxonomy with UNITE [RDP Classifier]" + ENDC, logging_file, display = True)
+    PIPITS_UNITE_RETRAINED_PROPERTIES = "pipits_db/UNITE_retrained_" + options.unite + "/UNITE_retrained/rRNAClassifier.properties"
     cmd = " ".join(["classifier",
                     "-Xms" + str(options.Xms),
                     "-Xmx" + str(options.Xmx),
                     "classify", 
-                    "-t $PIPITS_UNITE_RETRAINED_DIR" + "/rRNAClassifier.properties", 
+                    "-t " + PIPITS_UNITE_RETRAINED_PROPERTIES, 
                     "-o", options.outDir + "/assigned_taxonomy.txt", 
                     tmpDir + "/input_nr_otus_nonchimeras_relabelled.fasta"])
     run_cmd(cmd, logging_file, options.verbose)
@@ -421,12 +590,13 @@ if __name__ == '__main__':
 
         # Classify
         logger("Assigning taxonomy [RDP Classifier] - Warcup", logging_file, display = True)
+        PIPITS_WARCUP_RETRAINED_PROPERTIES = "pipits_db/warcup_retrained_V2/warcup_retrained_V2/rRNAClassifier.properties"
         cmd = " ".join([
             "classifier",
             "-Xms" + str(options.Xms),
             "-Xmx" + str(options.Xmx),
             "classify", 
-            "-t $PIPITS_WARCUP_RETRAINED_DIR" + "/rRNAClassifier.properties", 
+            "-t " + PIPITS_WARCUP_RETRAINED_PROPERTIES,
             "-o", options.outDir + "/assigned_taxonomy_warcup.txt", 
             tmpDir + "/input_nr_otus_nonchimeras_relabelled.fasta"])
         run_cmd(cmd, logging_file, options.verbose)
@@ -540,7 +710,10 @@ if __name__ == '__main__':
     summary_file.write("No.of reads used to generate OTU table: " + str(int(otu_reads_count)) + "\n")
     summary_file.write("Number of OTUs:                         " + str(otu_count) + "\n")
     summary_file.write("Number of phylotypes:                   " + str(phylo_count) + "\n")
-    summary_file.write("Number of samples:                      " + str(otu_sample_count) + "\n")
+    summary_file.write("Number of samples:                      " + str(otu_sample_count) + "\n\n")
+    summary_file.write("UNITE DB version:                       " + options.unite + "\n")
+    summary_file.write("PIPITS version:                         " + str(__version__) + "\n")
+
 
     logger(BLUE + "\tNumber of reads used to generate OTU table: " + str(int(otu_reads_count)) + ENDC, logging_file, display = True)
     logger(BLUE + "\tNumber of OTUs:                             " + str(otu_count) + ENDC, logging_file, display = True)

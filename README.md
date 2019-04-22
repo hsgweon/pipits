@@ -1,52 +1,19 @@
 [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-# PIPITS*
+# PIPITS
 
 ### An automated pipeline for analyses of fungal internal transcribed spacer (ITS) sequences from the Illumina sequencing platform [(Gweon et al., 2015)](https://besjournals.onlinelibrary.wiley.com/doi/abs/10.1111/2041-210X.12399)
 
-#### * Shown to perform better than QIIME2 and Galaxy! - [See this paper](https://peerj.com/preprints/27019/)
+##### Shown to perform better than QIIME2 and Galaxy! - [See this paper](https://peerj.com/preprints/27019/)
 
 
 ## Updates
 
-###### UPDATE (31 July 2018)
-> - PIPITS 2.2 - Changes made with the way PIPITS_FUNITS dereplicates and rereplicates sequences. Now using VSEARCH to dereplicate and PIPITS\_REREPLICATE to rereplicate. This shouldn't affect the resulting OTU table.
-> - Update PIPITS with:
-> ```
-> conda update -с bioconda -c conda-forge -c defaults pipits
-> ```
-> then check you have version 2.2 installed by:
-> ```
-> conda list pipits
-> ```
+###### UPDATE (18 April 2019) - PIPITS 2.3
+> - **PIPITS_PROCESS automatically downloads** UNITE database (the most recent version - UNITE version 02.02.2019), so there is no need to meddle with environment variables anymore. Just run commands and it will take care of the database issues. You can still use older database by the way using --unite option (see help by -h).
+> - **PIPITS_FUNITS exploits multiple CPUs.** It's an experimental feature, so do use it with care. You can invoke to use multiple CPUs by using the usual ```-t NUMBER_OF_CPUS``` option.
+> - Update PIPITS with ```conda update --channel bioconda --channel conda-forge --channel defaults pipits```
+> then check you have version 2.3 installed by: ```conda list pipits```
 
-
-###### UPDATE (13 June 2018)
-> - Bug fix update released: PIPITS 2.1: **There has been a major bug in PIPITS_FUNITS affecting PIPITS2** (PIPITS1 isn't affected by this bug). Due to this bug, sequences were not inflated properly after dereplication (for speed). If you have used PIPITS2, then you WILL need to update PIPITS with:
-> ```
-> conda update -с bioconda -c conda-forge -c defaults pipits
-> ```
-> Then check you have pipits 2.1 installed by:
-> ```
-> conda list pipits
-> ```
-
-
-###### UPDATE (29 March 2018)
-
-> - **PIPITS 2.0** is exclusively available for Python3. This shouldn't be a problem to most of us as we will all be using Conda environment (I hope!). See the instruction for more detail.
-
-###### UPDATE (22 March 2018)
-
-> - **PIPITS 2.0** is now available for download from the [Bioconda](https://bioconda.github.io/index.html) channel. This means that PIPITS can be installed very easily now. See below for more information
-> - It now supports Mac OS as well as Linux
-> - Because of *pipits\_prep*'s generic nature, it is now called *pispino\_seqprep*, and moved out of **PIPITS**, and now is part of [**PISPINO**](https://github.com/hsgweon/pispino) package. **PISPINO** will be installed automatically by **PIPITS**
-> - The recent UNITE DB (01.12.2017) has been trained and uploaded for **PIPITS**
-
-###### UPDATE (5 July 2017)
-
-> - PEAR is NO LONGER the default joiner method: PEAR now requires an academic licence and you cannot directly download it from its new homepage any more. I am not a big fan of tools with a restricted licence so I have decided to move on from PEAR and instead use VSEARCH's relatively new joining protocol. VSEARCH developers have openly said that their protocol is based on the algorithm used by PEAR and indeed I have tested VSEARCH on a very large ITS datasets and it was shown to perform in a very similar or almost exactly the same way as PEAR (I am considering whether it would be worth publishing a paper on these different joining methods and the implications). If you still prefer to use PEAR and have managed to get PEAR downloaded, then you can always choose to use PEAR by specifying "--joiner_method PEAR" in ***pipits\_prep***. Otherwise, VSEARCH seems to be a perfect replacement - fast, reliable and free
-> - New UNITE dataset (2017-06-28) available.
-> - PIPITS is purposefully designed to give limited options compared to other tools, so you have more time to analyse the OTU Table than worry about tweaking parameters and dependencies. If you have any suggestions , do let me know by commenting on Issues or email me, and I will try my best to get it implemented ASAP.
 
 <br>
 
@@ -54,120 +21,65 @@
 
 ### PIPITS:
 
-- is an automated pipeline for analyses of fungal internal transcribed spacer (ITS) sequences from the Illumina sequencing platform
+- is an automated pipeline for analyses of fungal internal transcribed spacer (ITS) sequences from the Illumina sequencing platform.
 
-- is designed to work best on POSIX systems (this essentiallly means it doesn't work in Windows)
+- is designed to work best on POSIX systems (this essentiallly means it doesn't work in Windows).
 
-- will need at least 4GB of RAM on your machine running 64bit Linux of mac OS, and it's been tested to be stable on Ubuntu 16.04, and macOS High Sierra
+- will need at least 4GB of RAM on your machine running 64bit Linux of mac OS, and it's been tested to be stable on Ubuntu 16.04, and macOS Mojave.
 
-- is compatible on PYTHON3
+- Uses UNITE fungal db (and also comes with an option to run it against WARCUP fungal db).
+
+- Just 4 commands, and you are good to go!
 
 <br>
 
-## A. Setting up PIPITS
+## A. Installing PIPITS
 
+### A1. Install
 
-### A1. Install and create a Conda environment for PIPITS
+It is recommended that you use a [conda](https://conda.io/) environment for running **PIPITS** to ensure that its dependencies are contained in this "sandbox". This meant that you don't mess with your existig system and you don't need to be the admin. Don't worry, it's easy - just type the following command. 
 
-It is recommended that you use a [Conda](https://conda.io/) environment for running **PIPITS** to ensure that its dependencies are contained in this "sandbox". Don't worry, it's easy - just type the following command
-
-> install **PIPITS** and dependencies and create a Conda environment (here the environment is named "pipit_env" but you can choose any name you wish). PIPITS is exclusively compatible with Python3, so add "python=3.6" as below:
+> EXPLANATION: install **PIPITS** and dependencies and create a Conda environment (here the environment is named "pipit_env" but you can choose any name you wish). PIPITS is exclusively compatible with Python3, so add "python=3.6" as below:
 
 ```shell
-conda create -n pipits_env -с bioconda -c conda-forge -c defaults python=3.6 pipits
-```
-
-### A2. Reference datasets
-
-There are three reference datasets to download:
-
-**UNITE fungal ITS reference trained dataset. UNITE 7.2 (2017-12-01)** - [file](https://sourceforge.net/projects/pipits/files/PIPITS_DB/UNITE_retrained_01.12.2017.tar.gz)
-
-> Create a directory for the datasets
-
-```sh
-mkdir -p $HOME/pipits/refdb
-```
-> We provide a trained UNITE fungal data. Download, save and extract it to an appropriate directory (e.g. $HOME/pipits/refdb). On macOS, wget is not available but you can install it - see [here](https://gist.github.com/shrayasr/8206257)
-
-```
-cd $HOME/pipits/refdb
-wget https://sourceforge.net/projects/pipits/files/PIPITS_DB/UNITE_retrained_01.12.2017.tar.gz -O UNITE_retrained_01.12.2017.tar.gz
-rm -rf UNITE_retrained
-tar xvfz UNITE_retrained_01.12.2017.tar.gz
-```
-
-**UNITE UCHIME reference dataset** - [file](https://unite.ut.ee/sh_files/uchime_reference_dataset_28.06.2017.zip)
-
-> Download UNITE UCHIME reference dataset for chimera removal.
-
-```sh
-cd $HOME/pipits/refdb
-wget https://unite.ut.ee/sh_files/uchime_reference_dataset_28.06.2017.zip -O uchime_reference_dataset_28.06.2017.zip
-rm -rf uchime_reference_dataset_28.06.2017
-unzip uchime_reference_dataset_28.06.2017.zip
-```
-
-**Warcup ITS reference trained dataset** - [file](https://sourceforge.net/projects/pipits/files/warcup_retrained_V2.tar.gz)
-
-> **PIPITS** supports Warcup ITS reference training dataset. By specifying "--warcup" when running *pipits_process*, **PIPITS** will create an additional Warcup classified OTU table.
-
-```sh
-cd $HOME/pipits/refdb
-wget https://sourceforge.net/projects/pipits/files/warcup_retrained_V2.tar.gz
-rm -rf warcup_retrained_V2
-tar xvfz warcup_retrained_V2.tar.gz
+conda create -n pipits_env --channel bioconda --channel conda-forge --channel defaults python=3.6 pipits
 ```
 
 
-### A3. Set environment variables
-
-
-We need to set some environmental variables to let **PIPITS** know where these reference datasets are. Add the following lines in your system's profile file. Ubuntu's default profile file is "$HOME/.bashrc", and on mac OS, it is "$HOME/.bash_profile"
-
-
-> Open the profile file with a text editor, and add:
-
-    export PIPITS_UNITE_RETRAINED_DIR="$HOME/pipits/refdb/UNITE_retrained"
-    export PIPITS_UNITE_REFERENCE_DATA_CHIMERA="$HOME/pipits/refdb/uchime_reference_dataset_28.06.2017/uchime_reference_dataset_28.06.2017.fasta"
-    export PIPITS_WARCUP_RETRAINED_DIR="$HOME/pipits/refdb/warcup_retrained_V2"
-
-> Close and re-open the terminal, alternatively you can:
-
-```sh
-source $HOME/.bashrc
-```
-
-<br>
-
-
-## B. Running PIPITS
+### A2. Test PIPITS
 
 The **PIPITS** is divided into three consequential parts:
 
-1.  **Sequence preparation** to join, convert, quality filter etc.
-2.  **Fungal ITS extraction** to remove conserved regions
+1.  **Prepping raw sequences:** join, convert, quality filter etc.
+2.  **Fungal ITS extraction:** remove conserved regions
 3.  **Process** the reads to produce an OTU abundance table and the taxonomic assignment table for downstream analysis
 
-Test it with a very small test dataset to ensure everything is set up correcly.
-> Download & extract a test dataset
+Let's test it with a very small test dataset to ensure everything is set up correcly.
+> EXPLANATION: Download & extract a test dataset
 
 ```sh
 wget http://sourceforge.net/projects/pipits/files/PIPITS_TESTDATA/rawdata.tar.gz -O rawdata.tar.gz
 tar xvfz rawdata.tar.gz
 ```
->Get into Conda environment you created above
+> EXPLANATION: Get into Conda environment you created above, and run the commands.
 
 ```sh
 source activate pipits_env
+pispino_createreadpairslist -i rawdata -o readpairslist.txt
+pispino_seqprep -i rawdata -o out_seqprep -l readpairslist.txt
+pipits_funits -i out_seqprep/prepped.fasta -o out_funits -x ITS2 -v -r
+pipits_process -i out_funits/ITS.fasta -o out_process -v -r
 ```
 
+<br>
+
+## B. Running PIPITS
 
 ### B1. Sequence Preparation
 
 Illumina reads are generally provided as demultiplexed FASTQ files where the Illumina software (BASESPACE) splits the reads into separate files, one for each barcode.
 
-> [PISPINO](https://github.com/hsgweon/pispino) (originally part of **PIPITS**) provides a script called *pispino_createreadpairslist* which generates
+> EXPLANATION: [PISPINO](https://github.com/hsgweon/pispino) (originally part of **PIPITS**) provides a script called ```pispino_createreadpairslist``` which generates
 a tab-delimited text file for all read-pairs from the directory containing your raw sequences
 
 ```sh
@@ -180,7 +92,7 @@ pispino_createreadpairslist -i rawdata -o readpairslist.txt
 2.  Prior to running the command, you need to ensure that the raw data are either uncompressed (“.fastq”), or compressed with bz2 or gz (“.fastq.bz2”, “.fastq.gz”). Sample IDs are taken from the first characters preceding an underscore (“_”) from each filename
 3.  After running *pispino_createreadpairslist*, check the resulting file ("readpairslist.txt") to see correct filenames and desired sample IDs are listed in the resulting file ("readpairslist.txt"). No duplicate sample IDs are allowed.
 
-> Once we have the list file ("readpairslist.txt"), we can then begin to "prepare" the sequences:
+> EXPLANATION: Once we have the list file ("readpairslist.txt"), we can then begin to "prepare" the sequences:
 
 ```sh
 pispino_seqprep -i rawdata -o out_seqprep -l readpairslist.txt
@@ -198,7 +110,7 @@ pispino_seqprep -i rawdata -o out_seqprep -l readpairslist.txt
 
 The output from ***pipits_prep*** is taken as an input for this step. It is also mandatory to provide the script with which ITS subregion (i.e. ITS1 or ITS2) is to be extracted.
 
-> the input file (indicated with "-i") is the resulting file from the previous step
+> EXPLANATION: the input file (indicated with "-i") is the resulting file from the previous step
 
 ```sh
 pipits_funits -i out_seqprep/prepped.fasta -o out_funits -x ITS2
@@ -222,7 +134,7 @@ pipits_funits -i out_seqprep/prepped.fasta -o out_funits -x ITS2
 
 ### B3. Process sequences
 
-> This is the final step involving clustering and assigning of taxonomy.
+> EXPLANATION: This is the final step involving clustering and assigning of taxonomy.
 
 ```sh
 pipits_process -i out_funits/ITS.fasta -o out_process
@@ -252,6 +164,7 @@ pipits_process -i out_funits/ITS.fasta -o out_process
 ```
 source deactivate
 ```
+
 <br>
 
 ## C. Misc

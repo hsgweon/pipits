@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 
-import sys, os, argparse, subprocess, shutil
+import sys, os, argparse, subprocess, shutil, multiprocessing
 from pispino.seqtools import *
 from pispino.runcmd import *
 from pispino.logger import *
 
-__version__    = 2.2
+__version__    = 2.3
 
 __author__     = "Hyun Soon Gweon"
 __copyright__  = "Copyright 2015, The PIPITS Project"
@@ -65,7 +65,6 @@ if __name__ == '__main__':
         default = "1",
         required = False)
 
-
     options = parser.parse_args()
 
 
@@ -106,9 +105,16 @@ if __name__ == '__main__':
     cmd = " ".join(["conda list"])
     run_cmd(cmd, version_file, False)
 
-
     # Start
     logger("pipits_funits started", logging_file, display = True)
+
+    # Threads threshold
+    if int(options.threads) > 999:
+        logger(RED + "ERROR: Threads not allowed to exceed 999." + ENDC, logging_file, display = True)
+        exit(1)
+    elif int(options.threads) > multiprocessing.cpu_count():
+        logger(RED + "ERROR: The number of available CPUs in your system is: " + str(multiprocessing.cpu_count()) + ". Please use more appropriate value for -t" + ENDC, logging_file, display = True)
+
 
     # Check integrity of the input file
     logger(ENDC + "Checking input FASTA for illegal characters" + ENDC, logging_file, display = True)
@@ -158,8 +164,8 @@ if __name__ == '__main__':
     # Summary #
     ###########
 
-    output_previous = tmpDir + "/derep.fasta"
     logger(ENDC + "Counting dereplicated sequences" + ENDC, logging_file, display = True)
+    output_previous = tmpDir + "/derep.fasta"
     numberofsequences = int(getFileLineCount(output_previous) / 2)
     if numberofsequences == 0: 
         logger(RED + "ERROR: You have 0 sequences!" + ENDC, logging_file, display = True)
@@ -169,36 +175,106 @@ if __name__ == '__main__':
         summary_file.write("Number of dereplicated sequences: " + str(numberofsequences) + "\n")
 
 
-    ################################################################
-    # Run ITSx. Chop reads into regions. Re-orientate where needed #
-    ################################################################
+    ###############################
+    # Divide sequences into parts #
+    ###############################
 
-    logger(ENDC + "Extracting " + options.ITSx_subregion + " from sequences [ITSx]" + ENDC, logging_file, display = True)
-    cmd = " ".join([
-        ITSx, 
-        "-i", tmpDir + "/derep.fasta", 
-        "-o", tmpDir + "/derep", 
-        "--preserve", "T", 
-        "-t", "F", 
-        "--cpu", options.threads, 
-        "--save_regions", options.ITSx_subregion])
-    run_cmd(cmd, logging_file, options.verbose)
-    logger(BLUE + "... done" + ENDC, logging_file, display = True)
+    if int(options.threads) > 1:
+
+        logger(ENDC + "Splitting sequences to multiple parts" + ENDC, logging_file, display = True)
+        cmd = " ".join([
+            "seqkit split",
+             tmpDir + "/derep.fasta",
+             "-p", options.threads,
+             "-f", 
+             "--out-dir", tmpDir + "/split"
+             ])
+        run_cmd(cmd, logging_file, options.verbose)
+        logger(BLUE + "... done" + ENDC, logging_file, display = True)
+
+
+        cmds = []
+        
+        for i in range(1, int(options.threads)+1):
+            # print(tmpDir + "/split/derep.part_" + "%03d" % i + ".fasta")
+            cmd = " ".join([
+                ITSx, 
+                "-i", tmpDir + "/split/derep.part_" + "%03d" % i + ".fasta", 
+                "-o", tmpDir + "/split/derep.part_" + "%03d" % i,
+                "--preserve", "T", 
+                "-t", "F", 
+                "--cpu 1", 
+                "--save_regions", options.ITSx_subregion
+                ])
+            cmds.append(cmd)
+
+        import fileinput
+        import glob
+        from subprocess import Popen
+        from itertools import islice
+
+        maxThreads = int(options.threads)
+        processes = (Popen(cmd, shell=True) for cmd in cmds)
+        running_processes = list(islice(processes, maxThreads))  # start new processes
+        while running_processes:
+            for i, process in enumerate(running_processes):
+                if process.poll() is not None:  # the process has finished
+                    running_processes[i] = next(processes, None)  # start new process
+                    if running_processes[i] is None: # no new processes
+                        del running_processes[i]
+                        break
+
+        # Concatenate all
+        with open(tmpDir + "/derep." + options.ITSx_subregion + ".fasta", 'wb') as outfile:
+            for inputfilepath in glob.glob(tmpDir + "/split/derep.part_???.ITS?.fasta"):
+                with open(inputfilepath, 'rb') as infile:
+                    shutil.copyfileobj(infile, outfile)
+
+    else:
+
+        ################################################################
+        # Run ITSx. Chop reads into regions. Re-orientate where needed #
+        ################################################################
+
+        logger(ENDC + "Extracting " + options.ITSx_subregion + " from sequences [ITSx]" + ENDC, logging_file, display = True)
+        cmd = " ".join([
+            ITSx, 
+            "-i", tmpDir + "/derep.fasta", 
+            "-o", tmpDir + "/derep", 
+            "--preserve", "T", 
+            "-t", "F", 
+            "--cpu 1", 
+            "--save_regions", options.ITSx_subregion])
+        run_cmd(cmd, logging_file, options.verbose)
+        logger(BLUE + "... done" + ENDC, logging_file, display = True)
 
 
     ###########
     # Summary #
     ###########
 
-    output_previous = tmpDir + "/derep." + options.ITSx_subregion + ".fasta"
     logger(ENDC + "Counting ITS sequences (dereplicated)" + ENDC, logging_file, display = True)
+    output_previous = tmpDir + "/derep." + options.ITSx_subregion + ".fasta"
     numberofsequences = int(getFileLineCount(output_previous) / 2)
     if numberofsequences == 0: 
-        logger(RED + "ERROR: You have 0 sequences!" + ENDC, logging_file, display = True)
+        logger(RED + "ERROR: You have 0 sequences identified as " + options.ITSx_subregion + ". Are you sure your sequences are " + options.ITSx_subregion + "?" + ENDC, logging_file, display = True)
         exit(1)
     else:
         logger(BLUE + "... number of ITS sequences (dereplicated): " + str(numberofsequences) + ENDC, logging_file, display = True)
         summary_file.write("Number of ITS sequences (dereplicated): " + str(numberofsequences) + "\n")
+
+
+    ##############
+    # Sort by ID #
+    ##############
+
+    logger(ENDC + "Sorting by ID" + ENDC, logging_file, display = True)
+    cmd = " ".join([
+        "seqkit sort", tmpDir + "/derep." + options.ITSx_subregion + ".fasta",
+         "-o",         tmpDir + "/derep." + options.ITSx_subregion + ".sorted.fasta"
+         ])
+    run_cmd(cmd, logging_file, options.verbose)
+    logger(BLUE + "... done" + ENDC, logging_file, display = True)
 
 
     #########################################
@@ -208,7 +284,7 @@ if __name__ == '__main__':
     logger(ENDC + "Removing short sequences below < 100bp" + ENDC, logging_file, display = True)
     cmd = " ".join([
         VSEARCH, 
-        "--fastx_filter", tmpDir + "/derep." + options.ITSx_subregion + ".fasta",
+        "--fastx_filter", tmpDir + "/derep." + options.ITSx_subregion + ".sorted.fasta",
         "--fastaout",     tmpDir + "/derep." + options.ITSx_subregion + ".sizefiltered.fasta",
         "--fastq_minlen 100",
         "--fasta_width 0"
