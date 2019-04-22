@@ -8,7 +8,7 @@
 
 ## Updates
 
-###### UPDATE (18 April 2019) - PIPITS 2.3
+###### UPDATE (22 April 2019) - PIPITS 2.3
 > - **PIPITS_PROCESS automatically downloads** UNITE database (the most recent version - UNITE version 02.02.2019), so there is no need to meddle with environment variables anymore. Just run commands and it will take care of the database issues. You can still use older database by the way using --unite option (see help by -h).
 > - **PIPITS_FUNITS exploits multiple CPUs.** It's an experimental feature, so do use it with care. You can invoke to use multiple CPUs by using the usual ```-t NUMBER_OF_CPUS``` option.
 > - Update PIPITS with ```conda update --channel bioconda --channel conda-forge --channel defaults pipits```
@@ -58,12 +58,20 @@ Let's test it with a very small test dataset to ensure everything is set up corr
 > EXPLANATION: Download & extract a test dataset
 
 ```sh
-wget http://sourceforge.net/projects/pipits/files/PIPITS_TESTDATA/rawdata.tar.gz -O rawdata.tar.gz
-tar xvfz rawdata.tar.gz
+wget https://sourceforge.net/projects/pipits/files/PIPITS_TESTDATA/pipits_test.tar.gz -O pipits_test.tar.gz
+tar xvfz pipits_test.tar.gz
 ```
+
+> EXPLANATION: Enter into ```pipits_test``` directory
+
+```sh
+cd pipits_test
+```
+
 > EXPLANATION: Get into Conda environment you created above, and run the commands.
 
 ```sh
+cd pipits_test
 source activate pipits_env
 pispino_createreadpairslist -i rawdata -o readpairslist.txt
 pispino_seqprep -i rawdata -o out_seqprep -l readpairslist.txt
