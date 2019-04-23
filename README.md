@@ -71,7 +71,6 @@ cd pipits_test
 > EXPLANATION: Get into Conda environment you created above, and run the commands.
 
 ```sh
-cd pipits_test
 source activate pipits_env
 pispino_createreadpairslist -i rawdata -o readpairslist.txt
 pispino_seqprep -i rawdata -o out_seqprep -l readpairslist.txt
