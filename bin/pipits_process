@@ -392,8 +392,8 @@ if __name__ == '__main__':
         "--derep_fulllength", options.input, 
         "--output", tmpDir + "/input_nr.fasta", 
         "--minuniquesize", str(minuniquesize), 
-        "--sizeout",
-        "--threads", options.threads])
+        "--sizeout"
+        ])
     run_cmd(cmd, logging_file, options.verbose)
 
     # Check if the file is empty
