@@ -364,8 +364,8 @@ if __name__ == '__main__':
 
     logger("Downloading UCHIME database for chimera filtering: ", logging_file, display = True)
 
-    url = "https://sourceforge.net/projects/pipits/files/PIPITS_DB/uchime_reference_dataset_28.06.2017.fasta.tar.gz"
-    md5 = "1289196bbafa4eecde4b60d2793e5348"
+    url = "https://sourceforge.net/projects/pipits/files/PIPITS_DB/uchime_reference_dataset_28.06.2017.tar.gz"
+    md5 = "a84af781f9ba42a76f456b558dbc1ae5"
 
     downloadDB(
         url = url,
@@ -421,7 +421,7 @@ if __name__ == '__main__':
     ###################
 
     logger(ENDC + "Removing chimeras [VSEARCH]" + ENDC, logging_file, display = True)
-    PIPITS_UNITE_REFERENCE_DATA_CHIMERA = "pipits_db/uchime_reference_dataset_28.06.2017.fasta"
+    PIPITS_UNITE_REFERENCE_DATA_CHIMERA = "pipits_db/uchime_reference_dataset_28.06.2017/uchime_reference_dataset_28.06.2017.fasta"
     cmd = " ".join([
         VSEARCH, 
         "--uchime_ref", tmpDir + "/input_nr_otus.fasta", 
