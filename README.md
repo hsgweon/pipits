@@ -7,6 +7,8 @@
 
 
 ## Updates
+###### UPDATE (28 May 2019) - PIPITS 2.4
+> - **BIOM files are now in the HDF5 format.** OTU tables in BIOM format is now in HDF5 rather than JSON format. OTU tables in HDF5 BIOM are supported by PHYLOSEQ and QIIME2.
 
 ###### UPDATE (22 April 2019) - PIPITS 2.3
 > - **PIPITS_PROCESS automatically downloads** UNITE database (the most recent version - UNITE version 02.02.2019), so there is no need to meddle with environment variables anymore. Just run commands and it will take care of the database issues. You can still use older database by the way using --unite option (see help by -h).
@@ -62,15 +64,10 @@ wget https://sourceforge.net/projects/pipits/files/PIPITS_TESTDATA/pipits_test.t
 tar xvfz pipits_test.tar.gz
 ```
 
-> EXPLANATION: Enter into ```pipits_test``` directory
+> EXPLANATION: Get into the Conda environment you've just created, and run PIPITS.
 
 ```sh
 cd pipits_test
-```
-
-> EXPLANATION: Get into Conda environment you created above, and run the commands.
-
-```sh
 source activate pipits_env
 pispino_createreadpairslist -i rawdata -o readpairslist.txt
 pispino_seqprep -i rawdata -o out_seqprep -l readpairslist.txt
