@@ -4,7 +4,7 @@ import sys, os, argparse, subprocess, shutil
 from pispino.runcmd import *
 from pispino.logger import *
 
-__version__    = 2.3
+__version__    = 2.4
 
 __author__     = "Hyun Soon Gweon"
 __copyright__  = "Copyright 2015, The PIPITS Project"
@@ -493,7 +493,7 @@ if __name__ == '__main__':
         BIOM, "convert", 
         "-i", tmpDir + "/otu_table_prelim.txt", 
         "-o", tmpDir + "/otu_table_prelim.biom", 
-        "--table-type=\"OTU table\" --to-json"
+        "--table-type=\"OTU table\" --to-hdf5"
         ])
     run_cmd(cmd, logging_file, options.verbose)
 
@@ -543,8 +543,7 @@ if __name__ == '__main__':
         "--observation-metadata-fp", options.outDir + "/assigned_taxonomy_reformatted_filtered.txt", 
         "--observation-header", "OTUID,taxonomy,confidence", 
         "--sc-separated", "taxonomy", 
-        "--float-fields", "confidence", 
-        "--output-as-json"])
+        "--float-fields", "confidence"])
     run_cmd(cmd, logging_file, options.verbose)
 
 
@@ -566,7 +565,8 @@ if __name__ == '__main__':
     cmd = " ".join([
         "python", EXE_DIR + "/pipits_phylotype_biom", 
         "-i", options.outDir + "/otu_table.biom", 
-        "-o", options.outDir + "/phylotype_table.txt"])
+        "-o", options.outDir + "/phylotype_table.txt",
+        "-l 6"])
     run_cmd(cmd, logger, options.verbose)
 
     try:
@@ -577,8 +577,8 @@ if __name__ == '__main__':
         BIOM, "convert",
         "-i", options.outDir + "/phylotype_table.txt",
         "-o", options.outDir + "/phylotype_table.biom",
-        "--table-type=\"OTU table\" --process-obs-metadata=\"taxonomy\"",
-        "--to-json"])
+        "--table-type=\"OTU table\"",
+        "--to-hdf5"])
     run_cmd(cmd, logging_file, options.verbose)
 
 
@@ -623,8 +623,7 @@ if __name__ == '__main__':
             "--observation-metadata-fp", options.outDir + "/assigned_taxonomy_reformatted_filtered_warcup.txt",
             "--observation-header", "OTUID,taxonomy,confidence",
             "--sc-separated", "taxonomy",
-            "--float-fields", "confidence",
-            "--output-as-json"])
+            "--float-fields", "confidence"])
         run_cmd(cmd, logging_file, options.verbose)
 
 
@@ -645,7 +644,11 @@ if __name__ == '__main__':
 
         # Make phylotyp table #
         logger("Phylotyping OTU table - Warcup", logging_file, display = True)
-        cmd = " ".join(["python", EXE_DIR + "/pipits_phylotype_biom", "-i", options.outDir + "/otu_table_warcup.biom", "-o", options.outDir + "/phylotype_table_warcup.txt"])
+        cmd = " ".join([
+            "python", EXE_DIR + "/pipits_phylotype_biom", 
+            "-i", options.outDir + "/otu_table_warcup.biom", 
+            "-o", options.outDir + "/phylotype_table_warcup.txt",
+            "-l 6"])
         run_cmd(cmd, logging_file, options.verbose)
 
         try:
@@ -656,8 +659,8 @@ if __name__ == '__main__':
             BIOM, "convert",
             "-i", options.outDir + "/phylotype_table_warcup.txt",
             "-o", options.outDir + "/phylotype_table_warcup.biom",
-            "--table-type=\"OTU table\" --process-obs-metadata=\"taxonomy\"",
-            "--to-json"])
+            "--table-type=\"OTU table\"",
+            "--to-hdf5"])
         run_cmd(cmd, logging_file, options.verbose)
 
 
@@ -677,30 +680,12 @@ if __name__ == '__main__':
 
     def biomstats(BIOMFILE):
 
-        import json
-        jsondata = open(BIOMFILE)
-        biom = json.load(jsondata)
+        from biom import load_table
+        biom = load_table(BIOMFILE)
 
-        sampleSize = int(biom["shape"][1])
-        otus = int(biom["shape"][0])
-
-        taxonomies = []
-        for i in range(len(biom["rows"])):
-            taxonomies.append("; ".join(biom["rows"][i]["metadata"]["taxonomy"]))
-
-        sampleids = []
-        for i in range(len(biom["columns"])):
-            sampleids.append(biom["columns"][i]["id"])
-
-        # BIOM table into matrix
-        totalCount = sum([i[2] for i in biom["data"]])
-
-        '''
-        matrix = np.zeros(shape=(otus, sampleSize))
-        for i in biom["data"]:
-            matrix[i[0], i[1]] = i[2]
-        totalCount = matrix.sum()
-        '''
+        sampleSize = int(biom.shape[1])
+        otus = int(biom.shape[0])
+        totalCount = biom.sum()
 
         return totalCount, otus, sampleSize
 
@@ -713,7 +698,6 @@ if __name__ == '__main__':
     summary_file.write("Number of samples:                      " + str(otu_sample_count) + "\n\n")
     summary_file.write("UNITE DB version:                       " + options.unite + "\n")
     summary_file.write("PIPITS version:                         " + str(__version__) + "\n")
-
 
     logger(BLUE + "\tNumber of reads used to generate OTU table: " + str(int(otu_reads_count)) + ENDC, logging_file, display = True)
     logger(BLUE + "\tNumber of OTUs:                             " + str(otu_count) + ENDC, logging_file, display = True)
