@@ -7,11 +7,14 @@
 
 
 ## Updates
+###### UPDATE (19 Feb 2020) - PIPITS 2.5
+> - **New UNITE DB (released on 2020-02-04).** PIPITS will now download the new UNITE db. Also few minor bugs have now been fixed. 
+
 ###### UPDATE (28 May 2019) - PIPITS 2.4
 > - **BIOM files are now in the HDF5 format.** OTU tables in BIOM format is now in HDF5 rather than JSON format. OTU tables in HDF5 BIOM are supported by PHYLOSEQ and QIIME2.
 
 ###### UPDATE (22 April 2019) - PIPITS 2.3
-> - **PIPITS_PROCESS automatically downloads** UNITE database (the most recent version - UNITE version 02.02.2019), so there is no need to meddle with environment variables anymore. Just run commands and it will take care of the database issues. You can still use older database by the way using --unite option (see help by -h).
+> - **PIPITS_PROCESS automatically downloads** UNITE database (the most recent version), so there is no need to meddle with environment variables anymore. Just run commands and it will take care of the database issues. You can still use older database by the way using --unite option (see help by -h).
 > - **PIPITS_FUNITS exploits multiple CPUs.** It's an experimental feature, so do use it with care. You can invoke to use multiple CPUs by using the usual ```-t NUMBER_OF_CPUS``` option.
 > - Update PIPITS with ```conda update --channel bioconda --channel conda-forge --channel defaults pipits```
 > then check you have version 2.3 installed by: ```conda list pipits```
@@ -27,9 +30,9 @@
 
 - is designed to work best on POSIX systems (this essentiallly means it doesn't work in Windows).
 
-- will need at least 4GB of RAM on your machine running 64bit Linux of mac OS, and it's been tested to be stable on Ubuntu 16.04, and macOS Mojave.
+- will need at least 4GB of RAM on your machine running 64-bit Linux of mac OS, and it's been tested to be stable on Ubuntu 16.04, and macOS Mojave.
 
-- Uses UNITE fungal db (and also comes with an option to run it against WARCUP fungal db).
+- Automatically downloads the most recent version of UNITE fungal db (and also comes with an option to run it against WARCUP fungal db).
 
 - Just 4 commands, and you are good to go!
 
