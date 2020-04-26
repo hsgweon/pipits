@@ -37,7 +37,7 @@ biom = load_table(options.biominputfile)
 
 phylum_idx = int(options.level) # Species
 collapse_s = lambda id_, md: '; '.join(md['taxonomy'][:phylum_idx + 1])
-collapsed = biom.collapse(collapse_s, axis='observation')
+collapsed = biom.collapse(collapse_s, norm = False, min_group_size=1, axis='observation').sort(axis = 'observation')
 
 outfile = open(options.outfile, "w")
 outfile.write(collapsed.to_tsv())

@@ -1,5 +1,5 @@
 [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-# PIPITS
+# PIPITS :mushroom:
 
 ### An automated pipeline for analyses of fungal internal transcribed spacer (ITS) sequences from the Illumina sequencing platform [(Gweon et al., 2015)](https://besjournals.onlinelibrary.wiley.com/doi/abs/10.1111/2041-210X.12399)
 
@@ -7,6 +7,13 @@
 
 
 ## Updates
+
+###### UPDATE (26 April 2020) - PIPITS 2.6
+> - **BIOM to phylotype table bug fixed.** After BIOM (one of the dependencies) was upgraded, phylotype table inadvertently got filled with normalised values. This now has been remedied, and it's now back to the previous behaviour. For those who just want to convert OTU tables to phylotype tables without re-running PIPITS again, please update PIPITS, and (within pipits_env) then: 
+> ```
+pipits_phylotype_biom -i otu_table.biom -o phylotype_table.txt -l 6
+```
+
 ###### UPDATE (19 Feb 2020) - PIPITS 2.5
 > - **New UNITE DB (released on 2020-02-04).** PIPITS will now download the new UNITE db. Also few minor bugs have now been fixed. 
 

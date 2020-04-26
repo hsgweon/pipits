@@ -1,7 +1,7 @@
 from setuptools import setup
 import os
 
-__version__ = os.environ.get("VERSION", "2.5")
+__version__ = os.environ.get("VERSION", "2.6")
 
 setup(
 	name = "pipits",
