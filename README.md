@@ -6,7 +6,7 @@
 ##### Shown to perform better than QIIME2 and Galaxy! - [See this paper](https://peerj.com/preprints/27019/)
 
 
-## Updates
+## Updates/Notice/News
 
 ###### UPDATE (26 April 2020) - PIPITS 2.6
 > - **BIOM to phylotype table bug fixed.** After BIOM (one of the dependencies) was upgraded, phylotype table inadvertently got filled with normalised values. This now has been remedied, and it's now back to the previous behaviour. For those who just want to convert OTU tables to phylotype tables without re-running PIPITS again, please update PIPITS, and (within pipits_env) then: 
