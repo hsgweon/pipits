@@ -4,7 +4,7 @@ import sys, os, argparse, subprocess, shutil
 from pispino.runcmd import *
 from pispino.logger import *
 
-__version__    = 2.5
+__version__    = 2.6.1
 
 __author__     = "Hyun Soon Gweon"
 __copyright__  = "Copyright 2015, The PIPITS Project"
@@ -651,7 +651,7 @@ if __name__ == '__main__':
             "python", EXE_DIR + "/pipits_phylotype_biom", 
             "-i", options.outDir + "/otu_table_warcup.biom", 
             "-o", options.outDir + "/phylotype_table_warcup.txt",
-            "-l 6"])
+            "-l 8"])
         run_cmd(cmd, logging_file, options.verbose)
 
         try:
