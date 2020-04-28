@@ -8,7 +8,7 @@
 
 ## Updates/Notice/News
 
-###### UPDATE (28 April 2020) - PIPITS 2.6.1
+###### UPDATE (28 April 2020) - PIPITS 2.7
 > - **WARCUP phylotype table bug fixed.** It now produces correcly aggregated table (it used to aggregate at the Family-level, but now it aggregates at the Species-level)
 
 ###### UPDATE (26 April 2020) - PIPITS 2.6

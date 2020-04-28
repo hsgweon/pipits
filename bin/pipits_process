@@ -4,7 +4,7 @@ import sys, os, argparse, subprocess, shutil
 from pispino.runcmd import *
 from pispino.logger import *
 
-__version__    = 2.6.1
+__version__    = 2.7
 
 __author__     = "Hyun Soon Gweon"
 __copyright__  = "Copyright 2015, The PIPITS Project"
