@@ -81,12 +81,13 @@ tar xvfz pipits_test.tar.gz
 
 ```sh
 cd pipits_test
-source activate pipits_env
+conda activate pipits_env
 pispino_createreadpairslist -i rawdata -o readpairslist.txt
 pispino_seqprep -i rawdata -o out_seqprep -l readpairslist.txt
 pipits_funits -i out_seqprep/prepped.fasta -o out_funits -x ITS2 -v -r
 pipits_process -i out_funits/ITS.fasta -o out_process -v -r
 ```
+Some rare setups (e.g., installation in user-level folders of dated server distributions) cause ```pipits_process``` to fail while converting to biom format. The issue can be solved by updating the fresh installation from within the environment: ```conda update pipits```.
 
 <br>
 
@@ -178,8 +179,8 @@ pipits_process -i out_funits/ITS.fasta -o out_process
         sequences binned into the same taxonomic assignments.
 8.  If you have memory issues, try increasing the maximum memory with "--Xmx". For example, "--Xmx 4G".
 9.	Once all finished, you can leave Conda environment by typeing
-```
-source deactivate
+```sh
+conda deactivate
 ```
 
 <br>
