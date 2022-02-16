@@ -8,6 +8,9 @@
 
 ## Updates/Notice/News
 
+###### UPDATE (15 February 2022) - PIPITS 2.8
+> - **UNITE 8.3 added.** PIPITS now classifies sequences against UNITE 8.3 (98,090 sequences)
+
 ###### UPDATE (28 April 2020) - PIPITS 2.7
 > - **WARCUP phylotype table bug fixed.** It now produces correcly aggregated table (it used to aggregate at the Family-level, but now it aggregates at the Species-level)
 
