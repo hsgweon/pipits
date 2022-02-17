@@ -4,7 +4,7 @@ import sys, os, argparse, subprocess, shutil
 from pispino.runcmd import *
 from pispino.logger import *
 
-__version__    = 2.7
+__version__    = 2.8
 
 __author__     = "Hyun Soon Gweon"
 __copyright__  = "Copyright 2015, The PIPITS Project"
@@ -112,8 +112,8 @@ if __name__ == '__main__':
         action = "store",
         dest = "unite",
         help = "UNITE db version to be used - PIPITS will download db automaticlly. Leaving this option out will default to the most recent version of UNITE available to PIPITS. Currently 02_02_2019.",
-        choices = ["04.02.2020", "02.02.2019", "01.12.2017", "28.06.2017"],
-        default = "04.02.2020",
+        choices = ["10.05.2021", "04.02.2020", "02.02.2019", "01.12.2017", "28.06.2017"],
+        default = "10.05.2021",
         required = False)
     options = parser.parse_args()
 
@@ -331,7 +331,10 @@ if __name__ == '__main__':
     elif options.unite == "04.02.2020":
         url = "https://sourceforge.net/projects/pipits/files/PIPITS_DB/UNITE_retrained_" + options.unite + ".tar.gz"
         md5 = "b2f833c89794be20a5fdb6169d9205f1"
-
+    elif options.unite == "10.05.2021":
+        url = "https://sourceforge.net/projects/pipits/files/PIPITS_DB/UNITE_retrained_" + options.unite + ".tar.gz"
+        md5 = "13f1edfb1357eeda3f41ff8b0a15447f"
+        
     downloadDB(
         url = url,
         md5 = md5,
