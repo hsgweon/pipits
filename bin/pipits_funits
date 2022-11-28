@@ -5,7 +5,7 @@ from pispino.seqtools import *
 from pispino.runcmd import *
 from pispino.logger import *
 
-__version__    = 2.8
+__version__    = 3.0
 
 __author__     = "Hyun Soon Gweon"
 __copyright__  = "Copyright 2015, The PIPITS Project"
@@ -184,18 +184,21 @@ if __name__ == '__main__':
         logger(ENDC + "Splitting sequences to multiple parts" + ENDC, logging_file, display = True)
         cmd = " ".join([
             "seqkit split",
-             tmpDir + "/derep.fasta",
-             "-p", options.threads,
-             "-f", 
-             "--out-dir", tmpDir + "/split"
-             ])
+            tmpDir + "/derep.fasta",
+            "-p", options.threads,
+            "-f", 
+            "--out-dir", tmpDir + "/split",
+            "-w 0"
+        ])
         run_cmd(cmd, logging_file, options.verbose)
         logger(BLUE + "... done" + ENDC, logging_file, display = True)
 
+        # Count the number of splits
+        number_of_splits = len(os.listdir(tmpDir +"/split"))
+
 
         cmds = []
-        
-        for i in range(1, int(options.threads)+1):
+        for i in range(1, int(number_of_splits) + 1):
             # print(tmpDir + "/split/derep.part_" + "%03d" % i + ".fasta")
             cmd = " ".join([
                 ITSx, 
@@ -203,18 +206,20 @@ if __name__ == '__main__':
                 "-o", tmpDir + "/split/derep.part_" + "%03d" % i,
                 "--preserve", "T", 
                 "-t", "F", 
-                "--cpu 1", 
-                "--save_regions", options.ITSx_subregion
-                ])
+                "--cpu 1",
+                "--silent T",
+                "--save_regions", options.ITSx_subregion])
             cmds.append(cmd)
 
+
+        logger(ENDC + "Extracting " + options.ITSx_subregion + " from sequences [ITSx]" + ENDC, logging_file, display = True)
         import fileinput
         import glob
-        from subprocess import Popen
+        from subprocess import Popen,PIPE
         from itertools import islice
 
         maxThreads = int(options.threads)
-        processes = (Popen(cmd, shell=True) for cmd in cmds)
+        processes = (Popen(cmd, shell=True, stderr=PIPE, stdout=PIPE) for cmd in cmds)
         running_processes = list(islice(processes, maxThreads))  # start new processes
         while running_processes:
             for i, process in enumerate(running_processes):
@@ -243,12 +248,15 @@ if __name__ == '__main__':
             "-o", tmpDir + "/derep", 
             "--preserve", "T", 
             "-t", "F", 
-            "--cpu 1", 
+            "--cpu 1",
+            "--silent T",
             "--save_regions", options.ITSx_subregion])
+        #print(cmd)
         run_cmd(cmd, logging_file, options.verbose)
         logger(BLUE + "... done" + ENDC, logging_file, display = True)
 
 
+        
     ###########
     # Summary #
     ###########
@@ -257,11 +265,10 @@ if __name__ == '__main__':
     output_previous = tmpDir + "/derep." + options.ITSx_subregion + ".fasta"
     numberofsequences = int(getFileLineCount(output_previous) / 2)
     if numberofsequences == 0: 
-        logger(RED + "ERROR: You have 0 sequences identified as " + options.ITSx_subregion + ". Are you sure your sequences are " + options.ITSx_subregion + "?" + ENDC, logging_file, display = True)
-        exit(1)
+        logger(RED + "WARNING: You have 0 sequences identified as " + options.ITSx_subregion + ". Are you sure your sequences are " + options.ITSx_subregion + "?" + ENDC, logging_file, display = True)
     else:
         logger(BLUE + "... number of ITS sequences (dereplicated): " + str(numberofsequences) + ENDC, logging_file, display = True)
-        summary_file.write("Number of ITS sequences (dereplicated): " + str(numberofsequences) + "\n")
+    summary_file.write("Number of ITS sequences (dereplicated): " + str(numberofsequences) + "\n")
 
 
     ##############
@@ -271,8 +278,9 @@ if __name__ == '__main__':
     logger(ENDC + "Sorting by ID" + ENDC, logging_file, display = True)
     cmd = " ".join([
         "seqkit sort", tmpDir + "/derep." + options.ITSx_subregion + ".fasta",
-         "-o",         tmpDir + "/derep." + options.ITSx_subregion + ".sorted.fasta"
-         ])
+        "-o",         tmpDir + "/derep." + options.ITSx_subregion + ".sorted.fasta",
+        "-w 0"
+    ])
     run_cmd(cmd, logging_file, options.verbose)
     logger(BLUE + "... done" + ENDC, logging_file, display = True)
 
@@ -312,29 +320,64 @@ if __name__ == '__main__':
     # Re-inflate #
     ##############
 
-    logger(ENDC + "Re-inflating sequences" + ENDC, logging_file, display = True)
+    logger(ENDC + "Re-inflating sequences." + ENDC, logging_file, display = True)
     cmd = " ".join(["python", EXE_DIR + "/pipits_rereplicate",
                     "-i", tmpDir + "/derep." + options.ITSx_subregion + ".sizefiltered.fasta", 
-                    "-o", options.outDir + "/ITS.fasta", 
+                    "-o", tmpDir + "/out_ITSxed_sequences.fasta", 
                     "--uc", tmpDir + "/derep.uc"])
     run_cmd(cmd, logging_file, options.verbose)
+
+    # Find missing sequences
+    logger(ENDC + "Dealing with sequence without conserved regions." + ENDC, logging_file, display = True)
+    cmd = " ".join(["python", EXE_DIR + "/pipits_diffseqs",
+                    "-1",
+                    options.input,
+                    "-2", tmpDir + "/out_ITSxed_sequences.fasta",
+                    "-o", tmpDir + "/sequences_without_conserved_region.txt"])
+    #print(cmd)
+    run_cmd(cmd, logging_file, options.verbose)
+
+    cmd = " ".join(["seqkit grep -f",
+                    tmpDir + "/sequences_without_conserved_region.txt",
+                    options.input,
+                    "-o",
+                    tmpDir + "/out_notITSxed_sequences.fasta",
+                    "-w 0"])
+    #print(cmd)                                                                                                                                                                                                               
+    run_cmd(cmd, logging_file, options.verbose)
+    
+    cmd = " ".join(["cat",
+                    tmpDir + "/out_ITSxed_sequences.fasta",
+                    tmpDir + "/out_notITSxed_sequences.fasta",
+                    ">",
+                    options.outDir + "/ITS.fasta"])
+    #print(cmd)
+    run_cmd(cmd, logging_file, options.verbose)
     logger(BLUE + "... done" + ENDC, logging_file, display = True)
-
-
+    
 
     ###########
     # Summary #
     ###########
 
+    output_previous = tmpDir + "/out_ITSxed_sequences.fasta"
+    numberofsequences = int(getFileLineCount(output_previous) / 2)
+    logger(GREEN +     "Total number of sequences with ITS subregion: " + str(numberofsequences) + ENDC, logging_file, display = True)
+    summary_file.write("Total number of sequences with ITS subregion: " + str(numberofsequences) + "\n")
+
+    out_notITSxed_sequences = tmpDir + "/out_notITSxed_sequences.fasta"
+    out_notITSxed_sequences_sc = int(getFileLineCount(out_notITSxed_sequences) / 2)
+    logger(GREEN +     "Total number of sequences without conserved region(s): " + str(out_notITSxed_sequences_sc) + ENDC, logging_file, display = True)
+    summary_file.write("Total number of sequences without conserved region(s): " + str(out_notITSxed_sequences_sc) + "\n")
+
     output_previous = options.outDir + "/ITS.fasta"
-    logger(ENDC + "Counting sequences after re-inflation" + ENDC, logging_file, display = True)
     numberofsequences = int(getFileLineCount(output_previous) / 2)
     if numberofsequences == 0: 
         logger(RED + "ERROR: You have 0 sequences! Something isn't right." + ENDC, logging_file, display = True)
         exit(1)
     else:
-        logger(BLUE + "... number of sequences with ITS subregion: " + str(numberofsequences) + ENDC, logging_file, display = True)
-        summary_file.write("Number of sequences with ITS subregion: " + str(numberofsequences) + "\n")
+        logger(GREEN +     "Total number of sequences in the final output of this step (FUNITS): " + str(numberofsequences) + ENDC, logging_file, display = True)
+        summary_file.write("Total number of sequences in the final output of this step (FUNITS): " + str(numberofsequences) + "\n")
 
 
     ###############################

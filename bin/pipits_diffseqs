@@ -1,0 +1,56 @@
+#!/usr/bin/env python
+
+############################################################
+# Argument Options
+
+import argparse
+parser = argparse.ArgumentParser(description = "")
+parser.add_argument("-1", 
+                    action = "store", 
+                    dest = "inputfile1", 
+                    metavar = "inputfile1",
+                    help = "[REQUIRED] input sequence file 1", 
+                    required = True)
+parser.add_argument("-2",
+                    action = "store",
+                    dest = "inputfile2",
+                    metavar = "inputfile2",
+                    help = "[REQUIRED] input sequence file 2",
+                    required = True)
+parser.add_argument("-o", 
+                    action = "store", 
+                    dest = "outputfile", 
+                    metavar = "outputfile",
+                    help = "[REQUIRED] output sequence file", 
+                    required = True)
+options = parser.parse_args()
+
+############################################################
+
+import os, sys
+
+inputfile1 = open(options.inputfile1, "r")
+inputfile2 = open(options.inputfile2, "r")
+outputfile = open(options.outputfile, "w")
+
+list1 = []
+with open(options.inputfile1, "r") as f:
+    for l in f:
+        if l.startswith(">"):
+            list1.append(l.split(">")[1].rstrip())
+
+list2 = []
+with open(options.inputfile2, "r") as f:
+    for l in f:
+        if l.startswith(">"):
+            list2.append(l.split(">")[1].rstrip())
+
+if len(list1) < len(list2):
+    print("Error: Something wrong with PIPITS_FUNITS - discrepancy between input and ITSxed sequences.")
+    exit(1)
+
+difference = list(set(list1) - set(list2))
+            
+for i in difference:
+    outputfile.write(i + "\n")
+    

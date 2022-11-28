@@ -3,10 +3,20 @@
 
 ### An automated pipeline for analyses of fungal internal transcribed spacer (ITS) sequences from the Illumina sequencing platform [(Gweon et al., 2015)](https://besjournals.onlinelibrary.wiley.com/doi/abs/10.1111/2041-210X.12399)
 
-##### Shown to perform better than QIIME2 and Galaxy! - [See this paper](https://peerj.com/preprints/27019/)
+##### Shown to perform better than QIIME2 - [See this paper](https://doi.org/10.3897/mycokeys.39.28109)
 
 
 ## Updates/Notice/News
+
+###### UPDATE (27 November 2022) - PIPITS 3.0
+> Some significant changes!
+> 
+> - PIPITS now classifies sequences against **UNITE 9.0** (205,888 fungi & 326,300 Eukaryotes - see below). 
+> - The database now includes non-fungi (i.e. Eukaryotes) to ensure that the infamous OTUs with a mere "k\_\_Fungi" could be better classified. With the inclusion, not these OTUs can indeed be "k\_\_Fungi", "k\_\_Viridiplantae" or "k\_\_unidentified". Do note that depending on your choice of primers, you may pick up quite a lot of plant ITS sequences (no primers are perfectly specific for just fungi).
+> - However, because of the significant increase in the size of the database, PIPITS now requires at least **16GB of RAM** (preferably more e.g. 32GB). This may not suite those who used to enjoy running PIPITS on their laptop. Sorry... time has moved on! 
+> - Also the increase in the size of the database meant that RDP Classifier can take a very long time to process the data. For this reason, you now have an option to run **SINTAX (VSEARCH)** to assign sequences. This is remarkably quick!
+> - If you find that RDP Classifier is taking too long, please use "--taxassignmentmethod sin" to just run SINTAX (VSEARCH). That said, the confidence threshold of 0.85 doesn't equates 0.85 of RDP Classifier though from my experience, the differences are small. Do note that [SINTAX](https://doi.org/10.1101/074161) is a non-Bayesian taxonomic classifier.
+> - I will look to incorporate other classifier such as [CONSTAX](https://doi.org/10.1093/bioinformatics/btab347) in the future!
 
 ###### UPDATE (15 February 2022) - PIPITS 2.8
 > - **UNITE 8.3 added.** PIPITS now classifies sequences against UNITE 8.3 (98,090 sequences)
@@ -41,13 +51,13 @@ pipits_phylotype_biom -i otu_table.biom -o phylotype_table.txt -l 6
 
 - is an automated pipeline for analyses of fungal internal transcribed spacer (ITS) sequences from the Illumina sequencing platform.
 
-- is designed to work best on POSIX systems (this essentiallly means it doesn't work in Windows).
+- only works on POSIX systems (this essentiallly means it doesn't work in Windows - sorry...).
 
-- will need at least 4GB of RAM on your machine running 64-bit Linux of mac OS, and it's been tested to be stable on Ubuntu 16.04, and macOS Mojave.
+- will need at least 16 GB of RAM on your machine running 64-bit Linux of mac OS.
 
 - Automatically downloads the most recent version of UNITE fungal db (and also comes with an option to run it against WARCUP fungal db).
 
-- Just 4 commands, and you are good to go!
+- Just **4 commands**, and you are good to go!
 
 <br>
 
@@ -121,10 +131,10 @@ pispino_seqprep -i rawdata -o out_seqprep -l readpairslist.txt
 
 #### *Note*
 
-1.  Read-pairs are joined by examining the overlapping regions of sequences
-2.  The resulting assembled reads are then quality filtered
-3.  The header of each read is then relabelled with an index number followed by a Sample ID
-4.  The resulting files are converted into FASTA and merged into a single file to produce the final output file "prepped.fasta" in the output directory
+1. Read-pairs are joined by examining the overlapping regions of sequences
+2. The resulting assembled reads are then quality filtered
+3. The header of each read is then relabelled with an index number followed by a Sample ID
+4. The resulting files are converted into FASTA and merged into a single file to produce the final output file "prepped.fasta" in the output directory
 
 
 ### B2. Fungal ITS extraction
@@ -139,18 +149,9 @@ pipits_funits -i out_seqprep/prepped.fasta -o out_funits -x ITS2
 
 #### *Note*
 
-1.  Selected subregion are extracted with [ITSx](http://microbiology.se/software/itsx/) and where necessary they are re-orientated to 5’ to 3’ direction. It is worth noting that ITSx uses HMMER3 (Mistry et al., 2013) to compare input sequences against a set of models built from a number of different subregions of ITS sequences found in various organisms. This makes ITSx an ideal tool for both extraction of
-    desired ITS subregions as well as filtering for specific groups of
-    organisms. It also means that while PIPITS has been created with the
-    analysis of fungal amplicons in mind, it could be adapted for the
-    analyses of other organism groups where ITS is used as a marker by
-    changing the ITSx settings and reference databases
-3.  Having extracted the subregion, sequences are re-inflated to reflect
-    their original abundances. To date, the longest sequenceable reads
-    from the Illumina technology are 300 bp x 2 which is not sufficient
-    to sequence both ITS1 and ITS2 and to have an overlapping region to
-    join them. For this reason the program supports only a single
-    subregion extraction mode
+1. Selected subregion are extracted with [ITSx](http://microbiology.se/software/itsx/) and where necessary they are re-orientated to 5’ to 3’ direction. It is worth noting that ITSx uses HMMER3 (Mistry et al., 2013) to compare input sequences against a set of models built from a number of different subregions of ITS sequences found in various organisms. This makes ITSx an ideal tool for both extraction of desired ITS subregions as well as filtering for specific groups of organisms. It also means that while PIPITS has been created with the analysis of fungal amplicons in mind, it could be adapted for the analyses of other organism groups where ITS is used as a marker by changing the ITSx settings and reference databases
+2. Having extracted the subregion, sequences are re-inflated to reflect their original abundances. To date, the longest sequenceable reads from the Illumina technology are 300 bp x 2 which is not sufficient to sequence both ITS1 and ITS2 and to have an overlapping region to join them. For this reason the program supports only a single subregion extraction mode
+3. PIPITS will include those sequences that do not have any conserved region detected. This is so that ALL sequences are taken into account.
 
 
 ### B3. Process sequences

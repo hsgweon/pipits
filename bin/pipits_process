@@ -4,7 +4,7 @@ import sys, os, argparse, subprocess, shutil
 from pispino.runcmd import *
 from pispino.logger import *
 
-__version__    = 2.8
+__version__    = 3.0
 
 __author__     = "Hyun Soon Gweon"
 __copyright__  = "Copyright 2015, The PIPITS Project"
@@ -51,6 +51,14 @@ if __name__ == '__main__':
         default = "0.85",
         required = False)
     parser.add_argument(
+        "--sintaxconfidence",
+        action = "store",
+        dest = "sintaxconfidence",
+        metavar = "<FLOAT>",
+        help = "VSEARCH SINTAX assignment confidence threshold [default: 0.85]",
+        default = "0.85",
+        required = False)
+    parser.add_argument(
         "-l",
         action = "store",
         dest = "sortedlist",
@@ -89,15 +97,13 @@ if __name__ == '__main__':
         action = "store",
         dest = "Xms",
         default = "4g",
-        metavar = "<INT>",
         help = "The minimum size, in bytes, of the memory allocation pool for JVM",
         required = False)
     parser.add_argument(
         "--Xmx",
         action = "store",
         dest = "Xmx",
-        default = "4g",
-        metavar = "<INT>",
+        default = "16g",
         help = "The maximum size, in bytes, of the memory allocation pool for JVM",
         required = False)
     parser.add_argument(
@@ -108,12 +114,20 @@ if __name__ == '__main__':
         default = False,
         required = False)
     parser.add_argument(
+        "--taxassignmentmethod",
+        action = "store",
+        dest = "taxassignmentmethod",
+        help = "Choice of taxonomic assignment. By default, PIPITS will run both RDP Classifier and SINTAX (VSEARCH).",
+        choices = ["all", "rdp", "sin"],
+        default = "all",
+        required = False)
+    parser.add_argument(
         "--unite",
         action = "store",
         dest = "unite",
-        help = "UNITE db version to be used - PIPITS will download db automaticlly. Leaving this option out will default to the most recent version of UNITE available to PIPITS. Currently 02_02_2019.",
-        choices = ["10.05.2021", "04.02.2020", "02.02.2019", "01.12.2017", "28.06.2017"],
-        default = "10.05.2021",
+        help = "UNITE db version to be used - PIPITS will download db automaticlly. Leaving this option out will default to the most recent version of UNITE available to PIPITS.",
+        choices = ["27.10.2022", "10.05.2021", "04.02.2020", "02.02.2019", "01.12.2017", "28.06.2017"],
+        default = "27.10.2022",
         required = False)
     options = parser.parse_args()
 
@@ -319,21 +333,20 @@ if __name__ == '__main__':
 
     logger("Downloading UNITE trained database, version: " + options.unite, logging_file, display = True)
 
+    url = "https://sourceforge.net/projects/pipits/files/PIPITS_DB/UNITE_retrained_" + options.unite + ".tar.gz"
+    
     if options.unite == "02.02.2019":
-        url = "https://sourceforge.net/projects/pipits/files/PIPITS_DB/UNITE_retrained_" + options.unite + ".tar.gz"
         md5 = "8fd3b74a510bb20b67933a2ecc620f89"
     elif options.unite == "01.12.2017":
-        url = "https://sourceforge.net/projects/pipits/files/PIPITS_DB/UNITE_retrained_" + options.unite + ".tar.gz"
         md5 = "3c5be9c60fecf70076739379e7c9ead5"
     elif options.unite == "28.06.2017":
-        url = "https://sourceforge.net/projects/pipits/files/PIPITS_DB/UNITE_retrained_" + options.unite + ".tar.gz"
         md5 = "33fa78987751a494c586676ff3a0da65"
     elif options.unite == "04.02.2020":
-        url = "https://sourceforge.net/projects/pipits/files/PIPITS_DB/UNITE_retrained_" + options.unite + ".tar.gz"
         md5 = "b2f833c89794be20a5fdb6169d9205f1"
     elif options.unite == "10.05.2021":
-        url = "https://sourceforge.net/projects/pipits/files/PIPITS_DB/UNITE_retrained_" + options.unite + ".tar.gz"
         md5 = "13f1edfb1357eeda3f41ff8b0a15447f"
+    elif options.unite == "27.10.2022":
+        md5 = "7d31f5612a78607e50d4170b75d0cbfa"
         
     downloadDB(
         url = url,
@@ -345,6 +358,25 @@ if __name__ == '__main__':
     logger(BLUE + "... done" + ENDC, logging_file, display = True)
 
 
+    ##################
+    # VSEARCH SINTAX #
+    ##################
+
+    logger("Downloading database for SINTAX", logging_file, display = True)
+    
+    url = "https://sourceforge.net/projects/pipits/files/PIPITS_DB/UNITE_retrained_27.10.2022.sintax.fa.tar.gz"
+    md5 = "b26ebd07a5abb415e1ad35b8dc8108d2"
+
+    downloadDB(
+        url = url,
+        md5 = md5,
+        output_dir = "pipits_db",
+        logging_file = logging_file,
+        summary_file = summary_file,
+        verbose = options.verbose)
+    logger(BLUE + "... done" + ENDC, logging_file, display = True)
+
+    
     ##########
     # WARCUP #
     ##########
@@ -502,90 +534,163 @@ if __name__ == '__main__':
         "--table-type=\"OTU table\" --to-hdf5"
         ])
     run_cmd(cmd, logging_file, options.verbose)
+    
+    
+    #########################
+    # VSINTAX against UNITE #
+    #########################
+
+    if (options.taxassignmentmethod == "all" or "sin"):
+    
+        logger(ENDC + "Assigning taxonomy with VSEARCH-SINTAX [VSEARCH]" + ENDC, logging_file, display = True)
+        PIPITS_UNITE_RETRAINED_VSEARCHSINTAXFORMATTED = "pipits_db/UNITE_retrained_" + options.unite + ".sintax.fa/UNITE_retrained_" + options.unite + ".sintax.fa"
+        
+        cmd = " ".join([VSEARCH,
+                        "--sintax",
+                        tmpDir + "/input_nr_otus_nonchimeras_relabelled.fasta",
+                        "--db", PIPITS_UNITE_RETRAINED_VSEARCHSINTAXFORMATTED,
+                        "--sintax_cutoff 1.0",
+                        "--tabbedout", options.outDir + "/assigned_taxonomy_sintax_raw.txt",
+                        "--threads", options.threads])
+        #print(cmd)
+        run_cmd(cmd, logging_file, options.verbose)
+        
+        # Reformat the table
+        cmd = " ".join([
+            "python", EXE_DIR + "/pipits_reformatVSintaxTaxonomy",
+            "-i", options.outDir + "/assigned_taxonomy_sintax_raw.txt" ,
+            "-o", options.outDir + "/assigned_taxonomy_sintax.txt",
+            "-c", options.sintaxconfidence])
+        #print(cmd)
+        run_cmd(cmd, logging_file, options.verbose)
+
+        # Adding VSINTAX Assignment to OTU table #
+        logger(ENDC + "Adding SINTAX assignment to OTU table [BIOM]" + ENDC, logging_file, display = True)
+        try:
+            os.remove(options.outDir + "/otu_table.biom")
+        except OSError:
+            pass
+        cmd = " ".join([
+            BIOM, "add-metadata",
+            "-i", tmpDir + "/otu_table_prelim.biom",
+            "-o", options.outDir + "/otu_table_sintax.biom",
+            "--observation-metadata-fp", options.outDir + "/assigned_taxonomy_sintax.txt",
+            "--observation-header", "OTUID,taxonomy,confidence",
+            "--sc-separated", "taxonomy",
+            "--float-fields", "confidence"])
+        run_cmd(cmd, logging_file, options.verbose)
+
+        # Convert BIOM to TABLE
+        logger(ENDC + "Converting OTU table with taxa assignment into a BIOM format [BIOM]" + ENDC, logging_file, display = True)
+        try:
+            os.remove(options.outDir + "/otu_table_sintax.txt")
+        except OSError:
+            pass
+        cmd = " ".join([BIOM, "convert",
+                        "-i", options.outDir + "/otu_table_sintax.biom",
+                        "-o", options.outDir + "/otu_table_sintax.txt",
+                        "--to-tsv",
+                        "--header-key taxonomy"])
+        run_cmd(cmd, logging_file, options.verbose)
+        
+        # Phylotype
+        logger(ENDC + "Phylotyping OTU table" + ENDC, logging_file, display = True)
+        cmd = " ".join([
+            "python", EXE_DIR + "/pipits_phylotype_biom",
+            "-i", options.outDir + "/otu_table_sintax.biom",
+            "-o", options.outDir + "/phylotype_table_sintax.txt",
+            "-l 6"])
+        run_cmd(cmd, logger, options.verbose)
+
+        try:
+            os.remove(options.outDir + "/phylotype_table_sintax.biom")
+        except OSError:
+            pass
+        cmd = " ".join([
+            BIOM, "convert",
+            "-i", options.outDir + "/phylotype_table_sintax.txt",
+            "-o", options.outDir + "/phylotype_table_sintax.biom",
+            "--table-type=\"OTU table\"",
+            "--to-hdf5"])
+        run_cmd(cmd, logging_file, options.verbose)
 
 
     #####################
     # RDP against UNITE #
     #####################
 
-    logger(ENDC + "Assigning taxonomy with UNITE [RDP Classifier]" + ENDC, logging_file, display = True)
-    PIPITS_UNITE_RETRAINED_PROPERTIES = "pipits_db/UNITE_retrained_" + options.unite + "/UNITE_retrained/rRNAClassifier.properties"
-    cmd = " ".join(["classifier",
-                    "-Xms" + str(options.Xms),
-                    "-Xmx" + str(options.Xmx),
-                    "classify", 
-                    "-t " + PIPITS_UNITE_RETRAINED_PROPERTIES, 
-                    "-o", options.outDir + "/assigned_taxonomy.txt", 
-                    tmpDir + "/input_nr_otus_nonchimeras_relabelled.fasta"])
-    run_cmd(cmd, logging_file, options.verbose)
+    if (options.taxassignmentmethod == "all" or "rdp"):
+        
+        logger(ENDC + "Assigning taxonomy with UNITE [RDP Classifier]" + ENDC, logging_file, display = True)
+        PIPITS_UNITE_RETRAINED_PROPERTIES = "pipits_db/UNITE_retrained_" + options.unite + "/UNITE_retrained/rRNAClassifier.properties"
+        cmd = " ".join(["classifier",
+                        "-Xms" + str(options.Xms),
+                        "-Xmx" + str(options.Xmx),
+                        "classify", 
+                        "-t " + PIPITS_UNITE_RETRAINED_PROPERTIES, 
+                        "-o", options.outDir + "/assigned_taxonomy_rdp_raw.txt", 
+                        tmpDir + "/input_nr_otus_nonchimeras_relabelled.fasta"])
+        #print(cmd)
+        run_cmd(cmd, logging_file, options.verbose)
 
-
-    ###############################################
-    # Reformatting RDP_CLASSIFIER output for biom #
-    ###############################################
-
-    logger(ENDC + "Reformatting RDP_Classifier output" + ENDC, logging_file, display = True)
-    cmd = " ".join([
-        "python", EXE_DIR + "/pipits_reformatAssignedTaxonomy", 
-        "-i", options.outDir + "/assigned_taxonomy.txt" , 
-        "-o", options.outDir + "/assigned_taxonomy_reformatted_filtered.txt",
-        "-c", options.RDP_assignment_threshold])
-    run_cmd(cmd, logging_file, options.verbose)
-
-
-    #############################################
-    # Adding RDP_CLASSIFIER output to OTU table #
-    #############################################
-
-    logger(ENDC + "Adding assignment to OTU table [BIOM]" + ENDC, logging_file, display = True)
-    try:
-        os.remove(options.outDir + "/otu_table.biom")
-    except OSError:
-        pass
-    cmd = " ".join([
-        BIOM, "add-metadata", 
-        "-i", tmpDir + "/otu_table_prelim.biom", 
-        "-o", options.outDir + "/otu_table.biom", 
-        "--observation-metadata-fp", options.outDir + "/assigned_taxonomy_reformatted_filtered.txt", 
-        "--observation-header", "OTUID,taxonomy,confidence", 
-        "--sc-separated", "taxonomy", 
-        "--float-fields", "confidence"])
-    run_cmd(cmd, logging_file, options.verbose)
-
-
-    # Convert BIOM to TABLE
-    logger(ENDC + "Converting OTU table with taxa assignment into a BIOM format [BIOM]" + ENDC, logging_file, display = True)
-    try:
-        os.remove(options.outDir + "/otu_table.txt")
-    except OSError:
-        pass
-    cmd = " ".join([BIOM, "convert", 
-                    "-i", options.outDir + "/otu_table.biom", 
-                    "-o", options.outDir + "/otu_table.txt",
-                    "--to-tsv",
-                    "--header-key taxonomy"])
-    run_cmd(cmd, logging_file, options.verbose)
-
-    # Phylotype
-    logger(ENDC + "Phylotyping OTU table" + ENDC, logging_file, display = True)
-    cmd = " ".join([
-        "python", EXE_DIR + "/pipits_phylotype_biom", 
-        "-i", options.outDir + "/otu_table.biom", 
-        "-o", options.outDir + "/phylotype_table.txt",
-        "-l 6"])
-    run_cmd(cmd, logger, options.verbose)
-
-    try:
-        os.remove(options.outDir + "/phylotype_table.biom")
-    except OSError:
-        pass
-    cmd = " ".join([
-        BIOM, "convert",
-        "-i", options.outDir + "/phylotype_table.txt",
-        "-o", options.outDir + "/phylotype_table.biom",
-        "--table-type=\"OTU table\"",
-        "--to-hdf5"])
-    run_cmd(cmd, logging_file, options.verbose)
+        # Reformatting output for biom
+        logger(ENDC + "Reformatting RDP_Classifier output" + ENDC, logging_file, display = True)
+        cmd = " ".join([
+            "python", EXE_DIR + "/pipits_reformatRDPTaxonomy", 
+            "-i", options.outDir + "/assigned_taxonomy_rdp_raw.txt" , 
+            "-o", options.outDir + "/assigned_taxonomy_rdp.txt",
+            "-c", options.RDP_assignment_threshold])
+        run_cmd(cmd, logging_file, options.verbose)
+        
+        # Adding RDP_CLASSIFIER output to OTU table
+        logger(ENDC + "Adding assignment to OTU table [BIOM]" + ENDC, logging_file, display = True)
+        try:
+            os.remove(options.outDir + "/otu_table.biom")
+        except OSError:
+            pass
+        cmd = " ".join([
+            BIOM, "add-metadata", 
+            "-i", tmpDir + "/otu_table_prelim.biom", 
+            "-o", options.outDir + "/otu_table_rdp.biom", 
+            "--observation-metadata-fp", options.outDir + "/assigned_taxonomy_rdp.txt", 
+            "--observation-header", "OTUID,taxonomy,confidence", 
+            "--sc-separated", "taxonomy", 
+            "--float-fields", "confidence"])
+        run_cmd(cmd, logging_file, options.verbose)
+        
+        # Convert BIOM to TABLE
+        logger(ENDC + "Converting OTU table with taxa assignment into a BIOM format [BIOM]" + ENDC, logging_file, display = True)
+        try:
+            os.remove(options.outDir + "/otu_table_rdp.txt")
+        except OSError:
+            pass
+        cmd = " ".join([BIOM, "convert", 
+                        "-i", options.outDir + "/otu_table_rdp.biom", 
+                        "-o", options.outDir + "/otu_table_rdp.txt",
+                        "--to-tsv",
+                        "--header-key taxonomy"])
+        run_cmd(cmd, logging_file, options.verbose)
+        
+        # Phylotype
+        logger(ENDC + "Phylotyping OTU table" + ENDC, logging_file, display = True)
+        cmd = " ".join([
+            "python", EXE_DIR + "/pipits_phylotype_biom", 
+            "-i", options.outDir + "/otu_table_rdp.biom", 
+            "-o", options.outDir + "/phylotype_table_rdp.txt",
+            "-l 6"])
+        run_cmd(cmd, logger, options.verbose)
+        
+        try:
+            os.remove(options.outDir + "/phylotype_table_rdp.biom")
+        except OSError:
+            pass
+        cmd = " ".join([
+            BIOM, "convert",
+            "-i", options.outDir + "/phylotype_table_rdp.txt",
+            "-o", options.outDir + "/phylotype_table_rdp.biom",
+            "--table-type=\"OTU table\"",
+            "--to-hdf5"])
+        run_cmd(cmd, logging_file, options.verbose)
 
 
     ##########
@@ -603,18 +708,17 @@ if __name__ == '__main__':
             "-Xmx" + str(options.Xmx),
             "classify", 
             "-t " + PIPITS_WARCUP_RETRAINED_PROPERTIES,
-            "-o", options.outDir + "/assigned_taxonomy_warcup.txt", 
+            "-o", options.outDir + "/assigned_taxonomy_warcup_raw.txt", 
             tmpDir + "/input_nr_otus_nonchimeras_relabelled.fasta"])
         run_cmd(cmd, logging_file, options.verbose)
 
         # Reformatting RDP_CLASSIFIER output for biom for Warcup
         cmd = " ".join([
             "python", EXE_DIR + "/pipits_reformatAssignedTaxonomy",
-            "-i", options.outDir + "/assigned_taxonomy_warcup.txt" ,
-            "-o", options.outDir + "/assigned_taxonomy_reformatted_filtered_warcup.txt",
+            "-i", options.outDir + "/assigned_taxonomy_warcup_raw.txt" ,
+            "-o", options.outDir + "/assigned_taxonomy_warcup.txt",
             "-c", options.RDP_assignment_threshold])
         run_cmd(cmd, logging_file, options.verbose)
-
 
         # Adding RDP_CLASSIFIER output to OTU table
         logger("Adding assignment to OTU table [BIOM] - Warcup", logging_file, display = True)
@@ -626,12 +730,11 @@ if __name__ == '__main__':
             BIOM, "add-metadata",
             "-i", tmpDir + "/otu_table_prelim.biom",
             "-o", options.outDir + "/otu_table_warcup.biom",
-            "--observation-metadata-fp", options.outDir + "/assigned_taxonomy_reformatted_filtered_warcup.txt",
+            "--observation-metadata-fp", options.outDir + "/assigned_taxonomy_warcup.txt",
             "--observation-header", "OTUID,taxonomy,confidence",
             "--sc-separated", "taxonomy",
             "--float-fields", "confidence"])
         run_cmd(cmd, logging_file, options.verbose)
-
 
         # Convert BIOM to TABLE
         logger("Converting OTU table with taxa assignment into a BIOM format [BIOM] - Warcup", logging_file, display = True)
@@ -646,7 +749,6 @@ if __name__ == '__main__':
             "--to-tsv",
             "--header-key taxonomy"])
         run_cmd(cmd, logging_file, options.verbose)
-
 
         # Make phylotyp table #
         logger("Phylotyping OTU table - Warcup", logging_file, display = True)
@@ -669,10 +771,8 @@ if __name__ == '__main__':
             "--to-hdf5"])
         run_cmd(cmd, logging_file, options.verbose)
 
-
     # Move representative sequence file to outDir
     shutil.move(tmpDir + "/input_nr_otus_nonchimeras_relabelled.fasta", options.outDir + "/repseqs.fasta")
-
 
     # Remove tmp
     if not options.retain:
@@ -695,20 +795,26 @@ if __name__ == '__main__':
 
         return totalCount, otus, sampleSize
 
-    otu_reads_count, otu_count, otu_sample_count = biomstats(options.outDir + "/otu_table.biom")
-    phylo_reads_count, phylo_count, phylo_sample_count = biomstats(options.outDir + "/phylotype_table.biom")
-
+    if (options.taxassignmentmethod == "all" or "rdp"):    
+        otu_reads_count, otu_count, otu_sample_count = biomstats(options.outDir + "/otu_table_rdp.biom")
+        phylo_reads_count, phylo_count, phylo_sample_count = biomstats(options.outDir + "/phylotype_table_rdp.biom")
+    else:
+        otu_reads_count, otu_count, otu_sample_count = biomstats(options.outDir + "/otu_table_sintax.biom")
+        phylo_reads_count, phylo_count, phylo_sample_count = biomstats(options.outDir + "/phylotype_table_sintax.biom")
+        
     summary_file.write("No.of reads used to generate OTU table: " + str(int(otu_reads_count)) + "\n")
     summary_file.write("Number of OTUs:                         " + str(otu_count) + "\n")
-    summary_file.write("Number of phylotypes:                   " + str(phylo_count) + "\n")
+    #summary_file.write("Number of phylotypes:                   " + str(phylo_count) + "\n")
     summary_file.write("Number of samples:                      " + str(otu_sample_count) + "\n\n")
     summary_file.write("UNITE DB version:                       " + options.unite + "\n")
     summary_file.write("PIPITS version:                         " + str(__version__) + "\n")
 
     logger(BLUE + "\tNumber of reads used to generate OTU table: " + str(int(otu_reads_count)) + ENDC, logging_file, display = True)
     logger(BLUE + "\tNumber of OTUs:                             " + str(otu_count) + ENDC, logging_file, display = True)
-    logger(BLUE + "\tNumber of phylotypes:                       " + str(phylo_count) + ENDC, logging_file, display = True)
+    #logger(BLUE + "\tNumber of phylotypes:                       " + str(phylo_count) + ENDC, logging_file, display = True)
     logger(BLUE + "\tNumber of samples:                          " + str(otu_sample_count) + ENDC, logging_file, display = True)
+    logger(BLUE + "\tUNITE DB version:                           " + options.unite + ENDC, logging_file, display = True)
+    logger(BLUE + "\tPIPITS version:                             " + str(__version__) + ENDC, logging_file, display = True)
 
     logger(ENDC + "Done - Resulting files are in \"" + options.outDir + "\" directory" + ENDC, logging_file, display = True)
     logger(ENDC + "pipits_process ended successfully." + ENDC, logging_file, display = True)

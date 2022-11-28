@@ -1,0 +1,99 @@
+#!/usr/bin/env python
+
+############################################################
+# Argument Options
+
+import argparse
+parser = argparse.ArgumentParser("Re-format taxonomy assignment output from VSEARCH-SINTAX.")
+parser.add_argument("-i, --in",
+                    action = "store",
+                    dest = "input",
+                    metavar = "input",
+                    help = "[REQUIRED] taxonomy assignment output from VSEARCH-SINTAX",
+                    required = True)
+parser.add_argument("-o, --out",
+                    action = "store",
+                    dest = "output",
+                    metavar = "output",
+                    help = "[REQUIRED] reformatted taxonomy assignment file",
+                    required = True)
+parser.add_argument("-c",
+                    action = "store",
+                    dest = "confidence",
+                    metavar = "confidence",
+                    help = "[REQUIRED] Minimum confidence to record an assignment",
+                    required = True)
+options = parser.parse_args()
+
+############################################################
+
+import sys
+
+THRESHOLD = float(options.confidence)
+
+handle_input = open(options.input, "rU")
+handle_output = open(options.output, "w")
+
+taxonomy_filtered = []
+taxonomy_conf_filtered = []
+    
+for line in handle_input:
+
+    otuID = line.rstrip().split("\t")[0]
+    #print(line)
+
+    if len(line.rstrip().split("\t")) > 1:
+        taxonomyColumn = line.rstrip().split("\t")[1].split(",")
+    else:
+        taxonomyColumn = []
+    taxonomy = []
+    taxonomy_conf = []
+    
+    for i in taxonomyColumn:
+
+        tax_level = i.split(":")[0]
+        tax_confidence = float(i.split("(")[1].split(")")[0])
+        tax_nomenclature = i.split(":")[1].split("(")[0]
+        
+        if tax_level == "k":
+            tax_nomenclature = "k__" + tax_nomenclature
+        elif tax_level == "p":
+            tax_nomenclature = "p__" + tax_nomenclature
+        elif tax_level == "c":
+            tax_nomenclature = "c__" + tax_nomenclature
+        elif tax_level == "o":
+            tax_nomenclature = "o__" + tax_nomenclature
+        elif tax_level == "f":
+            tax_nomenclature = "f__" + tax_nomenclature
+        elif tax_level == "g":
+            tax_nomenclature = "g__" + tax_nomenclature
+        elif tax_level == "s":
+            tax_nomenclature = "s__" + tax_nomenclature
+        else:
+            print(tax_level, "Error in VSEARCH SINTAX produced output: not a valid taxonomic level.")
+            exit(1)
+
+        taxonomy.append(tax_nomenclature)
+        taxonomy_conf.append(tax_confidence)
+
+    for i in range(len(taxonomy)):
+        if taxonomy_conf[i] >= THRESHOLD:
+            taxonomy_filtered.append(taxonomy[i])
+            taxonomy_conf_filtered.append(taxonomy_conf[i])
+        else:
+            break
+
+    # Write
+    if len(taxonomy_filtered) > 0:
+        handle_output.write(otuID + "\t")
+        handle_output.write("; ".join(taxonomy_filtered) + "\t")
+        handle_output.write(str(taxonomy_conf_filtered[-1]) + "\n")
+    else:
+        handle_output.write(otuID + "\t" + "k__unidentified" + "\t" + "1.0" + "\n")
+
+    taxonomy_filtered.clear()
+    taxonomy_conf_filtered.clear()
+    
+handle_input.close()
+handle_output.close()
+
