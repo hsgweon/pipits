@@ -475,7 +475,7 @@ if __name__ == '__main__':
 
     logger(ENDC + "Renaming OTUs" + ENDC, logging_file, display = True)
     def renumberOTUS():
-        handle_in = open(tmpDir + "/input_nr_otus_nonchimeras.fasta", "rU")
+        handle_in = open(tmpDir + "/input_nr_otus_nonchimeras.fasta", "r")
         handle_out = open(tmpDir + "/input_nr_otus_nonchimeras_relabelled.fasta", "w")
 
         counter = 1

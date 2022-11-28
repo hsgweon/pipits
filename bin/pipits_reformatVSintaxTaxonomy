@@ -31,7 +31,7 @@ import sys
 
 THRESHOLD = float(options.confidence)
 
-handle_input = open(options.input, "rU")
+handle_input = open(options.input, "r")
 handle_output = open(options.output, "w")
 
 taxonomy_filtered = []
