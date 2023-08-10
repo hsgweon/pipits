@@ -8,6 +8,9 @@
 
 ## Updates/Notice/News
 
+###### UPDATE (11 August 2023) - PIPITS 3.0
+> - Just a slight change in the installation instruction, namely from python=3.6 to python=3.8 to avoid "SyntaxError: invalid syntax"
+
 ###### UPDATE (27 November 2022) - PIPITS 3.0
 > Some significant changes!
 > 
