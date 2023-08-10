@@ -73,7 +73,7 @@ It is recommended that you use a [conda](https://conda.io/) environment for runn
 > EXPLANATION: install **PIPITS** and dependencies and create a Conda environment (here the environment is named "pipit_env" but you can choose any name you wish). PIPITS is exclusively compatible with Python3, so add "python=3.6" as below:
 
 ```shell
-conda create -n pipits_env --channel bioconda --channel conda-forge --channel defaults python=3.6 pipits
+conda create -n pipits_env --channel bioconda --channel conda-forge --channel defaults python=3.8 pipits
 ```
 
 
