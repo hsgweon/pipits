@@ -8,6 +8,12 @@
 
 ## Updates/Notice/News
 
+###### UPDATE (18 August 2024) - PIPITS 3.1
+> Significant changes.
+>
+> - **UNITE 10.0 added is the default DB version until further update.
+> - The default classifier now is SINTAX. It's much much quicker and provides very comparable results against RDP Classifier. This change is due to the fact that UNITE database has increased massively.
+
 ###### UPDATE (11 August 2023) - PIPITS 3.0
 > - Just a slight change in the installation instruction, namely from python=3.6 to python=3.8 to avoid "SyntaxError: invalid syntax"
 
