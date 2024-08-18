@@ -76,10 +76,10 @@ pipits_phylotype_biom -i otu_table.biom -o phylotype_table.txt -l 6
 
 It is recommended that you use a [conda](https://conda.io/) environment for running **PIPITS** to ensure that its dependencies are contained in this "sandbox". This meant that you don't mess with your existig system and you don't need to be the admin. Don't worry, it's easy - just type the following command. 
 
-> EXPLANATION: install **PIPITS** and dependencies and create a Conda environment (here the environment is named "pipit_env" but you can choose any name you wish). PIPITS is exclusively compatible with Python3, so add "python=3.6" as below:
+> EXPLANATION: install **PIPITS** and dependencies and create a Conda environment (here the environment is named "pipit_env" but you can choose any name you wish). PIPITS is exclusively compatible with Python3, so add "python=3.10" as below:
 
 ```shell
-conda create -n pipits_env --channel bioconda --channel conda-forge --channel defaults python=3.8 pipits
+conda create -n pipits_env --channel bioconda --channel conda-forge --channel defaults python=3.10 pipits
 ```
 
 
