@@ -1,24 +1,507 @@
 #!/usr/bin/env python
 
-import sys, os, argparse, subprocess, shutil
-from pispino.runcmd import *
-from pispino.logger import *
+import sys
+import os
+import argparse
+import subprocess
+import shutil
+import logging
+import time
+import hashlib
+import requests
+import tarfile
+import progressbar
+import traceback
+from pathlib import Path
 
-__version__    = 3.1
+try:
+    from biom import load_table
+    from biom.util import biom_open # For writing biom files if needed
+except ImportError:
+    logging.critical("The 'biom-format' library is required but not installed.")
+    logging.critical("Please install it, e.g., using 'pip install biom-format'")
+    sys.exit(1)
 
-__author__     = "Hyun Soon Gweon"
-__copyright__  = "Copyright 2015, The PIPITS Project"
-__credits__    = ["Hyun Soon Gweon", "Anna Oliver", "Joanne Taylor", "Tim Booth", "Melanie Gibbs", "Daniel S. Read", "Robert I. Griffiths", "Karsten Schonrogge"]
-__license__    = "GPL"
-__maintainer__ = "Hyun Soon Gweon"
-__email__      = "h.s.gweon@reading.ac.uk"
+
+__version__     = "4.0"
+__author__      = "Hyun Soon Gweon"
+__copyright__   = "Copyright 2015, The PIPITS Project"
+__credits__     = ["Hyun Soon Gweon", "Anna Oliver", "Joanne Taylor", "Tim Booth", "Melanie Gibbs", "Daniel S. Read", "Robert I. Griffiths", "Karsten Schonrogge"]
+__license__     = "GPL"
+__maintainer__  = "Hyun Soon Gweon"
+__email__       = "h.s.gweon@reading.ac.uk"
 
 VSEARCH = "vsearch"
 BIOM = "biom"
 
+class Colors:
+    RESET = '\033[0m'
+    RED = '\033[91m'
+    GREEN = '\033[92m'
+    YELLOW = '\033[93m'
+    BLUE = '\033[94m'
+    MAGENTA = '\033[95m'
+    CYAN = '\033[96m'
+
+# --- Custom Logger Formatter with Color ---
+class ColorFormatter(logging.Formatter):
+    LOG_COLORS = {
+        logging.DEBUG: Colors.CYAN,
+        logging.INFO: Colors.BLUE,
+        logging.WARNING: Colors.YELLOW,
+        logging.ERROR: Colors.RED,
+        logging.CRITICAL: Colors.MAGENTA
+    }
+
+    def format(self, record):
+        log_message = super().format(record)
+        handler = getattr(self, 'handler', None)
+        is_console = False
+        if handler and hasattr(handler, 'stream'):
+            is_console = handler.stream in (sys.stdout, sys.stderr)
+        if is_console and sys.stdout.isatty():
+             color = self.LOG_COLORS.get(record.levelno, Colors.RESET)
+             return f"{color}{log_message}{Colors.RESET}"
+        else:
+             log_message = log_message.replace(Colors.RED, '').replace(Colors.GREEN, '').replace(Colors.YELLOW, '') \
+                                    .replace(Colors.BLUE, '').replace(Colors.MAGENTA, '').replace(Colors.CYAN, '') \
+                                    .replace(Colors.RESET, '')
+             return log_message
+
+# --- Helper Functions ---
+
+def setup_logging(log_file_path, verbose):
+    """Sets up logging to file and colorful console output."""
+    log_format_file = '%(asctime)s - %(levelname)s - %(message)s'
+    log_format_console = '%(levelname)s: %(message)s'
+    log_level = logging.DEBUG if verbose else logging.INFO
+    logger = logging.getLogger()
+    logger.setLevel(logging.DEBUG)
+    if logger.hasHandlers():
+        logger.handlers.clear()
+    # File logging
+    file_handler = logging.FileHandler(log_file_path, mode='w')
+    file_handler.setLevel(logging.DEBUG)
+    file_formatter = logging.Formatter(log_format_file)
+    file_handler.setFormatter(file_formatter)
+    logger.addHandler(file_handler)
+    # Console logging
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setLevel(log_level)
+    color_formatter = ColorFormatter(log_format_console)
+    color_formatter.handler = console_handler
+    console_handler.setFormatter(color_formatter)
+    logger.addHandler(console_handler)
+
+def run_cmd(command, log_stdout=True):
+    """Runs a command using subprocess and logs."""
+    logging.debug(f"Running command: {command}")
+    try:
+        process = subprocess.run(command, shell=True, check=True,
+                                 capture_output=True, text=True, encoding='utf-8', errors='ignore')
+        if logging.getLogger().isEnabledFor(logging.DEBUG):
+            if log_stdout and process.stdout:
+                logging.debug("Command STDOUT:\n" + process.stdout.strip())
+            if process.stderr:
+                logging.debug("Command STDERR:\n" + process.stderr.strip())
+        return process
+    except subprocess.CalledProcessError as e:
+        logging.error(f"Command failed with exit code {e.returncode}")
+        logging.error(f"Failed command: {e.cmd}")
+        stderr_output = e.stderr.strip() if e.stderr else "N/A"
+        stdout_output = e.stdout.strip() if e.stdout else "N/A"
+        logging.error(f"STDERR: {stderr_output}")
+        if stdout_output != "N/A": logging.error(f"STDOUT: {stdout_output}")
+        raise
+    except FileNotFoundError as e:
+        logging.error(f"Command not found: {command.split()[0]}")
+        logging.error(f"Please ensure the required tools (like '{command.split()[0]}') are installed and in your PATH.")
+        logging.error(f"Original error: {e}")
+        raise
+
+def generate_sample_list_from_fasta(input_fasta_path, output_list_path):
+    """Generates sample list from FASTA headers."""
+    logging.info(f"Extracting unique sample IDs from {input_fasta_path}...")
+    uniquesampleids = set() # Use a set for faster uniqueness check
+    processed_headers = 0
+    try:
+        with open(input_fasta_path, "r") as f_in:
+            for line in f_in:
+                if line.startswith(">"):
+                    processed_headers += 1
+                    try:
+                        sampleid = line[1:].split("_", 1)[0]
+                        if sampleid: uniquesampleids.add(sampleid)
+                    except IndexError:
+                        logging.warning(f"Could not parse sample ID from header (missing '_'?): {line.strip()}")
+                        continue
+        if not uniquesampleids:
+             logging.warning("No unique sample IDs could be extracted from the input FASTA.")
+             open(output_list_path, 'w').close()
+             return False
+        with open(output_list_path, "w") as f_out:
+            # Sort IDs for consistent output order
+            for sample_id in sorted(list(uniquesampleids)):
+                f_out.write(sample_id + "\n")
+        logging.info(f"Found {len(uniquesampleids)} unique sample IDs from {processed_headers} headers.")
+        logging.info(f"Sample list written to {output_list_path}")
+        return True
+    except FileNotFoundError:
+        logging.error(f"Input FASTA file not found: {input_fasta_path}")
+        return False
+    except IOError as e:
+        logging.error(f"Error reading/writing file during sample list generation: {e}")
+        return False
+    except Exception as e:
+        logging.error(f"An unexpected error occurred during sample list generation: {e}")
+        return False
+
+def reformat_rdp_taxonomy(input_file, output_file, confidence_threshold):
+    """
+    Re-formats RDP Classifier output to QIIME-compatible format.
+    Args:
+        input_file (str): Path to the raw RDP classifier output.
+        output_file (str): Path to the output formatted file.
+        confidence_threshold (float): Minimum confidence to retain a level.
+    Returns:
+        bool: True on success, False on failure.
+    """
+    logging.info(f"Reformatting RDP taxonomy from {input_file} (Threshold: {confidence_threshold})")
+    PREFIX_MAP = {
+        "domain": "d__", "kingdom": "k__", "phylum": "p__", "subphylum": "subp__",
+        "class": "c__", "subclass": "subc__", "order": "o__", "family": "f__",
+        "genus": "g__", "species": "s__"
+    }
+    try:
+        with open(input_file, "r") as handle_input, open(output_file, "w") as handle_output:
+            processed_lines = 0
+            for line in handle_input:
+                processed_lines += 1
+                e = line.rstrip().split("\t")
+                if len(e) < 8: # Need at least OTUID and one level
+                    logging.warning(f"Skipping malformed line in RDP output: {line.strip()}")
+                    continue
+
+                otu_id = e[0]
+                taxonomy = []
+                taxonomy_conf = []
+
+                # RDP output format: OTUID seq_len strand domain "Root" conf phylum "taxon" conf ...
+                # Start parsing from index 5 (first rank name)
+                for i in range(5, len(e), 3):
+                    if (i + 2) >= len(e): # Check if triplet is complete
+                        logging.warning(f"Incomplete taxonomy triplet for OTU {otu_id}, stopping parse for this OTU.")
+                        break
+                    tax_level = e[i+1].lower() # Lowercase level name for consistency
+                    tax_name = e[i].replace(" ", "_") # Replace spaces in taxon name
+                    try:
+                        tax_confidence = float(e[i+2])
+                    except ValueError:
+                        logging.warning(f"Invalid confidence value '{e[i+2]}' for level '{tax_level}' in OTU {otu_id}. Skipping level.")
+                        continue # Skip this level
+
+                    prefix = PREFIX_MAP.get(tax_level)
+                    if prefix:
+                        taxonomy.append(f"{prefix}{tax_name}")
+                        taxonomy_conf.append(tax_confidence)
+                    else:
+                        logging.warning(f"Unrecognized taxonomic level '{tax_level}' for OTU {otu_id}. Skipping.")
+
+                # Filter based on confidence threshold
+                taxonomy_filtered = []
+                taxonomy_conf_filtered = []
+                for i in range(len(taxonomy)):
+                    if taxonomy_conf[i] >= confidence_threshold:
+                        taxonomy_filtered.append(taxonomy[i])
+                        taxonomy_conf_filtered.append(taxonomy_conf[i])
+                    else:
+                        break
+
+                # Handle cases where nothing meets the threshold
+                if not taxonomy_filtered:
+                    final_taxonomy_str = "k__Unassigned" # Use 'k__' prefix for consistency
+                    final_confidence = 1.0
+                else:
+                    final_taxonomy_str = "; ".join(taxonomy_filtered)
+                    final_confidence = taxonomy_conf_filtered[-1] # Confidence of the last assigned level
+
+                handle_output.write(f"{otu_id}\t{final_taxonomy_str}\t{final_confidence:.4f}\n")
+
+        logging.info(f"Reformatted {processed_lines} lines. Output written to {output_file}")
+        return True
+
+    except FileNotFoundError:
+        logging.error(f"Input RDP file not found: {input_file}")
+        return False
+    except IOError as e:
+        logging.error(f"Error reading RDP file {input_file} or writing to {output_file}: {e}")
+        return False
+    except Exception as e:
+        logging.error(f"An unexpected error occurred during RDP reformatting: {e}")
+        logging.error(traceback.format_exc())
+        return False
+
+
+def reformat_sintax_taxonomy(input_file, output_file, confidence_threshold):
+    """
+    Re-formats VSEARCH SINTAX output to QIIME-compatible format.
+    Args:
+        input_file (str): Path to the raw SINTAX tabbed output.
+        output_file (str): Path to the output formatted file.
+        confidence_threshold (float): Minimum confidence to retain a level.
+    Returns:
+        bool: True on success, False on failure.
+    """
+    logging.info(f"Reformatting SINTAX taxonomy from {input_file} (Threshold: {confidence_threshold})")
+    PREFIX_MAP = {"d": "d__", "k": "k__", "p": "p__", "c": "c__", "o": "o__", "f": "f__", "g": "g__", "s": "s__"}
+    try:
+        with open(input_file, "r") as handle_input, open(output_file, "w") as handle_output:
+            processed_lines = 0
+            for line in handle_input:
+                processed_lines += 1
+                parts = line.rstrip().split("\t")
+                if not parts: continue # Skip empty lines
+
+                otu_id = parts[0]
+                raw_taxonomy_str = ""
+                if len(parts) > 1:
+                    raw_taxonomy_str = parts[1]
+
+                taxonomy = []
+                taxonomy_conf = []
+
+                if raw_taxonomy_str:
+                    tax_levels = raw_taxonomy_str.split(",")
+                    for level_str in tax_levels:
+                        try:
+                            level_part, conf_part = level_str.split("(")
+                            level_abbr = level_part.split(":")[0]
+                            tax_name = level_part.split(":")[1].replace(" ", "_")
+                            tax_confidence = float(conf_part.rstrip(")"))
+                        except (ValueError, IndexError) as e:
+                            logging.warning(f"Could not parse SINTAX level string '{level_str}' for OTU {otu_id}: {e}. Skipping level.")
+                            continue
+
+                        prefix = PREFIX_MAP.get(level_abbr)
+                        if prefix and tax_name: # Ensure name is not empty
+                            taxonomy.append(f"{prefix}{tax_name}")
+                            taxonomy_conf.append(tax_confidence)
+                        else:
+                            logging.warning(f"Unrecognized SINTAX level '{level_abbr}' or empty name for OTU {otu_id}. Skipping.")
+
+                # Filter based on confidence threshold
+                taxonomy_filtered = []
+                taxonomy_conf_filtered = []
+                for i in range(len(taxonomy)):
+                    if taxonomy_conf[i] >= confidence_threshold:
+                        taxonomy_filtered.append(taxonomy[i])
+                        taxonomy_conf_filtered.append(taxonomy_conf[i])
+                    else:
+                        break # Stop at the first level below threshold
+
+                # Handle cases where nothing meets the threshold
+                if not taxonomy_filtered:
+                    final_taxonomy_str = "k__Unassigned"
+                    final_confidence = 1.0
+                else:
+                    final_taxonomy_str = "; ".join(taxonomy_filtered)
+                    final_confidence = taxonomy_conf_filtered[-1] # Confidence of last assigned level
+
+                handle_output.write(f"{otu_id}\t{final_taxonomy_str}\t{final_confidence:.4f}\n")
+
+        logging.info(f"Reformatted {processed_lines} lines. Output written to {output_file}")
+        return True
+    except FileNotFoundError:
+        logging.error(f"Input SINTAX file not found: {input_file}")
+        return False
+    except IOError as e:
+        logging.error(f"Error reading SINTAX file {input_file} or writing to {output_file}: {e}")
+        return False
+    except Exception as e:
+        logging.error(f"An unexpected error occurred during SINTAX reformatting: {e}")
+        logging.error(traceback.format_exc())
+        return False
+
+
+def create_phylotype_table(input_biom_file, output_tsv_file, level):
+    """
+    Collapses a BIOM table to a specified taxonomic level and writes to TSV.
+    Args:
+        input_biom_file (str): Path to the input BIOM table file.
+        output_tsv_file (str): Path to the output TSV phylotype table.
+        level (int): Taxonomic level index (0=domain/kingdom, 1=phylum, ..., 6=species).
+    Returns:
+        bool: True on success, False on failure.
+    """
+    logging.info(f"Creating phylotype table (Level index: {level}) from {input_biom_file}")
+    try:
+        biom_table = load_table(input_biom_file)
+        phylum_idx = int(level)
+        slice_end = phylum_idx + 1
+
+        def collapse_fn(id_, md):
+            taxonomy_list = md.get('taxonomy') # Use .get for safety
+            if taxonomy_list and isinstance(taxonomy_list, (list, tuple)) and len(taxonomy_list) > phylum_idx:
+                 return '; '.join(taxonomy_list[:slice_end])
+            elif taxonomy_list and isinstance(taxonomy_list, (list, tuple)):
+                 logging.debug(f"Taxonomy for {id_} is shorter than requested level {level}. Using full path: {taxonomy_list}")
+                 return '; '.join(taxonomy_list)
+            else:
+                 logging.warning(f"No taxonomy metadata found for OTU ID: {id_}. Collapsing to 'Unassigned'.")
+                 return 'k__Unassigned'
+
+        logging.debug(f"Collapsing BIOM table observations using slice end index: {slice_end}")
+        collapsed_table = biom_table.collapse(collapse_fn, norm=False, min_group_size=1, axis='observation').sort(axis='observation')
+
+        with open(output_tsv_file, "w") as outfile:
+            outfile.write(collapsed_table.to_tsv())
+
+        logging.info(f"Phylotype table (Level {level}) written to {output_tsv_file}")
+        return True
+
+    except FileNotFoundError:
+        logging.error(f"Input BIOM file not found: {input_biom_file}")
+        return False
+    except (IOError, ValueError) as e:
+        logging.error(f"Error processing BIOM file {input_biom_file} or writing TSV {output_tsv_file}: {e}")
+        return False
+    except KeyError as e:
+         logging.error(f"Metadata key error during collapse (likely missing 'taxonomy' metadata in BIOM file {input_biom_file}): {e}")
+         return False
+    except Exception as e:
+        logging.error(f"An unexpected error occurred during phylotyping: {e}")
+        logging.error(traceback.format_exc())
+        return False
+
+def create_otu_table_from_uc(uc_file_path, sample_list_path, output_tsv_path):
+    """
+    Generates an OTU table (TSV format) from a VSEARCH .uc file (expected from
+    --usearch_global, i.e., primarily 'H' and 'N' lines) and a sample list.
+    Replicates the functionality of the original pipits_uc2otutable.py script,
+    but optimized for --usearch_global output (ignores 'S' lines).
+
+    Args:
+        uc_file_path (str): Path to the input .uc file.
+        sample_list_path (str): Path to the file containing sample IDs (one per line).
+        output_tsv_path (str): Path to write the output OTU table TSV file.
+
+    Returns:
+        bool: True on success, False on failure.
+    """
+    logging.info(f"Generating OTU table from UC file: {uc_file_path}")
+    otus = {} # Key: OTU_ID (target), Value: List of sample IDs from reads hitting this OTU
+    line_count = 0
+    processed_hits = 0
+
+    try:
+        # --- Process UC file ---
+        with open(uc_file_path, "r") as infile:
+            for line in infile:
+                line = line.rstrip()
+                if not line or line.startswith('#'): continue # Skip empty/comment lines
+
+                line_count += 1
+                fields = line.split("\t")
+
+                # Expect 'H' (Hit) or 'N' (No Hit) lines from --usearch_global
+                # We only care about Hits ('H') for building the table
+                if fields[0] != 'H':
+                    continue # Skip non-hit lines (like 'N')
+
+                if len(fields) < 10:
+                    logging.error(f"Hit line {line_count} in .uc file '{uc_file_path}' has < 10 fields. Skipping.")
+                    continue
+
+                # Field 8: Query label (Read ID)
+                # Field 9: Target label (OTU ID)
+                read_id = fields[8]
+                otu_id_target = fields[9]
+
+                # Extract sample ID from read ID (part before the first '_')
+                try:
+                    sample_id = read_id.split("_", 1)[0]
+                except IndexError:
+                    logging.warning(f"Could not parse sample ID from read ID '{read_id}' on hit line {line_count}. Skipping read.")
+                    continue
+
+                # If this is the first time we see this OTU_ID, initialize its list
+                if otu_id_target not in otus:
+                    otus[otu_id_target] = []
+
+                # Append the sample ID associated with this read to the OTU's list
+                otus[otu_id_target].append(sample_id)
+                processed_hits += 1
+
+        logging.debug(f"Processed {line_count} lines from {uc_file_path}.")
+        logging.debug(f"Found {processed_hits} hits mapping to {len(otus)} OTUs.")
+
+        if not otus:
+             logging.warning(f"No hits ('H' lines) were processed from the UC file: {uc_file_path}. The resulting OTU table will be empty.")
+             # Create an empty file with header to avoid downstream errors?
+             # Let's proceed and let the write step handle the empty dict
+
+        # --- Load Sample IDs ---
+        sample_ids_list = []
+        with open(sample_list_path, "r") as samplefile:
+            for line in samplefile:
+                line = line.strip()
+                if line and not line.startswith("#"):
+                    sample_ids_list.append(line.split("\t")[0]) # Take first part if tab-separated
+
+        if not sample_ids_list:
+            logging.error(f"No sample IDs loaded from sample list file: {sample_list_path}")
+            return False
+        logging.info(f"Loaded {len(sample_ids_list)} sample IDs from {sample_list_path}.")
+
+        # --- Write OTU Table ---
+        with open(output_tsv_path, "w") as outfile:
+            # Write header
+            outfile.write("#OTU_ID\t" + "\t".join(sample_ids_list) + "\n")
+
+            # Write OTU counts per sample
+            final_otu_count = 0
+            # Sort OTU IDs for consistent output order
+            for otu_id in sorted(otus.keys()):
+                member_reads_samples = otus[otu_id]
+                final_otu_count += 1
+                outfile.write(otu_id)
+                total_reads_for_otu = 0
+                for sample_id in sample_ids_list:
+                    count = member_reads_samples.count(sample_id)
+                    outfile.write("\t" + str(count))
+                    total_reads_for_otu += count
+
+                # Sanity check (optional)
+                if len(member_reads_samples) != total_reads_for_otu:
+                    logging.warning(f"Mismatch in read count for OTU {otu_id}. Internal list length: {len(member_reads_samples)}, Summed count: {total_reads_for_otu}.")
+
+                outfile.write("\n")
+
+        if final_otu_count == 0 and processed_hits > 0:
+             logging.warning(f"Processed {processed_hits} hits but wrote 0 OTUs to the table. This might indicate an issue with OTU IDs or the writing process.")
+        elif final_otu_count == 0 and processed_hits == 0:
+             logging.info(f"No hits found in UC file, an empty OTU table was written to {output_tsv_path}")
+        else:
+             logging.info(f"OTU table with {final_otu_count} OTUs written to {output_tsv_path}")
+        return True
+
+    except FileNotFoundError as e:
+        logging.error(f"File not found during OTU table generation: {e}")
+        return False
+    except IOError as e:
+        logging.error(f"I/O error during OTU table generation: {e}")
+        return False
+    except Exception as e:
+        logging.error(f"An unexpected error occurred during OTU table generation: {e}")
+        logging.error(traceback.format_exc())
+        return False
+
+# --- Main Script ---
+
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser("PIPITS_PROCESS: Sequences to OTU Table")
+    # Arguments remain the same...
     parser.add_argument(
         "-i",
         action = "store",
@@ -49,6 +532,7 @@ if __name__ == '__main__':
         metavar = "<FLOAT>",
         help = "RDP assignment confidence threshold - RDP Classifier confidence threshold for output [default: 0.85]",
         default = "0.85",
+        type=float,
         required = False)
     parser.add_argument(
         "--sintaxconfidence",
@@ -57,19 +541,20 @@ if __name__ == '__main__':
         metavar = "<FLOAT>",
         help = "VSEARCH SINTAX assignment confidence threshold [default: 0.85]",
         default = "0.85",
+        type=float,
         required = False)
     parser.add_argument(
         "-l",
         action = "store",
         dest = "sortedlist",
         metavar = "<TXT>",
-        help = "[REQUIRED] Sample list file. Generated with PIPITS_GETREADPAIRSLIST prior to PIPITS_PREP",
+        help = "Sample list file. One sample ID per line. If not provided, it will be generated automatically from FASTA headers (part before first '_').",
         required = False)
     parser.add_argument(
         "--includeuniqueseqs",
         action = "store_true",
         dest = "includeuniqueseqs",
-        help = "[REQUIRED] PIPITS by default removes unique sequences before clustering. This means you wouldn't have any singletons. If you want singletons, then choose this option. It can take much longer to process.",
+        help = "PIPITS by default removes unique sequences before clustering. If you want singletons, choose this option.",
         required = False)
     # Generic
     parser.add_argument(
@@ -82,7 +567,7 @@ if __name__ == '__main__':
         "-v",
         action = "store_true",
         dest = "verbose",
-        help = "Verbose mode",
+        help = "Verbose mode (more detailed logging).",
         required = False)
     parser.add_argument(
         "-t",
@@ -107,17 +592,10 @@ if __name__ == '__main__':
         help = "The maximum size, in bytes, of the memory allocation pool for JVM",
         required = False)
     parser.add_argument(
-        "--warcup",
-        action = "store_true",
-        dest = "warcup",
-        help = "Also classify using Warcup database. The most recent warcup db will be downloaded automatically.",
-        default = False,
-        required = False)
-    parser.add_argument(
         "--taxassignmentmethod",
         action = "store",
         dest = "taxassignmentmethod",
-        help = "Choice of taxonomic assignment. By default, PIPITS will run both RDP Classifier and SINTAX (VSEARCH).",
+        help = "Choice of taxonomic assignment. By default, PIPITS will run SINTAX (VSEARCH). Selecting 'all' runs both RDP and SINTAX. Databases downloaded automatically unless --ignore-db-download is specified.",
         choices = ["all", "rdp", "sin"],
         default = "sin",
         required = False)
@@ -125,719 +603,527 @@ if __name__ == '__main__':
         "--unite",
         action = "store",
         dest = "unite",
-        help = "UNITE db version to be used - PIPITS will download db automaticlly. Leaving this option out will default to the most recent version of UNITE available to PIPITS.",
-        choices = ["04.04.2024", "25.07.2023", "27.10.2022", "10.05.2021", "04.02.2020", "02.02.2019", "01.12.2017", "28.06.2017"],
-        default = "04.04.2024",
+        help = "UNITE db version to be used - PIPITS will download db automaticlly unless --ignore-db-download is specified. Leaving this option out will default to the most recent version of UNITE available to PIPITS.",
+        choices = ["19.02.2025", "04.04.2024", "25.07.2023", "27.10.2022", "10.05.2021", "04.02.2020", "02.02.2019", "01.12.2017", "28.06.2017"],
+        default = "19.02.2025",
         required = False)
+    parser.add_argument(
+        "--ignore-db-download",
+        action = "store_true",
+        dest = "ignore_db_download",
+        default = False,
+        help = "Ignore automatic download of database files. Assumes databases are already present in 'pipits_db/'.",
+        required = False)
+
     options = parser.parse_args()
 
 
-    ######################
-    # Create directories #
-    ######################
-
-    EXE_DIR = os.path.dirname(os.path.realpath(__file__))
+    # --- Directory Setup ---
     if not os.path.exists(options.outDir):
-        os.mkdir(options.outDir)
-    else:
-        shutil.rmtree(options.outDir)
-        os.mkdir(options.outDir)
-    tmpDir = options.outDir + "/intermediate"
+        os.makedirs(options.outDir)
+
+    tmpDir = os.path.join(options.outDir, "intermediate")
     if not os.path.exists(tmpDir):
-        os.mkdir(tmpDir)
+        os.makedirs(tmpDir)
 
 
-    #############
-    # Log files #
-    #############
+    # --- Logging Setup ---
+    log_file = os.path.join(options.outDir, "output.log")
+    summary_file_path = os.path.join(options.outDir, "summary.log")
+    version_file_path = os.path.join(options.outDir, "versions.log")
 
-    logging_file = open(options.outDir + "/output.log", "w")
-    summary_file = open(options.outDir + "/summary.log", "w")
-    version_file = open(options.outDir + "/versions.log", "w")
+    setup_logging(log_file, options.verbose)
+
+    # --- Start! ---
+    logging.info(f"pipits_process {__version__}, the PIPITS Project")
+    logging.info("https://github.com/hsgweon/pipits")
+    logging.info("---------------------------------")
+    logging.info("")
+
+    # --- Log versions ---
+    try:
+        cmd_versions = "conda list"
+        version_info = run_cmd(cmd_versions, log_stdout=False)
+        with open(version_file_path, "w") as vf:
+            vf.write(f"Command: {cmd_versions}\n")
+            vf.write(version_info.stdout)
+        logging.info(f"Environment details logged to {version_file_path}")
+    except Exception as e:
+        logging.warning(f"Could not log environment versions using conda: {e}")
+
+    # --- Start Processing ---
+    logging.info("pipits_process started")
+    start_time = time.time()
 
 
-    ##########
-    # Start! #
-    ##########
-
-    logger("pipits_process " + str(__version__) + ", the PIPITS Project", logging_file, display = True, timestamp = False)
-    logger("https://github.com/hsgweon/pipits", logging_file, display = True, timestamp = False)
-    logger("---------------------------------", logging_file, display = True, timestamp = False)
-    logger("", logging_file, display = True, timestamp = False)
-
-    # Log versions
-    cmd = " ".join(["conda list"])
-    run_cmd(cmd, version_file, False)
-
-    # Environment variable - discontinued.
-    # 
-    # EXIT = []
-    # if os.environ.get("PIPITS_UNITE_REFERENCE_DATA_CHIMERA") is None:
-    #     EXIT.append("PIPITS_UNITE_REFERENCE_DATA_CHIMERA")
-    # if os.environ.get("PIPITS_UNITE_RETRAINED_DIR") is None:
-    #     EXIT.append("PIPITS_UNITE_RETRAINED_DIR")
-    # if os.environ.get("PIPITS_WARCUP_RETRAINED_DIR") is None:
-    #     EXIT.append("PIPITS_WARCUP_RETRAINED_DIR")
-    # 
-    # if len(EXIT) > 0:
-    #     logger("ERRO: environment variables (" + ", ".join(EXIT) + ") are not set. Please see PIPITS installation for an instruction on this.", logging_file, display = True)
-    #     exit(0)
-    # 
-
-    # Start
-    logger(ENDC + "pipits_process started" + ENDC, logging_file, display = True)
-
-    # Check for input file
+    # --- Input Validation ---
     if not os.path.exists(options.input):
-        logger("ERROR: Input file doesn't exist", logging_file, display = True)
-        exit(1)
+        logging.error(f"Input file not found: {options.input}")
+        sys.exit(1)
 
     if os.stat(options.input).st_size == 0:
-        logger("Input file is empty!", logging_file, display = True)
-        exit(0)
+        logging.error("Input file is empty!")
+        sys.exit(0)
 
 
-    ##############
-    # Sample ids #
-    ##############
-
+    # --- Sample ID Handling ---
     if not options.sortedlist:
-
-        # Generating a sample list
-        logger(ENDC + "Generating a sample list from the input sequences" + ENDC, logging_file, display = True)
-
+        logging.info("Sample list (-l) not provided. Generating from input FASTA headers...")
+        generated_sample_list_path = os.path.join(options.outDir, "generated_sampleIDs.txt")
         try:
-            os.remove(tmpDir + "/sampleIDs.txt")
-        except OSError:
-            pass
+            success = generate_sample_list_from_fasta(options.input, generated_sample_list_path)
+            if not success:
+                 logging.error("Failed to generate sample list automatically.")
+                 sys.exit(1)
+            options.sortedlist = generated_sample_list_path
+        except Exception as e:
+             logging.error(f"An unexpected error occurred calling generate_sample_list_from_fasta: {e}")
+             sys.exit(1)
+    else:
+        logging.info(f"Using provided sample list: {options.sortedlist}")
 
-        cmd = " ".join(["python", EXE_DIR + "/pipits_getsamplelistfromfasta",
-                        "-i", options.input,
-                        "-o", options.outDir + "/sampleIDs.txt"])
-        run_cmd(cmd, logging_file, options.verbose)
-        options.sortedlist = options.outDir + "/sampleIDs.txt"
 
-
-    sampleIDs = []
+    sampleIDs_check = []
     if not os.path.exists(options.sortedlist):
-        print("ERROR: Sample list file does NOT exist")
-        exit(1)
+        logging.error(f"Sample list file does NOT exist: {options.sortedlist}")
+        sys.exit(1)
 
-    for line in open(options.sortedlist):
-        if line[0] != "#":
-            sampleIDs.append(line.split("\t")[0].rstrip())
+    try:
+        with open(options.sortedlist, 'r') as f_list:
+            for line in f_list:
+                line_content = line.strip()
+                if line_content and not line_content.startswith("#"):
+                    if ' ' in line_content:
+                         logging.warning(f"Space detected in sample ID '{line_content}' from list file {options.sortedlist}. Consider removing spaces.")
+                    sampleIDs_check.append(line_content.split("\t")[0])
+    except IOError as e:
+         logging.error(f"Could not read sample list file {options.sortedlist}: {e}")
+         sys.exit(1)
+
+    if not sampleIDs_check:
+        logging.error(f"No valid sample IDs found in the sample list file: {options.sortedlist}")
+        sys.exit(1)
+    logging.info(f"Checked {len(sampleIDs_check)} sample IDs from {options.sortedlist}.")
+
 
     # Check for duplicate entries
-    duplicateIDs = list(set([x for x in sampleIDs if sampleIDs.count(x) > 1]))
+    duplicateIDs = list(set([x for x in sampleIDs_check if sampleIDs_check.count(x) > 1]))
     if len(duplicateIDs) > 0:
-        print("ERROR: You have a duplicate id in your Sample list file. Offending id: " + ",".join(duplicateIDs))
-        exit(1)
+        logging.error("You have duplicate id(s) in your Sample list file. Offending id(s): " + ",".join(duplicateIDs))
+        sys.exit(1)
 
 
-    #################
-    # Download data #
-    #################
+    # --- Download Data Section ---
 
     def get_md5(filename):
-    
-        import hashlib
-
         hash_md5 = hashlib.md5()
-        with open(filename, "rb") as f:
-            for chunk in iter(lambda: f.read(4096), b""):
-                hash_md5.update(chunk)
-        return hash_md5.hexdigest()
+        try:
+            with open(filename, "rb") as f:
+                for chunk in iter(lambda: f.read(4096), b""): hash_md5.update(chunk)
+            return hash_md5.hexdigest()
+        except FileNotFoundError:
+            logging.error(f"File not found for MD5 calculation: {filename}"); return None
+        except IOError as e:
+            logging.error(f"Could not read file for MD5 calculation {filename}: {e}"); return None
 
-    def downloadDB(
-        url,
-        md5,
-        output_dir,
-        logging_file, 
-        summary_file, 
-        verbose):
-
-        import progressbar
-        import requests
-        import tarfile
-        from pathlib import Path
-
+    def downloadDB(url, md5, output_dir):
         if not os.path.exists(output_dir):
-            os.mkdir(output_dir)
-        # else:
-        #     shutil.rmtree(output_dir)
-        #     os.mkdir(output_dir)
-
-        filename     = url.split("/")[-1]
-
-        # Check if unpacked file exists
+            try: os.makedirs(output_dir)
+            except OSError as e: logging.error(f"Could not create DB dir {output_dir}: {e}"); raise
+        filename = url.split("/")[-1]
+        filepath = os.path.join(output_dir, filename)
+        unpacked_dirname = os.path.join(output_dir, filename.split(".tar.gz")[0])
         DOWNLOADDB = True
-        
-        if os.path.isfile(output_dir + "/" + filename):
-
-            if get_md5(output_dir + "/" + filename) != md5:
-                logger("... DB directory and files exits, but seems to be different/corrupt -> re-downloading...", logging_file, display = True)
+        if os.path.isdir(unpacked_dirname) and len(os.listdir(unpacked_dirname)) > 0:
+            logging.info(f"Found existing unpacked dir: {unpacked_dirname}. Assuming DB present."); DOWNLOADDB = False
+        elif os.path.isfile(filepath):
+            existing_md5 = get_md5(filepath)
+            if existing_md5 and existing_md5 == md5:
+                logging.info(f"Found archive: {filepath} with matching MD5. Will unpack."); DOWNLOADDB = False
+            else:
+                logging.warning(f"Archive {filepath} MD5 mismatch/corrupt -> re-downloading...");
+                try: os.remove(filepath);
+                except OSError as e: logging.warning(f"Could not remove old file: {e}")
+                if os.path.exists(unpacked_dirname): shutil.rmtree(unpacked_dirname)
                 DOWNLOADDB = True
-            else:
-                logger("... DB directory and files exits, and all looking good. No need to download.", logging_file, display = True)
-                DOWNLOADDB = False
-
+        else: logging.info(f"Archive/unpacked dir not found. Downloading."); DOWNLOADDB = True
         if DOWNLOADDB:
+            logging.info(f"Downloading {filename} from {url}")
+            try: request = requests.get(url, stream=True, timeout=60); request.raise_for_status()
+            except requests.exceptions.RequestException as e: logging.error(f"Download failed {url}: {e}"); raise
+            try:
+                with open(filepath, 'wb') as file:
+                    file_size = int(request.headers.get('Content-Length', 0)); file_size_mb = round(file_size / 1024 / 1024, 2) if file_size > 0 else 0
+                    widgets = [progressbar.Bar(), progressbar.Percentage(), " | ", progressbar.FileTransferSpeed(), " | ", progressbar.DataSize(), f" / {file_size_mb:.2f} MB | " if file_size_mb > 0 else " | ", progressbar.ETA()]
+                    bar = progressbar.ProgressBar(widgets=widgets, max_value=file_size or progressbar.UnknownLength).start(); i = 0
+                    for chunk in request.iter_content(chunk_size=8192):
+                        if chunk: file.write(chunk); i += len(chunk); bar.update(i)
+                    bar.finish()
+            except IOError as e: logging.error(f"Could not write downloaded file {filepath}: {e}"); raise
+            except Exception as e: logging.error(f"Unexpected download error: {e}"); raise
+            downloaded_md5 = get_md5(filepath)
+            if not downloaded_md5 or downloaded_md5 != md5: logging.error(f"Downloaded {filepath} corrupt/MD5 mismatch. Exiting."); sys.exit(1)
+            else: logging.info("Download successful and verified.")
+        if os.path.isfile(filepath) and not (os.path.isdir(unpacked_dirname) and len(os.listdir(unpacked_dirname)) > 0):
+            logging.info(f"Unpacking {filepath}")
+            if os.path.exists(unpacked_dirname):
+                try: shutil.rmtree(unpacked_dirname)
+                except OSError as e: logging.error(f"Could not remove existing unpacked dir {unpacked_dirname}: {e}"); raise
+            try: os.makedirs(unpacked_dirname)
+            except OSError as e: logging.error(f"Could not create unpack dir {unpacked_dirname}: {e}"); raise
+            try:
+                with tarfile.open(filepath, "r:gz") as tar: tar.extractall(path=unpacked_dirname)
+                logging.info("Unpacking complete.")
+            except tarfile.ReadError as e: logging.error(f"Failed to unpack {filepath}. Corrupt? Error: {e}"); sys.exit(1)
+            except Exception as e: logging.error(f"Unexpected unpack error: {e}"); sys.exit(1)
+        elif not os.path.isdir(unpacked_dirname) or len(os.listdir(unpacked_dirname)) == 0:
+            logging.error(f"DB download skipped, but required unpacked dir '{unpacked_dirname}' missing/empty."); sys.exit(1)
 
-            request = requests.get(url, stream=True)
-
-            file         = open(output_dir + "/" + filename, 'wb')
-            file_size    = int(request.headers['Content-Length'])
-            file_size_mb = round(file_size / 1024 / 1024,2)
-
-            chunk_sz = 512
-
-            widgets = [progressbar.Bar(marker="#",left="[",right="]"),
-                       progressbar.Percentage()," | ",
-                       progressbar.FileTransferSpeed()," | ",
-                       progressbar.SimpleProgress()," | ",
-                       progressbar.ETA()]
-
-            bar = progressbar.ProgressBar(widgets=widgets, maxval=file_size).start()
-
-            i = 0
-
-            for chunk in request.iter_content(chunk_size=chunk_sz):
-                file.write(chunk)
-                i += len(chunk)
-                bar.update(i)
-
-            bar.finish()
-            print('File size: {0} MB'.format(file_size_mb))
-
-            file.close()
-
-            if get_md5(output_dir + "/" + filename) != md5:
-                print("Downloaded data is corrupt. Get in touch with PIPITS team!. Exiting...")
-                exit(1)
-
-        # Unpack
-        logger("... Unpacking", logging_file, display = True)
-
-        dirname = output_dir + "/" + filename.split(".tar.gz")[0]
-        if not os.path.exists(dirname):
-            os.mkdir(dirname)
-
-        tar = tarfile.open(output_dir + "/" + filename)
-        tar.extractall(path=dirname)
-        tar.close()
-
-
-    #########
-    # UNITE #
-    #########
-
-
-    if options.taxassignmentmethod == "all" or options.taxassignmentmethod == "rdp":
-    
-        logger("Downloading UNITE trained database, version: " + options.unite, logging_file, display = True)
-
-        url = "https://sourceforge.net/projects/pipits/files/PIPITS_DB/UNITE_retrained_" + options.unite + ".tar.gz"
-    
-        if options.unite == "02.02.2019":
-            md5 = "8fd3b74a510bb20b67933a2ecc620f89"
-        elif options.unite == "01.12.2017":
-            md5 = "3c5be9c60fecf70076739379e7c9ead5"
-        elif options.unite == "28.06.2017":
-            md5 = "33fa78987751a494c586676ff3a0da65"
-        elif options.unite == "04.02.2020":
-            md5 = "b2f833c89794be20a5fdb6169d9205f1"
-        elif options.unite == "10.05.2021":
-            md5 = "13f1edfb1357eeda3f41ff8b0a15447f"
-        elif options.unite == "27.10.2022":
-            md5 = "7d31f5612a78607e50d4170b75d0cbfa"
-        elif options.unite == "25.07.2023":
-            md5 = "1c578d0aba436f0b66d9a73b2991086d"
-        elif options.unite == "04.04.2024":
-            md5 = "94812f45cbfed846b55a6e845e68f35f"
-
-        downloadDB(
-            url = url,
-            md5 = md5,
-            output_dir = "pipits_db",
-            logging_file = logging_file,
-            summary_file = summary_file,
-            verbose = options.verbose)
-        logger(BLUE + "... done" + ENDC, logging_file, display = True)
-
-
-    ##################
-    # VSEARCH SINTAX #
-    ##################
-
-    if options.taxassignmentmethod == "all" or options.taxassignmentmethod == "sin":
-    
-        logger("Downloading database for SINTAX, version: " + options.unite, logging_file, display = True)
-    
-        url = "https://sourceforge.net/projects/pipits/files/PIPITS_DB/UNITE_retrained_" + options.unite + ".sintax.fa.tar.gz"
-        md5 = "135cce3029569c1c0528a7fdd9ed6673"
-
-        if options.unite == "27.10.2022":
-            md5 = "b26ebd07a5abb415e1ad35b8dc8108d2"
-        elif options.unite == "25.07.2023":
-            md5 = "cf7dcd5e289a4d31c87fadb056caaca7"
-        elif options.unite == "04.04.2024":
-            md5 = "135cce3029569c1c0528a7fdd9ed6673"
-    
-        downloadDB(
-            url = url,
-            md5 = md5,
-            output_dir = "pipits_db",
-            logging_file = logging_file,
-            summary_file = summary_file,
-            verbose = options.verbose)
-        logger(BLUE + "... done" + ENDC, logging_file, display = True)
-
-    
-    ##########
-    # WARCUP #
-    ##########
-
-    if options.warcup == True:
-    
-        logger("Downloading WARCUP trained database: ", logging_file, display = True)
-
-        url = "https://sourceforge.net/projects/pipits/files/PIPITS_DB/warcup_retrained_V2.tar.gz"
-        md5 = "e84733f23121f00de03b2a9b5398d6fb"
-
-        downloadDB(
-            url = url,
-            md5 = md5,
-            output_dir = "pipits_db",
-            logging_file = logging_file,
-            summary_file = summary_file,
-            verbose = options.verbose)
-        logger(BLUE + "... done" + ENDC, logging_file, display = True)
-
-
-    ##########
-    # UCHIME #
-    ##########
-
-    logger("Downloading UCHIME database for chimera filtering: ", logging_file, display = True)
-
-    url = "https://sourceforge.net/projects/pipits/files/PIPITS_DB/uchime_reference_dataset_28.06.2017.tar.gz"
-    md5 = "a84af781f9ba42a76f456b558dbc1ae5"
-
-    downloadDB(
-        url = url,
-        md5 = md5,
-        output_dir = "pipits_db",
-        logging_file = logging_file,
-        summary_file = summary_file,
-        verbose = options.verbose)
-    logger(BLUE + "... done" + ENDC, logging_file, display = True)
-
-
-
-    #########        
-    # Derep #
-    #########        
-
-    minuniquesize = 2 # This removes singletons
-    if options.includeuniqueseqs:
-        minuniquesize = 1 # Option to include singletons
-
-    logger(ENDC + "Dereplicating and removing unique sequences prior to picking OTUs" + ENDC, logging_file, display = True)
-    cmd = " ".join([
-        VSEARCH, 
-        "--derep_fulllength", options.input, 
-        "--output", tmpDir + "/input_nr.fasta", 
-        "--minuniquesize", str(minuniquesize), 
-        "--sizeout"
-        ])
-    run_cmd(cmd, logging_file, options.verbose)
-
-    # Check if the file is empty
-    if os.stat(tmpDir + "/input_nr.fasta").st_size == 0:
-        logger(RED + "ERROR: After dereplicating and removing unique sequences, there are no sequences! Processing stopped." + ENDC, logging_file, display = True)
-        exit(0)
-
-
-    ##################
-    # OTU clustering #
-    ##################
-
-    logger(ENDC + "Picking OTUs [VSEARCH]" + ENDC, logging_file, display = True)
-    cmd = " ".join([VSEARCH, 
-                    "--cluster_fast", tmpDir + "/input_nr.fasta", 
-                    "--id", options.VSEARCH_id,
-                    "--centroids", tmpDir + "/input_nr_otus.fasta",
-                    "--uc", tmpDir + "/input_nr_otus.uc",
-                    "--threads", options.threads])
-    run_cmd(cmd, logging_file, options.verbose)
-
-
-    ###################
-    # Chimera removal #
-    ###################
-
-    logger(ENDC + "Removing chimeras [VSEARCH]" + ENDC, logging_file, display = True)
-    PIPITS_UNITE_REFERENCE_DATA_CHIMERA = "pipits_db/uchime_reference_dataset_28.06.2017/uchime_reference_dataset_28.06.2017.fasta"
-    cmd = " ".join([
-        VSEARCH, 
-        "--uchime_ref", tmpDir + "/input_nr_otus.fasta", 
-        "--db " + PIPITS_UNITE_REFERENCE_DATA_CHIMERA,
-        "--nonchimeras", tmpDir + "/input_nr_otus_nonchimeras.fasta",
-        "--threads", options.threads])
-    run_cmd(cmd, logging_file, options.verbose)
-
-
-    ###############
-    # Rename OTUs #
-    ###############
-
-    logger(ENDC + "Renaming OTUs" + ENDC, logging_file, display = True)
-    def renumberOTUS():
-        handle_in = open(tmpDir + "/input_nr_otus_nonchimeras.fasta", "r")
-        handle_out = open(tmpDir + "/input_nr_otus_nonchimeras_relabelled.fasta", "w")
-
-        counter = 1
-        
-        for line in handle_in:
-            if line.startswith(">"):
-                newlabel = line[1:].split(";")[0]
-                handle_out.write(">OTU" + str(counter) + "\n")
-                counter += 1
+    # --- Conditional Download Execution ---
+    if options.ignore_db_download:
+        logging.warning("Skipping DB downloads (--ignore-db-download).")
+        logging.warning("Ensure required DBs are present in 'pipits_db/'.")
+        DB_DIR = "pipits_db"
+        if not os.path.isdir(DB_DIR): logging.error(f"DB download skipped, but DB dir '{DB_DIR}' not found."); sys.exit(1)
+    else:
+        DB_DOWNLOAD_ERROR = False
+        # UNITE RDP
+        if options.taxassignmentmethod == "all" or options.taxassignmentmethod == "rdp":
+            logging.info(f"Checking/Downloading UNITE RDP DB, version: {options.unite}")
+            url = f"https://sourceforge.net/projects/pipits/files/PIPITS_DB/UNITE_retrained_{options.unite}.tar.gz"
+            md5_map_rdp = {"19.02.2025": "1d5b1fdab5b173618c912c08835958f8",
+                           "04.04.2024": "94812f45cbfed846b55a6e845e68f35f",
+                           "25.07.2023": "1c578d0aba436f0b66d9a73b2991086d",
+                           "27.10.2022": "7d31f5612a78607e50d4170b75d0cbfa",
+                           "10.05.2021": "13f1edfb1357eeda3f41ff8b0a15447f",
+                           "04.02.2020": "b2f833c89794be20a5fdb6169d9205f1",
+                           "02.02.2019": "8fd3b74a510bb20b67933a2ecc620f89",
+                           "01.12.2017": "3c5be9c60fecf70076739379e7c9ead5",
+                           "28.06.2017": "33fa78987751a494c586676ff3a0da65"}
+            md5 = md5_map_rdp.get(options.unite)
+            if not md5: logging.error(f"Unknown MD5 for UNITE RDP {options.unite}. Cannot verify."); DB_DOWNLOAD_ERROR = True
             else:
-                handle_out.write(line.rstrip() + "\n")
-        handle_in.close()
-        handle_out.close()
-    renumberOTUS()
+                try: downloadDB(url=url, md5=md5, output_dir="pipits_db")
+                except Exception as e: logging.error(f"Failed UNITE RDP DB download/process: {e}"); DB_DOWNLOAD_ERROR = True
+        # SINTAX
+        if not DB_DOWNLOAD_ERROR and (options.taxassignmentmethod == "all" or options.taxassignmentmethod == "sin"):
+            logging.info(f"Checking/Downloading UNITE SINTAX DB, version: {options.unite}")
+            url = f"https://sourceforge.net/projects/pipits/files/PIPITS_DB/UNITE_retrained_{options.unite}.sintax.fa.tar.gz"
+            md5_map_sintax = {"19.02.2025": "bb6a7d9d16d6d60484d62d55fdd6dc55",
+                              "04.04.2024": "135cce3029569c1c0528a7fdd9ed6673",
+                              "25.07.2023": "cf7dcd5e289a4d31c87fadb056caaca7",
+                              "27.10.2022": "b26ebd07a5abb415e1ad35b8dc8108d2"}
+            md5 = md5_map_sintax.get(options.unite)
+            if not md5: logging.error(f"Unknown MD5 for UNITE SINTAX {options.unite}. Cannot verify."); DB_DOWNLOAD_ERROR = True
+            else:
+                try: downloadDB(url=url, md5=md5, output_dir="pipits_db")
+                except Exception as e: logging.error(f"Failed UNITE SINTAX DB download/process: {e}"); DB_DOWNLOAD_ERROR = True
+        # UCHIME
+        if not DB_DOWNLOAD_ERROR:
+            logging.info("Checking/Downloading UCHIME DB")
+            url = "https://sourceforge.net/projects/pipits/files/PIPITS_DB/uchime_reference_dataset_28.06.2017.tar.gz"
+            md5 = "a84af781f9ba42a76f456b558dbc1ae5"
+            try: downloadDB(url=url, md5=md5, output_dir="pipits_db")
+            except Exception as e: logging.error(f"Failed UCHIME DB download/process: {e}"); DB_DOWNLOAD_ERROR = True
+        if DB_DOWNLOAD_ERROR: logging.critical("DB download failed. Exiting."); sys.exit(1)
 
+    # --- Define DB Paths and Check Existence ---
+    DB_DIR = "pipits_db"
+    UCHIME_DB_NAME = "uchime_reference_dataset_28.06.2017"
+    UCHIME_DB_PATH = os.path.join(DB_DIR, UCHIME_DB_NAME, f"{UCHIME_DB_NAME}.fasta")
+    RDP_UNITE_DB_NAME = f"UNITE_retrained_{options.unite}"
+    PIPITS_UNITE_RETRAINED_PROPERTIES = os.path.join(DB_DIR, RDP_UNITE_DB_NAME, "UNITE_retrained", "rRNAClassifier.properties")
+    SINTAX_UNITE_DB_NAME = f"UNITE_retrained_{options.unite}.sintax.fa"
+    PIPITS_UNITE_RETRAINED_VSEARCHSINTAXFORMATTED = os.path.join(DB_DIR, SINTAX_UNITE_DB_NAME, f"UNITE_retrained_{options.unite}.sintax.fa")
+    DB_MISSING_ERROR = False
+    if not os.path.isfile(UCHIME_DB_PATH): logging.error(f"UCHIME DB not found: {UCHIME_DB_PATH}"); DB_MISSING_ERROR = True
+    if options.taxassignmentmethod == "all" or options.taxassignmentmethod == "rdp":
+        if not os.path.isfile(PIPITS_UNITE_RETRAINED_PROPERTIES): logging.error(f"RDP properties not found: {PIPITS_UNITE_RETRAINED_PROPERTIES}"); DB_MISSING_ERROR = True
+    if options.taxassignmentmethod == "all" or options.taxassignmentmethod == "sin":
+        if not os.path.isfile(PIPITS_UNITE_RETRAINED_VSEARCHSINTAXFORMATTED): logging.error(f"SINTAX DB not found: {PIPITS_UNITE_RETRAINED_VSEARCHSINTAXFORMATTED}"); DB_MISSING_ERROR = True
+    if DB_MISSING_ERROR: logging.critical("Required DB files missing. Exiting."); sys.exit(1)
+    else: logging.info("Required database files check passed.")
 
-    #####################
-    # Map reads to OTUs #
-    #####################
-
-    logger(ENDC + "Mapping reads onto centroids [VSEARCH]" + ENDC, logging_file, display = True)
-    cmd = " ".join([VSEARCH, 
-                    "--usearch_global", options.input, 
-                    "--db", tmpDir + "/input_nr_otus_nonchimeras_relabelled.fasta", 
-                    "--id", options.VSEARCH_id, 
-                    "--uc", tmpDir + "/otus.uc",
-                    "--threads", options.threads])
-    run_cmd(cmd, logging_file, options.verbose)
-
-
-    ####################
-    # OTU construction #
-    ####################
-
-    logger(ENDC + "Making OTU table" + ENDC, logging_file, display = True)
-    cmd = " ".join(["python", EXE_DIR + "/pipits_uc2otutable", 
-                    "-i", tmpDir + "/otus.uc", 
-                    "-o", tmpDir + "/otu_table_prelim.txt",
-                    "-l", options.sortedlist])
-    run_cmd(cmd, logging_file, options.verbose)
-
-
-    ###################
-    # Convert to biom #
-    ###################
-
-    logger(ENDC + "Converting classic tabular OTU into a BIOM format [BIOM]" + ENDC, logging_file, display = True)
+    # --- Main Processing Steps ---
     try:
-        os.remove(tmpDir + "/otu_table_prelim.biom")
-    except OSError:
-        pass
-    cmd = " ".join([
-        BIOM, "convert", 
-        "-i", tmpDir + "/otu_table_prelim.txt", 
-        "-o", tmpDir + "/otu_table_prelim.biom", 
-        "--table-type=\"OTU table\" --to-hdf5"
-        ])
-    run_cmd(cmd, logging_file, options.verbose)
-    
-    
-    #########################
-    # VSINTAX against UNITE #
-    #########################
+        # Derep
+        minuniquesize = 2 if not options.includeuniqueseqs else 1
+        logging.info("Dereplicating unique sequences [VSEARCH]")
+        input_nr_fasta = os.path.join(tmpDir, "input_nr.fasta")
+        cmd = f"{VSEARCH} --derep_fulllength \"{options.input}\" --output \"{input_nr_fasta}\" --minuniquesize {minuniquesize} --sizeout --fasta_width 0"
+        run_cmd(cmd)
+        if not os.path.exists(input_nr_fasta) or os.stat(input_nr_fasta).st_size == 0:
+            logging.error("Dereplication produced no sequences. Exiting."); sys.exit(0)
 
-    if options.taxassignmentmethod == "all" or options.taxassignmentmethod == "sin":
-    
-        logger(ENDC + "Assigning taxonomy with VSEARCH-SINTAX [VSEARCH]" + ENDC, logging_file, display = True)
-        PIPITS_UNITE_RETRAINED_VSEARCHSINTAXFORMATTED = "pipits_db/UNITE_retrained_" + options.unite + ".sintax.fa/UNITE_retrained_" + options.unite + ".sintax.fa"
-        
-        cmd = " ".join([VSEARCH,
-                        "--sintax",
-                        tmpDir + "/input_nr_otus_nonchimeras_relabelled.fasta",
-                        "--db", PIPITS_UNITE_RETRAINED_VSEARCHSINTAXFORMATTED,
-                        "--sintax_cutoff 1.0",
-                        "--tabbedout", options.outDir + "/assigned_taxonomy_sintax_raw.txt",
-                        "--threads", options.threads])
-        #print(cmd)
-        run_cmd(cmd, logging_file, options.verbose)
-        
-        # Reformat the table
-        cmd = " ".join([
-            "python", EXE_DIR + "/pipits_reformatVSintaxTaxonomy",
-            "-i", options.outDir + "/assigned_taxonomy_sintax_raw.txt" ,
-            "-o", options.outDir + "/assigned_taxonomy_sintax.txt",
-            "-c", options.sintaxconfidence])
-        #print(cmd)
-        run_cmd(cmd, logging_file, options.verbose)
+        # OTU clustering
+        logging.info(f"Clustering OTUs at {options.VSEARCH_id} identity [VSEARCH]")
+        input_nr_otus_fasta = os.path.join(tmpDir, "input_nr_otus.fasta")
+        input_nr_otus_uc = os.path.join(tmpDir, "input_nr_otus.uc")
+        cmd = f"{VSEARCH} --cluster_fast \"{input_nr_fasta}\" --id {options.VSEARCH_id} --centroids \"{input_nr_otus_fasta}\" --uc \"{input_nr_otus_uc}\" --threads {options.threads} --fasta_width 0"
+        run_cmd(cmd)
 
-        # Adding VSINTAX Assignment to OTU table #
-        logger(ENDC + "Adding SINTAX assignment to OTU table [BIOM]" + ENDC, logging_file, display = True)
+        # Chimera removal
+        logging.info("Removing chimeras using UCHIME-ref [VSEARCH]")
+        input_nr_otus_nonchimeras_fasta = os.path.join(tmpDir, "input_nr_otus_nonchimeras.fasta")
+        cmd = f"{VSEARCH} --uchime_ref \"{input_nr_otus_fasta}\" --db \"{UCHIME_DB_PATH}\" --nonchimeras \"{input_nr_otus_nonchimeras_fasta}\" --threads {options.threads} --fasta_width 0"
+        run_cmd(cmd)
+
+        # Rename OTUs
+        logging.info("Renaming OTUs")
+        renamed_otus_fasta = os.path.join(tmpDir, "input_nr_otus_nonchimeras_relabelled.fasta")
         try:
-            os.remove(options.outDir + "/otu_table.biom")
-        except OSError:
-            pass
-        cmd = " ".join([
-            BIOM, "add-metadata",
-            "-i", tmpDir + "/otu_table_prelim.biom",
-            "-o", options.outDir + "/otu_table_sintax.biom",
-            "--observation-metadata-fp", options.outDir + "/assigned_taxonomy_sintax.txt",
-            "--observation-header", "OTUID,taxonomy,confidence",
-            "--sc-separated", "taxonomy",
-            "--float-fields", "confidence"])
-        run_cmd(cmd, logging_file, options.verbose)
+            with open(input_nr_otus_nonchimeras_fasta, "r") as handle_in, open(renamed_otus_fasta, "w") as handle_out:
+                counter = 1; header_found = False
+                for line in handle_in:
+                    if line.startswith(">"): handle_out.write(f">OTU{counter}\n"); counter += 1; header_found = True
+                    else: handle_out.write(line)
+            if not header_found:
+                 logging.warning("No non-chimeric OTU sequences found after chimera removal.")
+        except IOError as e: logging.error(f"OTU renaming failed: {e}"); raise
 
-        # Convert BIOM to TABLE
-        logger(ENDC + "Converting OTU table with taxa assignment into a BIOM format [BIOM]" + ENDC, logging_file, display = True)
-        try:
-            os.remove(options.outDir + "/otu_table_sintax.txt")
-        except OSError:
-            pass
-        cmd = " ".join([BIOM, "convert",
-                        "-i", options.outDir + "/otu_table_sintax.biom",
-                        "-o", options.outDir + "/otu_table_sintax.txt",
-                        "--to-tsv",
-                        "--header-key taxonomy"])
-        run_cmd(cmd, logging_file, options.verbose)
-        
-        # Phylotype
-        logger(ENDC + "Phylotyping OTU table" + ENDC, logging_file, display = True)
-        cmd = " ".join([
-            "python", EXE_DIR + "/pipits_phylotype_biom",
-            "-i", options.outDir + "/otu_table_sintax.biom",
-            "-o", options.outDir + "/phylotype_table_sintax.txt",
-            "-l 6"])
-        run_cmd(cmd, logger, options.verbose)
+        if not os.path.exists(renamed_otus_fasta) or os.stat(renamed_otus_fasta).st_size == 0:
+            logging.warning("No non-chimeric OTUs to process further. Exiting pipeline.")
+            if not options.retain:
+                logging.info("Cleaning temporary directory")
+                try: shutil.rmtree(tmpDir)
+                except OSError as e: logging.warning(f"Could not remove temp dir {tmpDir}: {e}")
+            sys.exit(0)
 
-        try:
-            os.remove(options.outDir + "/phylotype_table_sintax.biom")
-        except OSError:
-            pass
-        cmd = " ".join([
-            BIOM, "convert",
-            "-i", options.outDir + "/phylotype_table_sintax.txt",
-            "-o", options.outDir + "/phylotype_table_sintax.biom",
-            "--table-type=\"OTU table\"",
-            "--to-hdf5"])
-        run_cmd(cmd, logging_file, options.verbose)
+        # Map reads to OTUs
+        logging.info("Mapping original reads to OTU centroids [VSEARCH]")
+        otus_uc_path = os.path.join(tmpDir, "otus.uc")
+        cmd = f"{VSEARCH} --usearch_global \"{options.input}\" --db \"{renamed_otus_fasta}\" --id {options.VSEARCH_id} --uc \"{otus_uc_path}\" --threads {options.threads}"
+        run_cmd(cmd)
 
+        # --- INTEGRATED OTU TABLE CONSTRUCTION ---
+        logging.info("Generating OTU table from mapping file [Internal Function]")
+        otu_table_prelim_txt = os.path.join(tmpDir, "otu_table_prelim.txt")
+        success = create_otu_table_from_uc(uc_file_path=otus_uc_path,
+                                           sample_list_path=options.sortedlist,
+                                           output_tsv_path=otu_table_prelim_txt)
+        if not success:
+            raise RuntimeError("Failed to generate OTU table using integrated function.")
+        # --- END INTEGRATED CALL ---
 
-    #####################
-    # RDP against UNITE #
-    #####################
-
-    if options.taxassignmentmethod == "all" or options.taxassignmentmethod == "rdp":
-
-        logger(ENDC + "Assigning taxonomy with UNITE [RDP Classifier]" + ENDC, logging_file, display = True)
-        PIPITS_UNITE_RETRAINED_PROPERTIES = "pipits_db/UNITE_retrained_" + options.unite + "/UNITE_retrained/rRNAClassifier.properties"
-        cmd = " ".join(["classifier",
-                        "-Xms" + str(options.Xms),
-                        "-Xmx" + str(options.Xmx),
-                        "classify", 
-                        "-t " + PIPITS_UNITE_RETRAINED_PROPERTIES, 
-                        "-o", options.outDir + "/assigned_taxonomy_rdp_raw.txt", 
-                        tmpDir + "/input_nr_otus_nonchimeras_relabelled.fasta"])
-        #print(cmd)
-        run_cmd(cmd, logging_file, options.verbose)
-
-        # Reformatting output for biom
-        logger(ENDC + "Reformatting RDP_Classifier output" + ENDC, logging_file, display = True)
-        cmd = " ".join([
-            "python", EXE_DIR + "/pipits_reformatRDPTaxonomy", 
-            "-i", options.outDir + "/assigned_taxonomy_rdp_raw.txt" , 
-            "-o", options.outDir + "/assigned_taxonomy_rdp.txt",
-            "-c", options.RDP_assignment_threshold])
-        run_cmd(cmd, logging_file, options.verbose)
-        
-        # Adding RDP_CLASSIFIER output to OTU table
-        logger(ENDC + "Adding assignment to OTU table [BIOM]" + ENDC, logging_file, display = True)
-        try:
-            os.remove(options.outDir + "/otu_table.biom")
-        except OSError:
-            pass
-        cmd = " ".join([
-            BIOM, "add-metadata", 
-            "-i", tmpDir + "/otu_table_prelim.biom", 
-            "-o", options.outDir + "/otu_table_rdp.biom", 
-            "--observation-metadata-fp", options.outDir + "/assigned_taxonomy_rdp.txt", 
-            "--observation-header", "OTUID,taxonomy,confidence", 
-            "--sc-separated", "taxonomy", 
-            "--float-fields", "confidence"])
-        run_cmd(cmd, logging_file, options.verbose)
-        
-        # Convert BIOM to TABLE
-        logger(ENDC + "Converting OTU table with taxa assignment into a BIOM format [BIOM]" + ENDC, logging_file, display = True)
-        try:
-            os.remove(options.outDir + "/otu_table_rdp.txt")
-        except OSError:
-            pass
-        cmd = " ".join([BIOM, "convert", 
-                        "-i", options.outDir + "/otu_table_rdp.biom", 
-                        "-o", options.outDir + "/otu_table_rdp.txt",
-                        "--to-tsv",
-                        "--header-key taxonomy"])
-        run_cmd(cmd, logging_file, options.verbose)
-        
-        # Phylotype
-        logger(ENDC + "Phylotyping OTU table" + ENDC, logging_file, display = True)
-        cmd = " ".join([
-            "python", EXE_DIR + "/pipits_phylotype_biom", 
-            "-i", options.outDir + "/otu_table_rdp.biom", 
-            "-o", options.outDir + "/phylotype_table_rdp.txt",
-            "-l 6"])
-        run_cmd(cmd, logger, options.verbose)
-        
-        try:
-            os.remove(options.outDir + "/phylotype_table_rdp.biom")
-        except OSError:
-            pass
-        cmd = " ".join([
-            BIOM, "convert",
-            "-i", options.outDir + "/phylotype_table_rdp.txt",
-            "-o", options.outDir + "/phylotype_table_rdp.biom",
-            "--table-type=\"OTU table\"",
-            "--to-hdf5"])
-        run_cmd(cmd, logging_file, options.verbose)
+        # Convert to biom
+        logging.info("Converting OTU table to BIOM format [BIOM]")
+        otu_table_prelim_biom = os.path.join(tmpDir, "otu_table_prelim.biom")
+        try: os.remove(otu_table_prelim_biom)
+        except OSError: pass
+        # Check if prelim table is empty before converting
+        if os.path.exists(otu_table_prelim_txt) and os.stat(otu_table_prelim_txt).st_size > 0:
+             # Check if it only contains the header
+            with open(otu_table_prelim_txt, 'r') as f_check:
+                if len(f_check.readlines()) <= 1: # Only header or empty
+                     logging.warning(f"Preliminary OTU table '{otu_table_prelim_txt}' is empty or contains only header. Skipping BIOM conversion and downstream steps.")
+                     # Exit gracefully after cleanup? Or continue to allow summary? Let's continue for now.
+                     # Set a flag or check file existence later
+                     otu_table_prelim_biom = None # Indicate no BIOM file created
+                else:
+                    cmd = f"{BIOM} convert -i \"{otu_table_prelim_txt}\" -o \"{otu_table_prelim_biom}\" --table-type=\"OTU table\" --to-hdf5"
+                    run_cmd(cmd)
+        else:
+            logging.warning(f"Preliminary OTU table '{otu_table_prelim_txt}' not found or is empty. Skipping BIOM conversion and downstream steps.")
+            otu_table_prelim_biom = None # Indicate no BIOM file created
 
 
-    ##########
-    # Warcup #
-    ##########
+        # --- Downstream steps only if otu_table_prelim_biom was created ---
+        if otu_table_prelim_biom and os.path.exists(otu_table_prelim_biom):
 
-    if options.warcup:
+            # --- VSINTAX ---
+            if options.taxassignmentmethod == "all" or options.taxassignmentmethod == "sin":
+                logging.info("Assigning taxonomy with VSEARCH-SINTAX")
+                sintax_raw_txt = os.path.join(options.outDir, "assigned_taxonomy_sintax_raw.txt")
+                cmd = f"{VSEARCH} --sintax \"{renamed_otus_fasta}\" --db \"{PIPITS_UNITE_RETRAINED_VSEARCHSINTAXFORMATTED}\" --sintax_cutoff {options.sintaxconfidence} --tabbedout \"{sintax_raw_txt}\" --threads {options.threads}"
+                run_cmd(cmd)
 
-        # Classify
-        logger("Assigning taxonomy [RDP Classifier] - Warcup", logging_file, display = True)
-        PIPITS_WARCUP_RETRAINED_PROPERTIES = "pipits_db/warcup_retrained_V2/warcup_retrained_V2/rRNAClassifier.properties"
-        cmd = " ".join([
-            "classifier",
-            "-Xms" + str(options.Xms),
-            "-Xmx" + str(options.Xmx),
-            "classify", 
-            "-t " + PIPITS_WARCUP_RETRAINED_PROPERTIES,
-            "-o", options.outDir + "/assigned_taxonomy_warcup_raw.txt", 
-            tmpDir + "/input_nr_otus_nonchimeras_relabelled.fasta"])
-        run_cmd(cmd, logging_file, options.verbose)
+                logging.info("Reformatting SINTAX output")
+                sintax_reformatted_txt = os.path.join(options.outDir, "assigned_taxonomy_sintax.txt")
+                success = reformat_sintax_taxonomy(sintax_raw_txt, sintax_reformatted_txt, options.sintaxconfidence)
+                if not success: raise RuntimeError("SINTAX reformatting failed.")
 
-        # Reformatting RDP_CLASSIFIER output for biom for Warcup
-        cmd = " ".join([
-            "python", EXE_DIR + "/pipits_reformatAssignedTaxonomy",
-            "-i", options.outDir + "/assigned_taxonomy_warcup_raw.txt" ,
-            "-o", options.outDir + "/assigned_taxonomy_warcup.txt",
-            "-c", options.RDP_assignment_threshold])
-        run_cmd(cmd, logging_file, options.verbose)
+                logging.info("Adding SINTAX assignment to BIOM table")
+                otu_table_sintax_biom = os.path.join(options.outDir, "otu_table_sintax.biom")
+                try: os.remove(otu_table_sintax_biom)
+                except OSError: pass
+                cmd = f"{BIOM} add-metadata -i \"{otu_table_prelim_biom}\" -o \"{otu_table_sintax_biom}\" --observation-metadata-fp \"{sintax_reformatted_txt}\" --observation-header OTUID,taxonomy,confidence --sc-separated taxonomy --float-fields confidence"
+                run_cmd(cmd)
 
-        # Adding RDP_CLASSIFIER output to OTU table
-        logger("Adding assignment to OTU table [BIOM] - Warcup", logging_file, display = True)
-        try:
-            os.remove(options.outDir + "/otu_table_warcup.biom")
-        except OSError:
-            pass
-        cmd = " ".join([
-            BIOM, "add-metadata",
-            "-i", tmpDir + "/otu_table_prelim.biom",
-            "-o", options.outDir + "/otu_table_warcup.biom",
-            "--observation-metadata-fp", options.outDir + "/assigned_taxonomy_warcup.txt",
-            "--observation-header", "OTUID,taxonomy,confidence",
-            "--sc-separated", "taxonomy",
-            "--float-fields", "confidence"])
-        run_cmd(cmd, logging_file, options.verbose)
+                logging.info("Converting SINTAX BIOM table to TSV format")
+                otu_table_sintax_txt = os.path.join(options.outDir, "otu_table_sintax.txt")
+                try: os.remove(otu_table_sintax_txt)
+                except OSError: pass
+                cmd = f"{BIOM} convert -i \"{otu_table_sintax_biom}\" -o \"{otu_table_sintax_txt}\" --to-tsv --header-key taxonomy"
+                run_cmd(cmd)
 
-        # Convert BIOM to TABLE
-        logger("Converting OTU table with taxa assignment into a BIOM format [BIOM] - Warcup", logging_file, display = True)
-        try:
-            os.remove(options.outDir + "/otu_table_warcup.txt")
-        except OSError:
-            pass
-        cmd = " ".join([
-            BIOM, "convert",
-            "-i", options.outDir + "/otu_table_warcup.biom",
-            "-o", options.outDir + "/otu_table_warcup.txt",
-            "--to-tsv",
-            "--header-key taxonomy"])
-        run_cmd(cmd, logging_file, options.verbose)
+                logging.info("Generating SINTAX phylotype table (Level 6)")
+                phylotype_sintax_txt = os.path.join(options.outDir, "phylotype_table_sintax.txt")
+                phylotype_level = 6
+                success = create_phylotype_table(otu_table_sintax_biom, phylotype_sintax_txt, phylotype_level)
+                if not success: raise RuntimeError("SINTAX Phylotyping failed.")
 
-        # Make phylotyp table #
-        logger("Phylotyping OTU table - Warcup", logging_file, display = True)
-        cmd = " ".join([
-            "python", EXE_DIR + "/pipits_phylotype_biom", 
-            "-i", options.outDir + "/otu_table_warcup.biom", 
-            "-o", options.outDir + "/phylotype_table_warcup.txt",
-            "-l 8"])
-        run_cmd(cmd, logging_file, options.verbose)
+                phylotype_sintax_biom = os.path.join(options.outDir, "phylotype_table_sintax.biom")
+                try: os.remove(phylotype_sintax_biom)
+                except OSError: pass
+                cmd = f"{BIOM} convert -i \"{phylotype_sintax_txt}\" -o \"{phylotype_sintax_biom}\" --table-type=\"OTU table\" --to-hdf5"
+                run_cmd(cmd)
 
-        try:
-            os.remove(options.outDir + "/phylotype_table_warcup.biom")
-        except OSError:
-            pass
-        cmd = " ".join([
-            BIOM, "convert",
-            "-i", options.outDir + "/phylotype_table_warcup.txt",
-            "-o", options.outDir + "/phylotype_table_warcup.biom",
-            "--table-type=\"OTU table\"",
-            "--to-hdf5"])
-        run_cmd(cmd, logging_file, options.verbose)
+            # --- RDP ---
+            if options.taxassignmentmethod == "all" or options.taxassignmentmethod == "rdp":
+                logging.info("Assigning taxonomy with RDP Classifier")
+                rdp_raw_txt = os.path.join(options.outDir, "assigned_taxonomy_rdp_raw.txt")
+                if not shutil.which("classifier"):
+                     logging.error("RDP Classifier command 'classifier' not found in PATH. Cannot proceed with RDP assignment.")
+                     raise FileNotFoundError("classifier command not found")
+                cmd = f"classifier -Xms{options.Xms} -Xmx{options.Xmx} classify -c {options.RDP_assignment_threshold} -t \"{PIPITS_UNITE_RETRAINED_PROPERTIES}\" -o \"{rdp_raw_txt}\" \"{renamed_otus_fasta}\""
+                run_cmd(cmd)
 
-    # Move representative sequence file to outDir
-    shutil.move(tmpDir + "/input_nr_otus_nonchimeras_relabelled.fasta", options.outDir + "/repseqs.fasta")
+                logging.info("Reformatting RDP output")
+                rdp_reformatted_txt = os.path.join(options.outDir, "assigned_taxonomy_rdp.txt")
+                success = reformat_rdp_taxonomy(rdp_raw_txt, rdp_reformatted_txt, options.RDP_assignment_threshold)
+                if not success: raise RuntimeError("RDP reformatting failed.")
 
-    # Remove tmp
+                logging.info("Adding RDP assignment to BIOM table")
+                otu_table_rdp_biom = os.path.join(options.outDir, "otu_table_rdp.biom")
+                try: os.remove(otu_table_rdp_biom)
+                except OSError: pass
+                cmd = f"{BIOM} add-metadata -i \"{otu_table_prelim_biom}\" -o \"{otu_table_rdp_biom}\" --observation-metadata-fp \"{rdp_reformatted_txt}\" --observation-header OTUID,taxonomy,confidence --sc-separated taxonomy --float-fields confidence"
+                run_cmd(cmd)
+
+                logging.info("Converting RDP BIOM table to TSV format")
+                otu_table_rdp_txt = os.path.join(options.outDir, "otu_table_rdp.txt")
+                try: os.remove(otu_table_rdp_txt)
+                except OSError: pass
+                cmd = f"{BIOM} convert -i \"{otu_table_rdp_biom}\" -o \"{otu_table_rdp_txt}\" --to-tsv --header-key taxonomy"
+                run_cmd(cmd)
+
+                logging.info("Generating RDP phylotype table (Level 6)")
+                phylotype_rdp_txt = os.path.join(options.outDir, "phylotype_table_rdp.txt")
+                phylotype_level = 6
+                success = create_phylotype_table(otu_table_rdp_biom, phylotype_rdp_txt, phylotype_level)
+                if not success: raise RuntimeError("RDP Phylotyping failed.")
+
+                phylotype_rdp_biom = os.path.join(options.outDir, "phylotype_table_rdp.biom")
+                try: os.remove(phylotype_rdp_biom)
+                except OSError: pass
+                cmd = f"{BIOM} convert -i \"{phylotype_rdp_txt}\" -o \"{phylotype_rdp_biom}\" --table-type=\"OTU table\" --to-hdf5"
+                run_cmd(cmd)
+
+        # --- End of conditional downstream steps ---
+        else:
+             logging.warning("Skipping taxonomy assignment and phylotyping because the preliminary BIOM table was not generated (likely due to no reads mapping).")
+
+
+        # Move representative sequence file to outDir (always do this if it exists)
+        if os.path.exists(renamed_otus_fasta):
+             final_repseq_path = os.path.join(options.outDir, "repseqs.fasta")
+             logging.info(f"Moving final representative sequences to {final_repseq_path}")
+             # Use copy then remove for robustness across filesystems, or just move
+             try:
+                 shutil.move(renamed_otus_fasta, final_repseq_path)
+             except Exception as e:
+                 logging.warning(f"Could not move representative sequences: {e}")
+                 # Try copying if move failed? Optional.
+                 # try:
+                 #     shutil.copy2(renamed_otus_fasta, final_repseq_path)
+                 #     os.remove(renamed_otus_fasta)
+                 # except Exception as ec:
+                 #     logging.error(f"Could not copy representative sequences either: {ec}")
+
+
+    # --- End of Main Processing Try/Except Block ---
+    except (subprocess.CalledProcessError, FileNotFoundError, IOError, ImportError, RuntimeError) as e:
+         logging.critical(f"A critical error occurred during processing: {e}")
+         logging.critical("Pipeline execution halted.")
+         sys.exit(1)
+    except Exception as e:
+         logging.critical(f"An unexpected critical error occurred: {e}")
+         logging.error(traceback.format_exc())
+         logging.critical("Pipeline execution halted.")
+         sys.exit(1)
+
+
+    # --- Cleanup ---
     if not options.retain:
-        logger(ENDC + "Cleaning temporary directory" + ENDC, logging_file, display = True)
-        shutil.rmtree(tmpDir)
+        logging.info("Cleaning temporary directory")
+        try: shutil.rmtree(tmpDir); logging.info("... temporary directory removed.")
+        except OSError as e: logging.warning(f"Could not remove temp dir {tmpDir}: {e}")
+    else: logging.info(f"Intermediate files retained in: {tmpDir}")
 
 
-    ####################################
-    # Stats: Import json formatted OTU #
-    ####################################
-
+    # --- Stats Calculation ---
     def biomstats(BIOMFILE):
+        try:
+            biom_table = load_table(BIOMFILE)
+            sampleSize = int(biom_table.shape[1]); otus = int(biom_table.shape[0]); totalCount = biom_table.sum()
+            return totalCount, otus, sampleSize
+        except ImportError: logging.warning("'biom-format' missing. Cannot calc stats."); return "N/A", "N/A", "N/A"
+        except FileNotFoundError: logging.warning(f"BIOM file not found for stats: {BIOMFILE}"); return "NF", "NF", "NF"
+        except Exception as e: logging.warning(f"Cannot process BIOM {BIOMFILE} for stats: {e}"); return "Err", "Err", "Err"
 
-        from biom import load_table
-        biom = load_table(BIOMFILE)
+    final_otu_biom_path = ""; stats_method = ""
+    potential_sintax_otu = os.path.join(options.outDir, "otu_table_sintax.biom")
+    potential_rdp_otu = os.path.join(options.outDir, "otu_table_rdp.biom")
 
-        sampleSize = int(biom.shape[1])
-        otus = int(biom.shape[0])
-        totalCount = biom.sum()
+    # Check if the final BIOM files *exist* before trying to calculate stats
+    if (options.taxassignmentmethod == "all" or options.taxassignmentmethod == "sin") and os.path.exists(potential_sintax_otu):
+        final_otu_biom_path = potential_sintax_otu; stats_method = "SINTAX"
+    elif (options.taxassignmentmethod == "all" or options.taxassignmentmethod == "rdp") and os.path.exists(potential_rdp_otu):
+        final_otu_biom_path = potential_rdp_otu; stats_method = "RDP"
+    # Add a fallback if no final tax-assigned table exists but the prelim one might
+    elif otu_table_prelim_biom and os.path.exists(otu_table_prelim_biom) and not final_otu_biom_path:
+         logging.warning("No final taxonomy-assigned BIOM table found. Using preliminary BIOM for stats.")
+         final_otu_biom_path = otu_table_prelim_biom
+         stats_method = "Preliminary (No Taxonomy)"
 
-        return totalCount, otus, sampleSize
 
-    if options.taxassignmentmethod == "all" or options.taxassignmentmethod == "rdp":
-        otu_reads_count, otu_count, otu_sample_count = biomstats(options.outDir + "/otu_table_rdp.biom")
-        phylo_reads_count, phylo_count, phylo_sample_count = biomstats(options.outDir + "/phylotype_table_rdp.biom")
+    otu_reads_count, otu_count, otu_sample_count = "N/A", "N/A", "N/A"
+    if final_otu_biom_path and os.path.exists(final_otu_biom_path): # Double check existence
+        logging.info(f"Calculating summary stats from final BIOM table: {final_otu_biom_path}")
+        otu_reads_count, otu_count, otu_sample_count = biomstats(final_otu_biom_path)
+    elif otu_table_prelim_biom is None:
+         logging.warning("Could not calculate stats because no preliminary or final BIOM file was generated (likely no reads mapped).")
+    else:
+        logging.warning(f"Could not find a suitable final OTU BIOM file ({potential_sintax_otu} or {potential_rdp_otu}) for summary stats.")
 
-    if options.taxassignmentmethod == "all" or options.taxassignmentmethod == "sin":
-        otu_reads_count, otu_count, otu_sample_count = biomstats(options.outDir + "/otu_table_sintax.biom")
-        phylo_reads_count, phylo_count, phylo_sample_count = biomstats(options.outDir + "/phylotype_table_sintax.biom")
-        
-    summary_file.write("No.of reads used to generate OTU table: " + str(int(otu_reads_count)) + "\n")
-    summary_file.write("Number of OTUs:                         " + str(otu_count) + "\n")
-    #summary_file.write("Number of phylotypes:                   " + str(phylo_count) + "\n")
-    summary_file.write("Number of samples:                      " + str(otu_sample_count) + "\n\n")
-    summary_file.write("UNITE DB version:                       " + options.unite + "\n")
-    summary_file.write("PIPITS version:                         " + str(__version__) + "\n")
 
-    logger(BLUE + "\tNumber of reads used to generate OTU table: " + str(int(otu_reads_count)) + ENDC, logging_file, display = True)
-    logger(BLUE + "\tNumber of OTUs:                             " + str(otu_count) + ENDC, logging_file, display = True)
-    #logger(BLUE + "\tNumber of phylotypes:                       " + str(phylo_count) + ENDC, logging_file, display = True)
-    logger(BLUE + "\tNumber of samples:                          " + str(otu_sample_count) + ENDC, logging_file, display = True)
-    logger(BLUE + "\tUNITE DB version:                           " + options.unite + ENDC, logging_file, display = True)
-    logger(BLUE + "\tPIPITS version:                             " + str(__version__) + ENDC, logging_file, display = True)
+    # --- Write Summary File ---
+    summary_lines = [
+        "--- PIPITS_PROCESS Summary ---",
+        f"Final stats based on table:           {stats_method}",
+        f"No. of reads in final OTU table:      {int(otu_reads_count) if isinstance(otu_reads_count, (int, float)) and otu_reads_count != 'N/A' else otu_reads_count}", # Handle N/A for int conversion
+        f"Number of OTUs:                       {otu_count}",
+        f"Number of samples:                    {otu_sample_count}",
+        "",
+        f"UNITE DB version used:                {options.unite}",
+        f"Taxonomy Assignment Method chosen:    {options.taxassignmentmethod}",
+        f"Identity Threshold (VSEARCH):         {options.VSEARCH_id}",
+        f"RDP Confidence Threshold:             {options.RDP_assignment_threshold}",
+        f"SINTAX Confidence Threshold:          {options.sintaxconfidence}",
+        f"Included Singleton OTUs:              {options.includeuniqueseqs}",
+        f"PIPITS Process Version:               {__version__}"
+    ]
+    try:
+        with open(summary_file_path, "w") as sf:
+            for line in summary_lines: sf.write(line + "\n")
+            try:
+                end_time = time.time(); total_time = end_time - start_time
+                sf.write(f"\nProcessing completed in {total_time:.2f} seconds.\n")
+            except NameError: pass # start_time might not be defined if exited early
+    except IOError as e:
+        logging.warning(f"Could not write summary file {summary_file_path}: {e}")
 
-    logger(ENDC + "Done - Resulting files are in \"" + options.outDir + "\" directory" + ENDC, logging_file, display = True)
-    logger(ENDC + "pipits_process ended successfully." + ENDC, logging_file, display = True)
-
-    logging_file.close()
-    version_file.close()
-    summary_file.close()
+    # --- Final Log Messages ---
+    logging.info("--- Summary ---")
+    logging.info(f"\tNumber of reads in final OTU table: {int(otu_reads_count) if isinstance(otu_reads_count, (int, float)) and otu_reads_count != 'N/A' else otu_reads_count}")
+    logging.info(f"\tNumber of OTUs:                       {otu_count}")
+    logging.info(f"\tNumber of samples:                    {otu_sample_count}")
+    logging.info(f"\tUNITE DB version:                     {options.unite}")
+    logging.info(f"\tTaxonomy Method Used (for stats):     {stats_method if stats_method else 'N/A'}")
+    logging.info(f"\tPIPITS version:                       {__version__}")
+    try:
+        end_time = time.time(); total_time = end_time - start_time
+        logging.info(f"pipits_process finished successfully in {total_time:.2f} seconds.")
+    except NameError:
+        logging.info("pipits_process finished (possibly with early exit).")
+    logging.info(f"Done - Resulting files are in '{options.outDir}' directory")
