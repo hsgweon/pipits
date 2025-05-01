@@ -1,0 +1,876 @@
+#!/usr/bin/env python3
+
+import sys
+import os
+import argparse
+import subprocess
+import shutil
+import logging
+import time
+import gzip
+import bz2
+import statistics # Needed for mean
+
+__version__    = "4.0" # Removed skipjoin option and placeholders
+
+__author__     = "Hyun Soon Gweon"
+__copyright__  = "Copyright 2015-2024, The PIPITS Project"
+__credits__    = ["Hyun Soon Gweon", "Anna Oliver", "Joanne Taylor", "Tim Booth", "Melanie Gibbs", "Daniel S. Read", "Robert I. Griffiths", "Karsten Schonrogge"]
+__license__    = "GPL"
+__maintainer__ = "PIPITS Maintainers"
+
+# Tool Paths
+VSEARCH                    = "vsearch"
+FASTX_FASTQ_QUALITY_FILTER = "fastq_quality_filter"
+FASTX_FASTQ_TO_FASTA       = "fastq_to_fasta"
+
+class Colors:
+    RESET = '\033[0m'
+    RED = '\033[91m'
+    GREEN = '\033[92m'
+    YELLOW = '\033[93m'
+    BLUE = '\033[94m'
+    MAGENTA = '\033[95m'
+    CYAN = '\033[96m'
+    HEADER = '\033[95m'
+
+# --- Logging Setup ---
+def setup_logging(log_file_path, verbose):
+    """Sets up logging to file and console."""
+    log_format_file = '%(asctime)s - %(levelname)s - %(message)s'
+    log_format_console = '%(levelname)s: %(message)s' # Keep console simple
+    log_level = logging.DEBUG if verbose else logging.INFO
+
+    logger = logging.getLogger()
+    logger.setLevel(logging.DEBUG)
+
+    if logger.hasHandlers():
+        logger.handlers.clear()
+
+    file_handler = logging.FileHandler(log_file_path, mode='w')
+    file_handler.setLevel(logging.DEBUG)
+    file_formatter = logging.Formatter(log_format_file)
+    file_handler.setFormatter(file_formatter)
+    logger.addHandler(file_handler)
+
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setLevel(log_level)
+    console_formatter = logging.Formatter(log_format_console)
+    console_handler.setFormatter(console_formatter)
+    logger.addHandler(console_handler)
+
+# --- Command Execution ---
+def run_cmd(command, verbose):
+    """Runs a command using subprocess and logs output."""
+    logging.debug(f"Running command: {command}")
+    try:
+        process = subprocess.run(command, shell=True, check=True,
+                                 capture_output=True, text=True, encoding='utf-8', errors='ignore')
+
+        stdout_lines = process.stdout.strip().split('\n') if process.stdout else []
+        stderr_lines = process.stderr.strip().split('\n') if process.stderr else []
+
+        if verbose:
+            if stdout_lines:
+                logging.debug("Command STDOUT:")
+                for line in stdout_lines:
+                    if line: logging.debug(line)
+            if stderr_lines:
+                logging.debug("Command STDERR:")
+                for line in stderr_lines:
+                     if line: logging.debug(line)
+        else:
+             # Only log stderr in non-verbose mode if it exists
+             if stderr_lines and any(line for line in stderr_lines):
+                 logging.debug("Command STDERR:")
+                 for line in stderr_lines:
+                     if line: logging.debug(line)
+
+        return process
+
+    except subprocess.CalledProcessError as e:
+        logging.error(f"Command failed with exit code {e.returncode}")
+        logging.error(f"Failed command: {e.cmd}")
+        stderr_output = e.stderr.strip() if e.stderr else "N/A"
+        stdout_output = e.stdout.strip() if e.stdout else "N/A"
+        logging.error(f"STDERR:\n{stderr_output}")
+        if stdout_output != "N/A": logging.error(f"STDOUT:\n{stdout_output}")
+        raise
+    except FileNotFoundError:
+         cmd_name = command.split()[0]
+         logging.error(f"Command not found: '{cmd_name}'. Please ensure it's installed and in your PATH.")
+         raise
+    except Exception as e:
+        logging.error(f"An unexpected error occurred running command: {command}")
+        logging.error(f"Error details: {e}")
+        raise
+
+# --- Sequence Utilities ---
+def blocks(files, size=65536):
+    """Helper function to read files in chunks."""
+    while True:
+        b = files.read(size)
+        if not b: break
+        yield b
+
+def get_file_line_count(filename):
+    """Counts lines in a potentially compressed file."""
+    opener = open
+    mode = "rb" # Read as bytes for consistency
+    try:
+        if filename.lower().endswith(".gz"):
+            opener = gzip.open
+        elif filename.lower().endswith(".bz2"):
+            opener = bz2.open
+        # No need for explicit .fastq/.fasta checks here now
+
+        with opener(filename, mode) as f:
+            # Count newline bytes efficiently
+            count = sum(bl.count(b"\n") for bl in blocks(f))
+        return count
+
+    except FileNotFoundError:
+        # Use debug level for file not found during counting, error might be too strong
+        logging.debug(f"File not found for line count: {filename}")
+        return 0
+    except Exception as e:
+        logging.error(f"Error counting lines in {filename}: {e}")
+        return 0
+
+# --- Core Functions ---
+
+def count_sequences(input_dir, sampleids_list, fastqs_f_list, fastqs_r_list, summary_file_handle):
+    """
+    Counts sequences in forward and reverse FASTQ files listed for each sample.
+    Calculates and logs total, min, max, and average sequences per sample.
+    Assumes input files are FASTQ (4 lines per sequence).
+    """
+    total_sequences = 0
+    sequences_per_sample = [] # Store count for each sample (Fwd + Rev)
+
+    logging.info("Counting initial sequences from provided list file...")
+
+    if len(sampleids_list) != len(fastqs_f_list) or len(sampleids_list) != len(fastqs_r_list):
+         logging.critical("Mismatch in lengths of sample ID and FASTQ file lists. Cannot proceed with counting.")
+         summary_file_handle.write("Initial sequence count: ERROR - List length mismatch\n")
+         return 0 # Indicate error
+
+    for i in range(len(sampleids_list)):
+        sample_id = sampleids_list[i]
+        fwd_filename = fastqs_f_list[i]
+        rev_filename = fastqs_r_list[i]
+
+        fwd_full_path = os.path.join(input_dir, fwd_filename)
+        rev_full_path = os.path.join(input_dir, rev_filename)
+
+        fwd_lines = get_file_line_count(fwd_full_path)
+        rev_lines = get_file_line_count(rev_full_path)
+
+        # Calculate sequences assuming FASTQ format (4 lines/seq)
+        # Handle files not found (line count is 0) or not divisible by 4
+        fwd_seqs = 0
+        if fwd_lines > 0:
+            if fwd_lines % 4 == 0:
+                fwd_seqs = fwd_lines // 4
+            else:
+                logging.warning(f"Forward file {fwd_filename} for sample {sample_id} has line count ({fwd_lines}) not divisible by 4. Treating as 0 sequences for this file.")
+
+        rev_seqs = 0
+        if rev_lines > 0:
+            if rev_lines % 4 == 0:
+                rev_seqs = rev_lines // 4
+            else:
+                logging.warning(f"Reverse file {rev_filename} for sample {sample_id} has line count ({rev_lines}) not divisible by 4. Treating as 0 sequences for this file.")
+
+        sample_total_seqs = fwd_seqs + rev_seqs
+        logging.debug(f"Sample {sample_id}: Fwd={fwd_seqs}, Rev={rev_seqs}, Total={sample_total_seqs}")
+
+        sequences_per_sample.append(sample_total_seqs)
+        total_sequences += sample_total_seqs
+
+    # Calculate Statistics
+    if not sequences_per_sample:
+        # This condition might be met if the list file was empty or all files were missing/invalid
+        logging.error("Could not count sequences. No samples processed or all files were empty/invalid.")
+        summary_file_handle.write("Initial sequence count: ERROR - No valid sequences counted\n")
+        return 0
+
+    min_seqs = min(sequences_per_sample)
+    max_seqs = max(sequences_per_sample)
+    # Avoid division by zero if list somehow ends up empty despite checks
+    avg_seqs = statistics.mean(sequences_per_sample) if sequences_per_sample else 0
+
+    # Log results
+    logging.info(f"{Colors.BLUE}... Total number of input reads (Fwd + Rev): {total_sequences}{Colors.RESET}")
+    logging.info(f"{Colors.BLUE}... Minimum reads per sample: {min_seqs}{Colors.RESET}")
+    logging.info(f"{Colors.BLUE}... Maximum reads per sample: {max_seqs}{Colors.RESET}")
+    logging.info(f"{Colors.BLUE}... Average reads per sample: {avg_seqs:.2f}{Colors.RESET}")
+
+    # Write to summary file
+    summary_file_handle.write(f"Total number of input reads (Fwd + Rev): {total_sequences}\n")
+    summary_file_handle.write(f"Minimum reads per sample: {min_seqs}\n")
+    summary_file_handle.write(f"Maximum reads per sample: {max_seqs}\n")
+    summary_file_handle.write(f"Average reads per sample: {avg_seqs:.2f}\n")
+
+    if total_sequences == 0:
+        logging.warning("Total initial sequence count is 0. Check input files listed in the list file and format warnings.")
+
+    return total_sequences
+
+
+def reindex_fastq(input_dir, output_dir, sampleids_list, filenames_list):
+    """Reindexes FASTQ files, naming them based on sample IDs."""
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+    file_open_mode = 'rt'
+    opener = open
+
+    for i in range(len(filenames_list)):
+        in_filename = filenames_list[i]
+        in_filepath = os.path.join(input_dir, in_filename)
+        sample_id = sampleids_list[i]
+        out_filename = f"{sample_id}.fastq"
+        out_filepath = os.path.join(output_dir, out_filename)
+
+        logging.info(f"Reindexing {in_filename} to {out_filename}")
+
+        # Determine opener based on extension
+        if in_filename.lower().endswith(".gz"):
+            opener = gzip.open
+            file_open_mode = 'rt'
+        elif in_filename.lower().endswith(".bz2"):
+            opener = bz2.open
+            file_open_mode = 'rt'
+        elif in_filename.lower().endswith((".fastq", ".fq")): # Accept .fq as well
+            opener = open
+            file_open_mode = 'rt'
+        else:
+            # Guess it's plain text if no known compression extension
+            logging.debug(f"Assuming plain text for unknown extension: {in_filename}")
+            opener = open
+            file_open_mode = 'rt'
+            # Log a warning if it's not a typical fastq extension
+            if not in_filename.lower().endswith((".fastq", ".fq")):
+                logging.warning(f"Processing file with non-standard extension during reindexing: {in_filename}")
+
+
+        try:
+            with opener(in_filepath, file_open_mode, encoding='utf-8', errors='ignore') as infile, \
+                 open(out_filepath, "w", encoding='utf-8') as outfile:
+
+                line_number = 0
+                sequence_number = 1
+                for line in infile:
+                    line_number += 1
+                    # Write header with new sample ID and sequence number
+                    if line_number % 4 == 1:
+                        # Basic check if line starts with '@'
+                        if not line.startswith('@'):
+                             logging.warning(f"Line {line_number} in {in_filename} does not start with '@'. Input may not be FASTQ.")
+                        outfile.write(f"@{sample_id}_{sequence_number}\n")
+                        sequence_number += 1
+                    # Write sequence, '+', and quality lines
+                    elif line_number % 4 == 2 or line_number % 4 == 0:
+                         # Ensure newline consistency
+                         outfile.write(line.rstrip('\r\n') + "\n")
+                    # Write the '+' separator line
+                    elif line_number % 4 == 3:
+                        # Standardize separator to just '+'
+                        outfile.write("+\n")
+
+            if line_number == 0:
+                 logging.warning(f"Input file {in_filepath} was empty. Output {out_filepath} is empty.")
+            elif line_number % 4 != 0:
+                 logging.warning(f"Input file {in_filepath} has {line_number} lines, not divisible by 4. Output {out_filepath} may be incomplete or corrupt.")
+
+            # Check for empty output even if input had lines
+            if os.path.exists(out_filepath) and os.stat(out_filepath).st_size == 0 and line_number > 0:
+                 logging.warning(f"Output file {out_filepath} is empty after reindexing {in_filename}, though input had lines.")
+
+        except FileNotFoundError:
+             logging.error(f"Input file not found during reindexing: {in_filepath}. Creating empty output.")
+             # Create empty file so downstream steps don't fail immediately
+             open(out_filepath, 'a').close()
+        except Exception as e:
+             logging.error(f"Error reindexing {in_filename}: {e}. Creating empty output.")
+             # Attempt to remove potentially corrupt partial file
+             try:
+                 if os.path.exists(out_filepath): os.remove(out_filepath)
+             except OSError:
+                 pass
+             open(out_filepath, 'a').close()
+
+# *** MODIFICATION: Removed skipjoin function ***
+
+def join_reads(input_dir_f, input_dir_r, output_dir, sampleids_list,
+               threads, verbose, summary_file_handle):
+    """Joins paired-end reads using VSEARCH."""
+    logging.info("Joining paired-end reads [VSEARCH]")
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+    total_joined_sequences = 0
+
+    for sample_id in sampleids_list:
+        fwd_read_path = os.path.join(input_dir_f, f"{sample_id}.fastq")
+        rev_read_path = os.path.join(input_dir_r, f"{sample_id}.fastq")
+        # VSEARCH writes directly to the final desired output name
+        final_joined_path = os.path.join(output_dir, f"{sample_id}.fastq")
+        # *** MODIFICATION: Removed definitions for discarded/unf/unr paths ***
+
+        # Check if input files exist and are not empty
+        fwd_exists = os.path.exists(fwd_read_path) and os.stat(fwd_read_path).st_size > 0
+        rev_exists = os.path.exists(rev_read_path) and os.stat(rev_read_path).st_size > 0
+
+        if not fwd_exists or not rev_exists:
+            if not fwd_exists: logging.warning(f"Forward read missing or empty: {fwd_read_path}")
+            if not rev_exists: logging.warning(f"Reverse read missing or empty: {rev_read_path}")
+            logging.warning(f"Skipping join for {sample_id}, creating empty joined output.")
+            # Ensure joined output file exists, even if empty
+            open(final_joined_path, 'a').close()
+            # *** MODIFICATION: Removed creation of placeholder discarded/unf/unr files ***
+            continue
+
+        # --- Run VSEARCH joiner ---
+        try:
+            # VSEARCH defaults from PISPINO/PIPITS: --fastq_allowmergestagger --fastq_maxdiffs 500 --fastq_minovlen 20 --fastq_minmergelen 100
+            # NOTE: Removed --fastqout_discarded, --fastqout_notmerged_fwd, --fastqout_notmerged_rev based on user request/vsearch version issues
+            cmd_parts = [
+                VSEARCH,
+                "--fastq_mergepairs", f'"{fwd_read_path}"',
+                "--reverse", f'"{rev_read_path}"',
+                "--fastqout", f'"{final_joined_path}"',
+                "--threads", str(threads),
+                "--fastq_allowmergestagger", # Allow staggered reads
+                "--fastq_maxdiffs 500",      # Allow many diffs (adjust if needed)
+                "--fastq_minovlen 20",       # Min overlap
+                "--fastq_minmergelen 100"    # Min final length
+            ]
+            cmd = " ".join(cmd_parts)
+            run_cmd(cmd, verbose)
+
+            # Count sequences in the final joined file
+            if os.path.exists(final_joined_path):
+                 line_count = get_file_line_count(final_joined_path)
+                 if line_count > 0 and line_count % 4 == 0:
+                     num_seqs = line_count // 4
+                     logging.debug(f"{sample_id}: Found {num_seqs} joined sequences.")
+                     total_joined_sequences += num_seqs
+                 elif line_count == 0:
+                      logging.debug(f"{sample_id}: Joined file {final_joined_path} is empty.")
+                 else:
+                      logging.warning(f"{sample_id}: Joined file {final_joined_path} has unexpected line count ({line_count}). Treating as 0 joined sequences for this sample.")
+            else:
+                 # Vsearch might not create the file if nothing merges
+                 logging.debug(f"Final joined file not created or empty for {sample_id}: {final_joined_path}")
+                 open(final_joined_path, 'a').close() # Ensure it exists
+
+            # *** MODIFICATION: Removed checks/creation of placeholder discarded/unf/unr files ***
+
+
+        except Exception as e:
+            logging.error(f"Error joining reads for {sample_id} using VSEARCH: {e}")
+            # Ensure empty joined file exists on error
+            if not os.path.exists(final_joined_path): open(final_joined_path, 'a').close()
+            # *** MODIFICATION: Removed creation of placeholder discarded/unf/unr files on error ***
+
+
+    # Log summary
+    if total_joined_sequences == 0:
+        logging.warning("VSEARCH JOINING STEP YIELDED 0 SEQUENCES. Check input data quality and joining parameters.")
+    else:
+        logging.info(f"{Colors.BLUE}... Total number of joined reads (VSEARCH): {total_joined_sequences}{Colors.RESET}")
+        summary_file_handle.write(f"Number of joined reads (VSEARCH): {total_joined_sequences}\n")
+
+    return total_joined_sequences
+
+
+def quality_filter(input_dir, output_dir, sampleids_list,
+                   base_phred_quality_score, FASTX_fastq_quality_filter_q,
+                   FASTX_fastq_quality_filter_p, verbose, summary_file_handle):
+    """Filters sequences based on quality using FASTX-Toolkit."""
+    logging.info("Quality filtering [FASTX-Toolkit]")
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+    total_filtered_sequences = 0
+
+    for sample_id in sampleids_list:
+        # Input is the result of the previous step (joining)
+        input_file = os.path.join(input_dir, f"{sample_id}.fastq")
+        output_file = os.path.join(output_dir, f"{sample_id}.fastq")
+
+        if not os.path.exists(input_file) or os.stat(input_file).st_size == 0:
+            logging.warning(f"Input file for quality filtering not found or empty: {input_file}. Creating empty output.")
+            open(output_file, 'a').close()
+            continue
+
+        try:
+            cmd_parts = [
+                FASTX_FASTQ_QUALITY_FILTER,
+                "-i", f'"{input_file}"',
+                "-o", f'"{output_file}"',
+                "-q", str(FASTX_fastq_quality_filter_q),
+                "-p", str(FASTX_fastq_quality_filter_p),
+                "-Q", str(base_phred_quality_score)
+            ]
+            cmd = " ".join(cmd_parts)
+            run_cmd(cmd, verbose)
+
+            if os.path.exists(output_file):
+                line_count = get_file_line_count(output_file)
+                if line_count > 0 and line_count % 4 == 0:
+                    num_seqs = line_count // 4
+                    logging.debug(f"{sample_id}: Found {num_seqs} quality-filtered sequences.")
+                    total_filtered_sequences += num_seqs
+                elif line_count == 0:
+                     logging.debug(f"{sample_id}: Quality-filtered file {output_file} is empty.")
+                else:
+                     logging.warning(f"{sample_id}: Quality-filtered file {output_file} has unexpected line count ({line_count}). Treating as 0 sequences for this sample.")
+            else:
+                 # fastq_quality_filter might not create output if all fail
+                 logging.debug(f"Quality-filtered file not created or empty for {sample_id}: {output_file}")
+                 open(output_file, 'a').close() # Ensure file exists
+
+        except Exception as e:
+             logging.error(f"Error during quality filtering for {sample_id}: {e}")
+             if not os.path.exists(output_file): open(output_file, 'a').close()
+
+    if total_filtered_sequences == 0:
+        logging.warning("QUALITY FILTERING YIELDED 0 SEQUENCES. Check quality parameters and input data.")
+    else:
+        logging.info(f"{Colors.BLUE}... Total number of quality-filtered reads: {total_filtered_sequences}{Colors.RESET}")
+        summary_file_handle.write(f"Number of quality filtered reads: {total_filtered_sequences}\n")
+
+    return total_filtered_sequences
+
+
+def convert_to_fasta(input_dir, output_dir, sampleids_list,
+                     base_phred_quality_score, FASTX_fastq_to_fasta_keep_n,
+                     verbose, summary_file_handle):
+    """Converts FASTQ to FASTA using FASTX-Toolkit, optionally keeping Ns."""
+    logging.info("Converting FASTQ to FASTA [FASTX-Toolkit]")
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+    total_converted_sequences = 0
+
+    for sample_id in sampleids_list:
+        # Input is the result of quality filtering
+        input_file = os.path.join(input_dir, f"{sample_id}.fastq")
+        output_file = os.path.join(output_dir, f"{sample_id}.fasta")
+
+        if not os.path.exists(input_file) or os.stat(input_file).st_size == 0:
+            logging.warning(f"Input file for FASTA conversion not found or empty: {input_file}. Creating empty output.")
+            open(output_file, 'a').close()
+            continue
+
+        try:
+            cmd_parts = [
+                FASTX_FASTQ_TO_FASTA,
+                "-i", f'"{input_file}"',
+                "-o", f'"{output_file}"',
+                "-Q", str(base_phred_quality_score)
+            ]
+            # Logic based on the --keep-Ns flag:
+            # If --keep-Ns is True (user wants to keep Ns), DO NOT add the -n flag to fastq_to_fasta
+            # If --keep-Ns is False (user wants to remove Ns), DO add the -n flag to fastq_to_fasta
+            if not FASTX_fastq_to_fasta_keep_n:
+                 cmd_parts.append("-n") # This tells fastx to *remove* Ns.
+                 logging.debug(f"{sample_id}: Removing sequences with Ns during conversion.")
+            else:
+                 logging.debug(f"{sample_id}: Keeping sequences with Ns during conversion.")
+
+
+            cmd = " ".join(cmd_parts)
+            run_cmd(cmd, verbose)
+
+            if os.path.exists(output_file):
+                line_count = get_file_line_count(output_file)
+                if line_count > 0 and line_count % 2 == 0:
+                    num_seqs = line_count // 2
+                    logging.debug(f"{sample_id}: Found {num_seqs} sequences after FASTA conversion.")
+                    total_converted_sequences += num_seqs
+                elif line_count == 0:
+                     logging.debug(f"{sample_id}: FASTA file {output_file} is empty after conversion.")
+                else:
+                     logging.warning(f"{sample_id}: Converted FASTA file {output_file} has unexpected line count ({line_count}). Treating as 0 sequences for this sample.")
+            else:
+                # fastq_to_fasta might not create output if all fail
+                logging.debug(f"Converted FASTA file not found or empty for {sample_id}: {output_file}")
+                open(output_file, 'a').close() # Ensure file exists
+
+        except Exception as e:
+            logging.error(f"Error during FASTA conversion for {sample_id}: {e}")
+            if not os.path.exists(output_file): open(output_file, 'a').close()
+
+    if total_converted_sequences == 0:
+        logging.warning("FASTA CONVERSION YIELDED 0 SEQUENCES.")
+    else:
+        logging.info(f"{Colors.BLUE}... Total number of final prepped sequences: {total_converted_sequences}{Colors.RESET}")
+        summary_file_handle.write(f"Number of final prepped sequences: {total_converted_sequences}\n")
+
+    return total_converted_sequences
+
+
+def merge_fasta(input_dir, output_dir, sampleids_list, summary_file_handle, final_output_name="prepped.fasta"):
+    """Merges individual FASTA files into a single file."""
+    logging.info(f"Merging FASTA files into {final_output_name}")
+    final_output_path = os.path.join(output_dir, final_output_name)
+    total_merged_sequences = 0
+    files_merged = 0
+
+    try:
+        with open(final_output_path, "w", encoding='utf-8') as outfile:
+            for sample_id in sampleids_list:
+                # Input is the result of FASTA conversion
+                input_file = os.path.join(input_dir, f"{sample_id}.fasta")
+                if os.path.exists(input_file) and os.stat(input_file).st_size > 0:
+                    logging.debug(f"Merging {input_file}")
+                    line_count_file = 0
+                    seq_count_file = 0
+                    with open(input_file, "r", encoding='utf-8', errors='ignore') as infile:
+                        for line in infile:
+                            outfile.write(line)
+                            line_count_file +=1
+                    if line_count_file > 0:
+                         if line_count_file % 2 == 0:
+                            seq_count_file = line_count_file // 2
+                            total_merged_sequences += seq_count_file
+                         else:
+                            logging.warning(f"Input FASTA {input_file} had odd line count ({line_count_file}). Sequence count may be inaccurate.")
+                            # Estimate count anyway? Or just warn? Let's just warn. Correct odd count by floor division
+                            seq_count_file = line_count_file // 2
+                            total_merged_sequences += seq_count_file
+                    else:
+                         logging.debug(f"Input FASTA {input_file} was empty.")
+
+                    files_merged += 1
+                    logging.debug(f"Merged {seq_count_file} sequences from {input_file}")
+
+                else:
+                    logging.warning(f"Input file for merging not found or empty: {input_file}")
+
+        if files_merged == 0:
+             logging.error(f"No valid FASTA files found to merge in {input_dir}.")
+             # Create an empty final file?
+             open(final_output_path, 'a').close()
+        else:
+             logging.info(f"{Colors.BLUE}... Merging complete. Merged {files_merged} files.")
+             logging.info(f"{Colors.BLUE}... Total sequences in merged file: {total_merged_sequences}{Colors.RESET}")
+             logging.info(f"{Colors.BLUE}... Final output file: {final_output_path}{Colors.RESET}")
+             summary_file_handle.write(f"Number of sequences in final merged file: {total_merged_sequences}\n")
+
+
+    except Exception as e:
+        logging.error(f"Error merging FASTA files: {e}")
+        # Ensure final output path exists even on error, possibly empty
+        if not os.path.exists(final_output_path): open(final_output_path, 'a').close()
+
+
+# --- Main Execution ---
+if __name__ == '__main__':
+
+    parser = argparse.ArgumentParser(
+        description="pipits_prep: Reindex, join (VSEARCH), quality filter, convert and merge Illumina FASTQ data.")
+    parser.add_argument(
+        "-i",
+        action = "store",
+        dest = "dataDir",
+        metavar = "<DIR>",
+        help = "[REQUIRED] Directory containing raw sequence files (FASTQ format, can be .gz or .bz2 compressed).",
+        required = True)
+    parser.add_argument(
+        "-o",
+        action = "store",
+        dest = "outputdir",
+        metavar = "<DIR>",
+        help = "Directory to output results [default: pipits_prep_output]",
+        default = "pipits_prep_output",
+        required = False)
+    parser.add_argument(
+        "-l",
+        action = "store",
+        dest = "listfile",
+        metavar = "<FILE>",
+        help = "[REQUIRED] Tab-separated file with three columns: SampleID, ForwardReadFilename, ReverseReadFilename. Only files listed here will be processed.",
+        required = True)
+    parser.add_argument(
+        "--FASTX-q",
+        action = "store",
+        dest = "FASTX_fastq_quality_filter_q",
+        metavar = "<INT>",
+        type=int,
+        help = "FASTX quality filter: Minimum quality score to keep [default: 30]",
+        default = 30,
+        required = False)
+    parser.add_argument(
+        "--FASTX-p",
+        action = "store",
+        dest = "FASTX_fastq_quality_filter_p",
+        metavar = "<INT>",
+        type=int,
+        help = "FASTX quality filter: Minimum percent of bases that must have '--FASTX-q' quality [default: 80]",
+        default = 80,
+        required = False)
+    parser.add_argument(
+        "--keep-Ns", # Name reflects effect: keeps Ns if flag is present
+        action = "store_true",
+        dest = "FASTX_fastq_to_fasta_keep_n",
+        help = "Keep sequences containing 'N' nucleotides during FASTQ to FASTA conversion [default: False, sequences with N are removed by FASTX tools]",
+        default=False,
+        required = False)
+    parser.add_argument(
+        "-b",
+        action = "store",
+        dest = "base_phred_quality_score",
+        metavar = "<INT>",
+        type=int,
+        help = "Base PHRED quality score encoding of input FASTQ files (e.g., 33 or 64) [default: 33]",
+        default = 33,
+        required = False)
+    parser.add_argument(
+        "-r", "--retain",
+        action = "store_true",
+        dest = "retain",
+        help = "Retain intermediate files in the 'tmp' subdirectory.",
+        required = False)
+    parser.add_argument(
+        "-v", "--verbose",
+        action = "store_true",
+        dest = "verbose",
+        help = "Verbose mode (log debug messages to console and file).",
+        required = False)
+    parser.add_argument(
+        "-t", "--threads",
+        action = "store",
+        dest = "threads",
+        metavar = "<INT>",
+        type=int,
+        help = "Number of threads for VSEARCH joining [default: 1]",
+        default = 1,
+        required = False)
+    # *** MODIFICATION: Removed --forward-reads-only argument ***
+    parser.add_argument('--version', action='version', version=f'%(prog)s {__version__}')
+
+    options = parser.parse_args()
+
+    # --- Directory Setup ---
+    if not os.path.exists(options.outputdir):
+        os.makedirs(options.outputdir)
+    tmpDir = os.path.join(options.outputdir, "tmp")
+    if not os.path.exists(tmpDir):
+        os.makedirs(tmpDir)
+
+    # --- Logging Setup ---
+    log_file_path = os.path.join(options.outputdir, "pipits_prep.log")
+    summary_file_path = os.path.join(options.outputdir, "summary.log")
+    setup_logging(log_file_path, options.verbose)
+
+    # --- Start Timer & Log Basic Info ---
+    start_time = time.time()
+    logging.info(f"Starting pipits_prep v{__version__}")
+    logging.info(f"Output directory: {options.outputdir}")
+    logging.info(f"Input data directory: {options.dataDir}")
+    logging.info(f"List file: {options.listfile}")
+    logging.info(f"Read joining will use VSEARCH.") # Updated message
+
+    # --- Check Input Directory ---
+    if not os.path.isdir(options.dataDir):
+        logging.critical(f"Input data directory not found or not a directory: {options.dataDir}")
+        sys.exit(1)
+
+    # --- Read List File ---
+    sampleids = []
+    fastqs_f = []
+    fastqs_r = []
+    logging.info(f"Reading sample list file: {options.listfile}")
+    try:
+        with open(options.listfile, "r") as lf:
+            line_num = 0
+            for line in lf:
+                line_num += 1
+                line = line.strip()
+                if not line or line.startswith("#"): continue
+
+                parts = line.split("\t")
+                if len(parts) != 3:
+                    logging.critical(f"Incorrect format in list file '{options.listfile}' on line {line_num}. Expected 3 tab-separated columns (SampleID, FwdFile, RevFile). Found {len(parts)} columns.")
+                    sys.exit(1)
+
+                sample_id, fwd_file, rev_file = parts[0], parts[1], parts[2]
+
+                # Validate Sample ID format
+                if "_" in sample_id:
+                     logging.critical(f"Sample ID '{sample_id}' on line {line_num} contains '_', which is not allowed by PIPITS.")
+                     sys.exit(1)
+                if " " in sample_id:
+                     logging.critical(f"Sample ID '{sample_id}' on line {line_num} contains a space.")
+                     sys.exit(1)
+
+                # Check existence *before* adding to list, but still add ID to process later
+                fwd_path_check = os.path.join(options.dataDir, fwd_file)
+                rev_path_check = os.path.join(options.dataDir, rev_file)
+
+                if not os.path.exists(fwd_path_check):
+                     logging.warning(f"Forward read file '{fwd_file}' listed on line {line_num} not found in '{options.dataDir}'.")
+                if not os.path.exists(rev_path_check):
+                     logging.warning(f"Reverse read file '{rev_file}' listed on line {line_num} not found in '{options.dataDir}'.")
+
+                # Add sample ID and filenames regardless of existence; subsequent steps handle missing files.
+                sampleids.append(sample_id)
+                fastqs_f.append(fwd_file)
+                fastqs_r.append(rev_file)
+
+        if not sampleids:
+             logging.critical(f"No valid sample entries found in list file: {options.listfile}")
+             sys.exit(1)
+
+        logging.info(f"Found {len(sampleids)} samples in list file.")
+
+        # Check for duplicate SampleIDs
+        if len(sampleids) != len(set(sampleids)):
+             duplicates = set([s for s in sampleids if sampleids.count(s) > 1])
+             logging.critical(f"Duplicate SampleIDs found in list file '{options.listfile}': {', '.join(duplicates)}. Please ensure all SampleIDs are unique.")
+             sys.exit(1)
+
+    except FileNotFoundError:
+        logging.critical(f"List file not found: {options.listfile}")
+        sys.exit(1)
+    except Exception as e:
+        logging.critical(f"Error reading list file {options.listfile}: {e}")
+        sys.exit(1)
+
+    # --- Open Summary File ---
+    summary_file_handle = None # Initialize
+    try:
+        summary_file_handle = open(summary_file_path, "w")
+        summary_file_handle.write(f"# pipits_prep v{__version__} Summary\n")
+        summary_file_handle.write(f"# Start time: {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
+        summary_file_handle.write(f"# Input directory: {os.path.abspath(options.dataDir)}\n")
+        summary_file_handle.write(f"# Output directory: {os.path.abspath(options.outputdir)}\n")
+        summary_file_handle.write(f"# List file: {os.path.abspath(options.listfile)}\n")
+        summary_file_handle.write(f"# Samples processed: {len(sampleids)}\n")
+        summary_file_handle.write("# --- Parameters ---\n")
+        # *** MODIFICATION: Removed forward reads only parameter from summary ***
+        summary_file_handle.write(f"Quality filter min score (q): {options.FASTX_fastq_quality_filter_q}\n")
+        summary_file_handle.write(f"Quality filter min percent (p): {options.FASTX_fastq_quality_filter_p}\n")
+        summary_file_handle.write(f"Keep Ns during conversion: {options.FASTX_fastq_to_fasta_keep_n}\n")
+        summary_file_handle.write(f"PHRED base: {options.base_phred_quality_score}\n")
+        summary_file_handle.write(f"Threads: {options.threads}\n")
+        summary_file_handle.write("# --- Processing Summary ---\n")
+
+    except IOError as e:
+         logging.critical(f"Cannot open summary file for writing: {summary_file_path} - {e}")
+         sys.exit(1)
+
+
+    # === Start Pipeline ===
+    pipeline_failed = False
+    try:
+        initial_seq_count = count_sequences(
+            options.dataDir, sampleids, fastqs_f, fastqs_r, summary_file_handle
+        )
+        if initial_seq_count == 0:
+             logging.warning("Initial sequence count reported as 0. Processing will continue, but check input files and list.")
+
+        # --- Reindexing ---
+        reindex_f_dir = os.path.join(tmpDir, "1_reindexed_F")
+        reindex_r_dir = os.path.join(tmpDir, "2_reindexed_R")
+        logging.info("Reindexing forward reads...")
+        reindex_fastq(options.dataDir, reindex_f_dir, sampleids, fastqs_f)
+        logging.info("Reindexing reverse reads...")
+        reindex_fastq(options.dataDir, reindex_r_dir, sampleids, fastqs_r)
+
+        # --- Joining ---
+        # *** MODIFICATION: Removed if/else for skipjoin, joining is mandatory ***
+        joined_dir = os.path.join(tmpDir, "3_joined")
+        seq_count_after_join = join_reads(reindex_f_dir, reindex_r_dir, joined_dir, sampleids,
+                   options.threads, options.verbose, summary_file_handle)
+        # Warning for 0 joined sequences is now inside join_reads
+
+        # --- Quality Filtering ---
+        qfiltered_dir = os.path.join(tmpDir, "4_quality_filtered")
+        seq_count_after_qfilter = quality_filter(joined_dir, qfiltered_dir, sampleids,
+                           options.base_phred_quality_score, options.FASTX_fastq_quality_filter_q,
+                           options.FASTX_fastq_quality_filter_p, options.verbose, summary_file_handle)
+        # Warning for 0 filtered sequences is now inside quality_filter
+
+        # --- FASTA Conversion ---
+        fasta_dir = os.path.join(tmpDir, "5_fasta_converted")
+        final_seq_count = convert_to_fasta(qfiltered_dir, fasta_dir, sampleids,
+                         options.base_phred_quality_score, options.FASTX_fastq_to_fasta_keep_n,
+                         options.verbose, summary_file_handle)
+        # Warning for 0 converted sequences is now inside convert_to_fasta
+
+        # --- Merging ---
+        merge_fasta(fasta_dir, options.outputdir, sampleids, summary_file_handle=summary_file_handle, final_output_name="prepped.fasta")
+
+    except (subprocess.CalledProcessError, FileNotFoundError, ValueError, Exception) as e:
+        logging.critical(f"Pipeline execution failed: {e}")
+        # Log the traceback for detailed debugging if verbose
+        if options.verbose:
+            import traceback
+            logging.debug(traceback.format_exc())
+        pipeline_failed = True
+
+    # === End Pipeline ===
+
+    # --- Clean Up ---
+    if not options.retain and os.path.exists(tmpDir):
+        logging.info("Cleaning temporary directory...")
+        try:
+            shutil.rmtree(tmpDir)
+            logging.info(f"{Colors.BLUE}... Temporary directory removed.{Colors.RESET}")
+        except OSError as e:
+            logging.warning(f"Could not remove temporary directory {tmpDir}: {e}")
+    elif options.retain:
+         logging.info(f"Intermediate files retained in: {tmpDir}")
+
+
+    # --- Final Summary & Timing ---
+    end_time = time.time()
+    duration = end_time - start_time
+    summary_message = f"Processing completed in {duration:.2f} seconds."
+    final_status = "FAILED" if pipeline_failed else "completed successfully"
+    final_result_file = os.path.join(options.outputdir, "prepped.fasta")
+
+    logging.info(f"pipits_prep {final_status}.")
+    # Only mention final file if successful and it exists
+    if not pipeline_failed and os.path.exists(final_result_file):
+         # Check final count before declaring success file
+         final_check_lines = get_file_line_count(final_result_file)
+         final_check_seqs = 0
+         if final_check_lines > 0 and final_check_lines % 2 == 0:
+             final_check_seqs = final_check_lines // 2
+         elif final_check_lines > 0:
+             logging.warning(f"Final output file {final_result_file} has unexpected line count ({final_check_lines}).")
+
+         logging.info(f"Final output file: {final_result_file} ({final_check_seqs} sequences)")
+         if final_check_seqs == 0:
+             logging.warning("Pipeline completed, but the final prepped.fasta file contains 0 sequences.")
+
+    elif not pipeline_failed:
+         # This case means pipeline completed but final file wasn't found/empty
+         logging.warning(f"Pipeline completed but final output file not found or empty: {final_result_file}")
+
+    logging.info(summary_message)
+
+    # Ensure summary file handle is closed
+    if summary_file_handle:
+        try:
+            summary_file_handle.write("# --- End Summary ---\n")
+            summary_file_handle.write(f"End time: {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
+            summary_file_handle.write(f"Duration: {duration:.2f} seconds\n")
+            summary_file_handle.write(f"Status: {final_status.upper()}\n")
+            summary_file_handle.close()
+        except Exception as e:
+            logging.error(f"Failed to write final summary or close summary file: {e}")
+
+
+    if pipeline_failed:
+        sys.exit(1)
+    else:
+        # Exit with success even if final count is 0 (just warn)
+        sys.exit(0) # Success
